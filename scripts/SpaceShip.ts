@@ -180,10 +180,10 @@ class SpaceShip extends BABYLON.Mesh {
       let thisSphere: BABYLON.BoundingSphere = this._mesh.getBoundingInfo().boundingSphere;
       for (let i: number = 0; i < Obstacle.SphereInstances.length; i++) {
         let sphere: BABYLON.BoundingSphere = Obstacle.SphereInstances[i];
-        if (SpaceShip.IntersectsDepth(thisSphere, sphere) > 0) {
+        if (Intersection.SphereSphere(thisSphere, sphere) > 0) {
           for (let j: number = 0; j < this._colliders.length; j++) {
             this._updateColliders();
-            let collisionDepth: number = SpaceShip.IntersectsDepth(sphere, this._colliders[j]);
+            let collisionDepth: number = Intersection.SphereSphere(sphere, this._colliders[j]);
             if (collisionDepth > 0) {
               console.log(collisionDepth);
               let forcedDisplacement: BABYLON.Vector3 = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
@@ -196,10 +196,10 @@ class SpaceShip extends BABYLON.Mesh {
       }
       for (let i: number = 0; i < Obstacle.BoxInstances.length; i++) {
         let box: BABYLON.BoundingBox = Obstacle.BoxInstances[i];
-        if (SpaceShip.IntersectsSphereDepth(box.minimumWorld, box.maximumWorld, thisSphere, tmpAxis) > 0) {
+        if (Intersection.BoxSphere(box, thisSphere, tmpAxis) > 0) {
           for (let j: number = 0; j < this._colliders.length; j++) {
             this._updateColliders();
-            let collisionDepth: number = SpaceShip.IntersectsSphereDepth(box.minimumWorld, box.maximumWorld, this._colliders[j], tmpAxis);
+            let collisionDepth: number = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
             if (collisionDepth > 0) {
               console.log(collisionDepth);
               let forcedDisplacement: BABYLON.Vector3 = tmpAxis.normalize();
@@ -211,26 +211,5 @@ class SpaceShip extends BABYLON.Mesh {
         }
       }
     }
-  }
-
-  public static IntersectsDepth(
-    sphere0: BABYLON.BoundingSphere,
-    sphere1: BABYLON.BoundingSphere
-  ): number {
-    let distance: number = BABYLON.Vector3.Distance(sphere0.centerWorld, sphere1.centerWorld);
-    return sphere0.radiusWorld + sphere1.radiusWorld - distance;
-  }
-
-  public static IntersectsSphereDepth(
-    minPoint: BABYLON.Vector3,
-    maxPoint: BABYLON.Vector3,
-    sphere: BABYLON.BoundingSphere,
-    directionFromBox: BABYLON.Vector3
-  ): number {
-    let vector: BABYLON.Vector3 = BABYLON.Vector3.Clamp(sphere.centerWorld, minPoint, maxPoint);
-    let num: number = BABYLON.Vector3.Distance(sphere.centerWorld, vector);
-    directionFromBox.copyFrom(sphere.centerWorld);
-    directionFromBox.subtractInPlace(vector);
-    return (sphere.radiusWorld - num);
   }
 }

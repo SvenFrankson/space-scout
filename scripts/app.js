@@ -3,6 +3,22 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var Intersection = (function () {
+    function Intersection() {
+    }
+    Intersection.SphereSphere = function (sphere0, sphere1) {
+        var distance = BABYLON.Vector3.Distance(sphere0.centerWorld, sphere1.centerWorld);
+        return sphere0.radiusWorld + sphere1.radiusWorld - distance;
+    };
+    Intersection.BoxSphere = function (box, sphere, directionFromBox) {
+        var vector = BABYLON.Vector3.Clamp(sphere.centerWorld, box.minimumWorld, box.maximumWorld);
+        var num = BABYLON.Vector3.Distance(sphere.centerWorld, vector);
+        directionFromBox.copyFrom(sphere.centerWorld);
+        directionFromBox.subtractInPlace(vector);
+        return (sphere.radiusWorld - num);
+    };
+    return Intersection;
+}());
 var Main = (function () {
     function Main(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
@@ -41,6 +57,17 @@ var Main = (function () {
                 var scaling = 1.5 * Math.random() + 0.5;
                 clone.scaling.copyFromFloats(scaling, scaling, scaling);
                 Obstacle.SphereInstances.push(clone.getBoundingInfo().boundingSphere);
+            }
+        });
+        BABYLON.SceneLoader.ImportMesh("", "./datas/cage.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
+            for (var i = 0; i < meshes.length; i++) {
+                if (meshes[i] instanceof BABYLON.Mesh) {
+                    var mesh = meshes[i];
+                    Obstacle.BoxInstances.push(mesh.getBoundingInfo().boundingBox);
+                    for (var j = 0; j < mesh.instances.length; j++) {
+                        Obstacle.BoxInstances.push(mesh.instances[j].getBoundingInfo().boundingBox);
+                    }
+                }
             }
         });
         var w = Main.Canvas.width * 0.95;
@@ -227,10 +254,10 @@ var SpaceShip = (function (_super) {
             var thisSphere = this._mesh.getBoundingInfo().boundingSphere;
             for (var i = 0; i < Obstacle.SphereInstances.length; i++) {
                 var sphere = Obstacle.SphereInstances[i];
-                if (SpaceShip.IntersectsDepth(thisSphere, sphere) > 0) {
+                if (Intersection.SphereSphere(thisSphere, sphere) > 0) {
                     for (var j = 0; j < this._colliders.length; j++) {
                         this._updateColliders();
-                        var collisionDepth = SpaceShip.IntersectsDepth(sphere, this._colliders[j]);
+                        var collisionDepth = Intersection.SphereSphere(sphere, this._colliders[j]);
                         if (collisionDepth > 0) {
                             console.log(collisionDepth);
                             var forcedDisplacement = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
@@ -243,10 +270,10 @@ var SpaceShip = (function (_super) {
             }
             for (var i = 0; i < Obstacle.BoxInstances.length; i++) {
                 var box = Obstacle.BoxInstances[i];
-                if (SpaceShip.IntersectsSphereDepth(box.minimumWorld, box.maximumWorld, thisSphere, tmpAxis) > 0) {
+                if (Intersection.BoxSphere(box, thisSphere, tmpAxis) > 0) {
                     for (var j = 0; j < this._colliders.length; j++) {
                         this._updateColliders();
-                        var collisionDepth = SpaceShip.IntersectsSphereDepth(box.minimumWorld, box.maximumWorld, this._colliders[j], tmpAxis);
+                        var collisionDepth = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
                         if (collisionDepth > 0) {
                             console.log(collisionDepth);
                             var forcedDisplacement = tmpAxis.normalize();
@@ -258,17 +285,6 @@ var SpaceShip = (function (_super) {
                 }
             }
         }
-    };
-    SpaceShip.IntersectsDepth = function (sphere0, sphere1) {
-        var distance = BABYLON.Vector3.Distance(sphere0.centerWorld, sphere1.centerWorld);
-        return sphere0.radiusWorld + sphere1.radiusWorld - distance;
-    };
-    SpaceShip.IntersectsSphereDepth = function (minPoint, maxPoint, sphere, directionFromBox) {
-        var vector = BABYLON.Vector3.Clamp(sphere.centerWorld, minPoint, maxPoint);
-        var num = BABYLON.Vector3.Distance(sphere.centerWorld, vector);
-        directionFromBox.copyFrom(sphere.centerWorld);
-        directionFromBox.subtractInPlace(vector);
-        return (sphere.radiusWorld - num);
     };
     return SpaceShip;
 }(BABYLON.Mesh));

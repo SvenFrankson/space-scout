@@ -62,6 +62,28 @@ class Main {
       }
     );
 
+    BABYLON.SceneLoader.ImportMesh(
+      "",
+      "./datas/cage.babylon",
+      "",
+      Main.Scene,
+      (
+        meshes: Array<BABYLON.AbstractMesh>,
+        particleSystems: Array<BABYLON.ParticleSystem>,
+        skeletons: Array<BABYLON.Skeleton>
+      ) => {
+        for (let i: number = 0; i < meshes.length; i++) {
+          if (meshes[i] instanceof BABYLON.Mesh) {
+            let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
+            Obstacle.BoxInstances.push(mesh.getBoundingInfo().boundingBox);
+            for (let j: number = 0; j < mesh.instances.length; j++) {
+              Obstacle.BoxInstances.push(mesh.instances[j].getBoundingInfo().boundingBox);
+            }
+          }
+        }
+      }
+    );
+
     let w: number = Main.Canvas.width * 0.95;
     let h: number = Main.Canvas.height * 0.95;
     let size: number = Math.min(w, h);

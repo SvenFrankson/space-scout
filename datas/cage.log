@@ -1,0 +1,53 @@
+Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Panel-0
+		WARNING: No materials have been assigned: 
+		num positions      :  8
+		num normals        :  8
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of mesh:  Panel
+		mesh is an instance of :  Panel-0.  Processing halted.
+	processing begun of mesh:  Cube.011
+		processing begun of Standard material:  Material
+		num positions      :  8
+		num normals        :  8
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of mesh:  Cube.010
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.009
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.008
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.007
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.006
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.005
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.004
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.003
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.002
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube.001
+		mesh is an instance of :  Cube.011.  Processing halted.
+	processing begun of mesh:  Cube
+		mesh is an instance of :  Cube.011.  Processing halted.
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.0141 secs
