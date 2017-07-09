@@ -1,8 +1,3 @@
-interface ISphere {
-  center: BABYLON.Vector3;
-  radius: number;
-}
-
 class SpaceShip extends BABYLON.Mesh {
 
   private _forwardDrag: number = 0.1;
@@ -185,7 +180,6 @@ class SpaceShip extends BABYLON.Mesh {
             this._updateColliders();
             let collisionDepth: number = Intersection.SphereSphere(sphere, this._colliders[j]);
             if (collisionDepth > 0) {
-              console.log(collisionDepth);
               let forcedDisplacement: BABYLON.Vector3 = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
               forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
               this.position.addInPlace(forcedDisplacement);
@@ -201,7 +195,6 @@ class SpaceShip extends BABYLON.Mesh {
             this._updateColliders();
             let collisionDepth: number = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
             if (collisionDepth > 0) {
-              console.log(collisionDepth);
               let forcedDisplacement: BABYLON.Vector3 = tmpAxis.normalize();
               forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
               this.position.addInPlace(forcedDisplacement);

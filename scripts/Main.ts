@@ -30,59 +30,10 @@ class Main {
     skyboxMaterial.specularColor = BABYLON.Color3.Black();
     skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/stars.png", Main.Scene);
 
-    BABYLON.SceneLoader.ImportMesh(
-      "",
-      "./datas/roids1.babylon",
-      "",
-      Main.Scene,
-      (
-        meshes: Array<BABYLON.AbstractMesh>,
-        particleSystems: Array<BABYLON.ParticleSystem>,
-        skeletons: Array<BABYLON.Skeleton>
-      ) => {
-        let base: BABYLON.Mesh = meshes[0] as BABYLON.Mesh;
-        base.isVisible = false;
-        let roids1Material: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("Roids1", Main.Scene);
-        roids1Material.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
-        roids1Material.bumpTexture = new BABYLON.Texture("./datas/roids1_normals.png", Main.Scene);
-        roids1Material.ambientTexture = new BABYLON.Texture("./datas/roids1_ao.png", Main.Scene);
-        base.material = roids1Material;
-        for (let i: number = 0; i < 50; i++) {
-          let clone: BABYLON.InstancedMesh = base.createInstance("Clone" + i);
-          clone.position.x = 100 * Math.random() - 50;
-          clone.position.y = 20 * Math.random() - 10;
-          clone.position.z = 100 * Math.random() - 50;
-          clone.rotation.x = 100 * Math.random() - 50;
-          clone.rotation.y = 20 * Math.random() - 10;
-          clone.rotation.z = 100 * Math.random() - 50;
-          let scaling: number = 1.5 * Math.random() + 0.5;
-          clone.scaling.copyFromFloats(scaling, scaling, scaling);
-          Obstacle.SphereInstances.push(clone.getBoundingInfo().boundingSphere);
-        }
-      }
-    );
-
-    BABYLON.SceneLoader.ImportMesh(
-      "",
-      "./datas/cage.babylon",
-      "",
-      Main.Scene,
-      (
-        meshes: Array<BABYLON.AbstractMesh>,
-        particleSystems: Array<BABYLON.ParticleSystem>,
-        skeletons: Array<BABYLON.Skeleton>
-      ) => {
-        for (let i: number = 0; i < meshes.length; i++) {
-          if (meshes[i] instanceof BABYLON.Mesh) {
-            let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
-            Obstacle.BoxInstances.push(mesh.getBoundingInfo().boundingBox);
-            for (let j: number = 0; j < mesh.instances.length; j++) {
-              Obstacle.BoxInstances.push(mesh.instances[j].getBoundingInfo().boundingBox);
-            }
-          }
-        }
-      }
-    );
+    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20);
+    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 10, 20, 2);
+    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 30, 20, 4);
+    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 40, 20, 8);
 
     let w: number = Main.Canvas.width * 0.95;
     let h: number = Main.Canvas.height * 0.95;

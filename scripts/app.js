@@ -19,6 +19,91 @@ var Intersection = (function () {
     };
     return Intersection;
 }());
+var Loader = (function () {
+    function Loader() {
+    }
+    Loader._loadStatic = function (name, scene, callback) {
+        BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
+            Loader._loadedStatics[name] = [];
+            for (var i = 0; i < meshes.length; i++) {
+                if (meshes[i] instanceof BABYLON.Mesh) {
+                    var mesh = meshes[i];
+                    Loader._loadedStatics[name].push(mesh);
+                    mesh.material = Loader._loadMaterial(name, scene);
+                    for (var j = 0; j < mesh.instances.length; j++) {
+                        Loader._loadedStatics[name].push(mesh.instances[j]);
+                        mesh.instances[j].isVisible = false;
+                        mesh.instances[j].isPickable = false;
+                    }
+                    mesh.isVisible = false;
+                    mesh.isPickable = false;
+                }
+            }
+            if (callback) {
+                callback(Loader._loadedStatics[name]);
+            }
+        });
+    };
+    Loader._loadMaterial = function (name, scene) {
+        var material = new BABYLON.StandardMaterial(name, scene);
+        material.specularColor.copyFromFloats(0.5, 0.5, 0.5);
+        material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
+        material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
+        return material;
+    };
+    Loader._cloneStaticIntoScene = function (sources, x, y, z, s, rX, rY, rZ, callback) {
+        if (s === void 0) { s = 1; }
+        if (rX === void 0) { rX = 0; }
+        if (rY === void 0) { rY = 0; }
+        if (rZ === void 0) { rZ = 0; }
+        var instance;
+        for (var i = 0; i < sources.length; i++) {
+            if (sources[i] instanceof BABYLON.Mesh) {
+                var source = sources[i];
+                instance = source.createInstance(source.name);
+                instance.position.copyFromFloats(x, y, z);
+                instance.rotation.copyFromFloats(rX, rY, rZ);
+                instance.scaling.copyFromFloats(s, s, s);
+                instance.computeWorldMatrix();
+                instance.freezeWorldMatrix();
+                if (source.name[0] === "S") {
+                    var radius = source.name.substring(2);
+                    instance.getBoundingInfo().boundingSphere.radius = parseFloat(radius);
+                    instance.getBoundingInfo().boundingSphere.radiusWorld = parseFloat(radius) * s;
+                }
+                Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
+            }
+            else if (sources[i] instanceof BABYLON.InstancedMesh) {
+                var source = sources[i];
+                instance = source.sourceMesh.createInstance(source.name);
+                instance.position.copyFromFloats(x, y, z);
+                instance.rotation.copyFromFloats(rX, rY, rZ);
+                instance.computeWorldMatrix();
+                instance.freezeWorldMatrix();
+                Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
+            }
+        }
+        if (callback) {
+            callback();
+        }
+    };
+    Loader.AddStaticIntoScene = function (name, scene, x, y, z, s, rX, rY, rZ, callback) {
+        if (s === void 0) { s = 1; }
+        if (rX === void 0) { rX = 0; }
+        if (rY === void 0) { rY = 0; }
+        if (rZ === void 0) { rZ = 0; }
+        if (Loader._loadedStatics[name]) {
+            Loader._cloneStaticIntoScene(Loader._loadedStatics[name], x, y, z, s, rX, rY, rZ, callback);
+        }
+        else {
+            Loader._loadStatic(name, scene, function (loadedMeshes) {
+                Loader._cloneStaticIntoScene(loadedMeshes, x, y, z, s, rX, rY, rZ, callback);
+            });
+        }
+    };
+    return Loader;
+}());
+Loader._loadedStatics = [];
 var Main = (function () {
     function Main(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
@@ -38,38 +123,10 @@ var Main = (function () {
         skyboxMaterial.diffuseColor = BABYLON.Color3.Black();
         skyboxMaterial.specularColor = BABYLON.Color3.Black();
         skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/stars.png", Main.Scene);
-        BABYLON.SceneLoader.ImportMesh("", "./datas/roids1.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
-            var base = meshes[0];
-            base.isVisible = false;
-            var roids1Material = new BABYLON.StandardMaterial("Roids1", Main.Scene);
-            roids1Material.specularColor = new BABYLON.Color3(0.3, 0.3, 0.3);
-            roids1Material.bumpTexture = new BABYLON.Texture("./datas/roids1_normals.png", Main.Scene);
-            roids1Material.ambientTexture = new BABYLON.Texture("./datas/roids1_ao.png", Main.Scene);
-            base.material = roids1Material;
-            for (var i = 0; i < 50; i++) {
-                var clone = base.createInstance("Clone" + i);
-                clone.position.x = 100 * Math.random() - 50;
-                clone.position.y = 20 * Math.random() - 10;
-                clone.position.z = 100 * Math.random() - 50;
-                clone.rotation.x = 100 * Math.random() - 50;
-                clone.rotation.y = 20 * Math.random() - 10;
-                clone.rotation.z = 100 * Math.random() - 50;
-                var scaling = 1.5 * Math.random() + 0.5;
-                clone.scaling.copyFromFloats(scaling, scaling, scaling);
-                Obstacle.SphereInstances.push(clone.getBoundingInfo().boundingSphere);
-            }
-        });
-        BABYLON.SceneLoader.ImportMesh("", "./datas/cage.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
-            for (var i = 0; i < meshes.length; i++) {
-                if (meshes[i] instanceof BABYLON.Mesh) {
-                    var mesh = meshes[i];
-                    Obstacle.BoxInstances.push(mesh.getBoundingInfo().boundingBox);
-                    for (var j = 0; j < mesh.instances.length; j++) {
-                        Obstacle.BoxInstances.push(mesh.instances[j].getBoundingInfo().boundingBox);
-                    }
-                }
-            }
-        });
+        Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20);
+        Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 10, 20, 2);
+        Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 30, 20, 4);
+        Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 40, 20, 8);
         var w = Main.Canvas.width * 0.95;
         var h = Main.Canvas.height * 0.95;
         var size = Math.min(w, h);
@@ -259,7 +316,6 @@ var SpaceShip = (function (_super) {
                         this._updateColliders();
                         var collisionDepth = Intersection.SphereSphere(sphere, this._colliders[j]);
                         if (collisionDepth > 0) {
-                            console.log(collisionDepth);
                             var forcedDisplacement = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
                             forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
                             this.position.addInPlace(forcedDisplacement);
@@ -275,7 +331,6 @@ var SpaceShip = (function (_super) {
                         this._updateColliders();
                         var collisionDepth = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
                         if (collisionDepth > 0) {
-                            console.log(collisionDepth);
                             var forcedDisplacement = tmpAxis.normalize();
                             forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
                             this.position.addInPlace(forcedDisplacement);
