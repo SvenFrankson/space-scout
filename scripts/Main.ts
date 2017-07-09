@@ -36,13 +36,13 @@ class Main {
     skybox.material = skyboxMaterial;
 
     Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20, 1, 0, 0, 0, () => {
-      for (let i: number = 0; i < 100; i++) {
+      for (let i: number = 0; i < 200; i++) {
         Loader.AddStaticIntoScene(
           "asteroid-2",
           Main.Scene,
-          Math.random() * 200 - 100,
-          Math.random() * 20 - 10,
-          Math.random() * 200 - 100,
+          Math.random() * 400 - 200,
+          Math.random() * 40 - 20,
+          Math.random() * 400 - 200,
           Math.random() * 4.5 + 0.5,
           Math.random() * Math.PI * 2,
           Math.random() * Math.PI * 2,
@@ -81,7 +81,29 @@ window.addEventListener("DOMContentLoaded", () => {
   player.initialize(
     "./datas/spaceship.babylon",
     () => {
-      player.attachControl(Main.Canvas);
+      let playerControl: SpaceShipInputs = new SpaceShipInputs(player, Main.Scene);
+      player.attachControler(playerControl);
+      playerControl.attachControl(Main.Canvas);
     }
   );
+
+  let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
+  foe.initialize(
+    "./datas/spaceship.babylon",
+    () => {
+      let foeIA: SpaceShipIA = new SpaceShipIA(foe, player, Main.Scene);
+      foe.attachControler(foeIA);
+    }
+  );
+  foe.position.copyFromFloats(-30, -30, -30);
+
+  let friend: SpaceShip = new SpaceShip("Player", Main.Scene);
+  friend.initialize(
+    "./datas/spaceship.babylon",
+    () => {
+      let friendIA: SpaceShipIA = new SpaceShipIA(friend, player, Main.Scene);
+      friend.attachControler(friendIA);
+    }
+  );
+  friend.position.copyFromFloats(30, 30, 30);
 });

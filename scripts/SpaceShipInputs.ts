@@ -1,6 +1,6 @@
 class SpaceShipInputs {
   private _spaceShip: SpaceShip;
-  private _forwardPow: number = 20;
+  private _forwardPow: number = 30;
   private _forward: boolean;
   private _backwardPow: number = 10;
   private _backward: boolean;

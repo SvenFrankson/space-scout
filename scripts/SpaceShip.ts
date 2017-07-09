@@ -1,3 +1,7 @@
+interface ISpaceShipControler {
+  checkInputs: (dt: number) => void;
+}
+
 class SpaceShip extends BABYLON.Mesh {
 
   private _forwardDrag: number = 0.1;
@@ -45,9 +49,18 @@ class SpaceShip extends BABYLON.Mesh {
   private _rY: BABYLON.Quaternion;
   private _rZ: BABYLON.Quaternion;
   private _localX: BABYLON.Vector3;
+  public get localX(): BABYLON.Vector3 {
+    return this._localX;
+  }
   private _localY: BABYLON.Vector3;
+  public get localY(): BABYLON.Vector3 {
+    return this._localY;
+  }
   private _localZ: BABYLON.Vector3;
-  private _inputs: SpaceShipInputs;
+  public get localZ(): BABYLON.Vector3 {
+    return this._localZ;
+  }
+  private _controler: ISpaceShipControler;
   private _colliders: Array<BABYLON.BoundingSphere> = [];
 
   constructor(name: string, scene: BABYLON.Scene) {
@@ -60,7 +73,7 @@ class SpaceShip extends BABYLON.Mesh {
     this._rX = BABYLON.Quaternion.Identity();
     this._rY = BABYLON.Quaternion.Identity();
     this._rZ = BABYLON.Quaternion.Identity();
-    this._inputs = new SpaceShipInputs(this, scene);
+    this._controler = new SpaceShipInputs(this, scene);
     this.createColliders();
     scene.registerBeforeRender(
       () => {
@@ -106,15 +119,15 @@ class SpaceShip extends BABYLON.Mesh {
     this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
   }
 
+  public attachControler(controler: ISpaceShipControler): void {
+    this._controler = controler;
+  }
+
   public static CenterRadiusBoundingSphere(center: BABYLON.Vector3, radius: number): BABYLON.BoundingSphere {
     return new BABYLON.BoundingSphere(
       new BABYLON.Vector3(center.x, center.y - radius, center.z),
       new BABYLON.Vector3(center.x, center.y + radius, center.z)
     );
-  }
-
-  public attachControl(canvas: HTMLCanvasElement): void {
-    this._inputs.attachControl(canvas);
   }
 
   private _move(): void {
@@ -123,7 +136,9 @@ class SpaceShip extends BABYLON.Mesh {
     BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
     BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
 
-    this._inputs.checkInputs(this._dt);
+    if (this._controler) {
+      this._controler.checkInputs(this._dt);
+    }
     this._drag();
 
     let dZ: BABYLON.Vector3 = BABYLON.Vector3.Zero();

@@ -125,8 +125,8 @@ var Main = (function () {
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
         Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20, 1, 0, 0, 0, function () {
-            for (var i = 0; i < 100; i++) {
-                Loader.AddStaticIntoScene("asteroid-2", Main.Scene, Math.random() * 200 - 100, Math.random() * 20 - 10, Math.random() * 200 - 100, Math.random() * 4.5 + 0.5, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
+            for (var i = 0; i < 200; i++) {
+                Loader.AddStaticIntoScene("asteroid-2", Main.Scene, Math.random() * 400 - 200, Math.random() * 40 - 20, Math.random() * 400 - 200, Math.random() * 4.5 + 0.5, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
             }
         });
         var w = Main.Canvas.width * 0.95;
@@ -154,9 +154,45 @@ window.addEventListener("DOMContentLoaded", function () {
     var player = new SpaceShip("Player", Main.Scene);
     new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
     player.initialize("./datas/spaceship.babylon", function () {
-        player.attachControl(Main.Canvas);
+        var playerControl = new SpaceShipInputs(player, Main.Scene);
+        player.attachControler(playerControl);
+        playerControl.attachControl(Main.Canvas);
     });
+    var foe = new SpaceShip("Player", Main.Scene);
+    foe.initialize("./datas/spaceship.babylon", function () {
+        var foeIA = new SpaceShipIA(foe, player, Main.Scene);
+        foe.attachControler(foeIA);
+    });
+    foe.position.copyFromFloats(-30, -30, -30);
+    var friend = new SpaceShip("Player", Main.Scene);
+    friend.initialize("./datas/spaceship.babylon", function () {
+        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
+        friend.attachControler(friendIA);
+    });
+    friend.position.copyFromFloats(30, 30, 30);
 });
+var SpaceMath = (function () {
+    function SpaceMath() {
+    }
+    SpaceMath.ProjectPerpendicularAt = function (v, at) {
+        var p = BABYLON.Vector3.Zero();
+        var k = (v.x * at.x + v.y * at.y + v.z * at.z);
+        k = k / (at.x * at.x + at.y * at.y + at.z * at.z);
+        p.copyFrom(v);
+        p.subtractInPlace(at.multiplyByFloats(k, k, k));
+        return p;
+    };
+    SpaceMath.AngleFromToAround = function (from, to, around) {
+        var pFrom = SpaceMath.ProjectPerpendicularAt(from, around).normalize();
+        var pTo = SpaceMath.ProjectPerpendicularAt(to, around).normalize();
+        var angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        if (BABYLON.Vector3.Dot(BABYLON.Vector3.Cross(pFrom, pTo), around) < 0) {
+            angle = -angle;
+        }
+        return angle;
+    };
+    return SpaceMath;
+}());
 var Obstacle = (function () {
     function Obstacle() {
     }
@@ -187,7 +223,7 @@ var SpaceShip = (function (_super) {
         _this._rX = BABYLON.Quaternion.Identity();
         _this._rY = BABYLON.Quaternion.Identity();
         _this._rZ = BABYLON.Quaternion.Identity();
-        _this._inputs = new SpaceShipInputs(_this, scene);
+        _this._controler = new SpaceShipInputs(_this, scene);
         _this.createColliders();
         scene.registerBeforeRender(function () {
             _this._move();
@@ -240,6 +276,27 @@ var SpaceShip = (function (_super) {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(SpaceShip.prototype, "localX", {
+        get: function () {
+            return this._localX;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SpaceShip.prototype, "localY", {
+        get: function () {
+            return this._localY;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SpaceShip.prototype, "localZ", {
+        get: function () {
+            return this._localZ;
+        },
+        enumerable: true,
+        configurable: true
+    });
     SpaceShip.prototype.initialize = function (url, callback) {
         var _this = this;
         BABYLON.SceneLoader.ImportMesh("", url, "", Main.Scene, function (meshes, particleSystems, skeletons) {
@@ -263,18 +320,20 @@ var SpaceShip = (function (_super) {
         this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
         this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
     };
+    SpaceShip.prototype.attachControler = function (controler) {
+        this._controler = controler;
+    };
     SpaceShip.CenterRadiusBoundingSphere = function (center, radius) {
         return new BABYLON.BoundingSphere(new BABYLON.Vector3(center.x, center.y - radius, center.z), new BABYLON.Vector3(center.x, center.y + radius, center.z));
-    };
-    SpaceShip.prototype.attachControl = function (canvas) {
-        this._inputs.attachControl(canvas);
     };
     SpaceShip.prototype._move = function () {
         this._dt = this.getEngine().getDeltaTime() / 1000;
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
-        this._inputs.checkInputs(this._dt);
+        if (this._controler) {
+            this._controler.checkInputs(this._dt);
+        }
         this._drag();
         var dZ = BABYLON.Vector3.Zero();
         dZ.copyFromFloats(this._localZ.x * this._forward * this._dt, this._localZ.y * this._forward * this._dt, this._localZ.z * this._forward * this._dt);
@@ -381,9 +440,79 @@ var SpaceShipCamera = (function (_super) {
     };
     return SpaceShipCamera;
 }(BABYLON.FreeCamera));
+var IIABehaviour;
+(function (IIABehaviour) {
+    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
+    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
+})(IIABehaviour || (IIABehaviour = {}));
+var SpaceShipIA = (function () {
+    function SpaceShipIA(spaceShip, target, scene) {
+        this._forwardPow = 20;
+        this._rollPow = 3;
+        this._yawPow = 3;
+        this._pitchPow = 3;
+        this._mode = IIABehaviour.Track;
+        this._spaceShip = spaceShip;
+        this._target = target;
+        this._scene = scene;
+    }
+    SpaceShipIA.prototype.checkInputs = function (dt) {
+        var direction = this._target.position.subtract(this._spaceShip.position);
+        var distance = direction.length();
+        direction.normalize();
+        this._checkMode(dt, direction, distance);
+        if (this._mode === IIABehaviour.Track) {
+            this.track(dt, direction, distance);
+        }
+        else if (this._mode === IIABehaviour.Escape) {
+            this.escape(dt, direction, distance);
+        }
+    };
+    SpaceShipIA.prototype._checkMode = function (dt, direction, distance) {
+        if (this._mode === IIABehaviour.Track) {
+            if (distance < 10) {
+                this._mode = IIABehaviour.Escape;
+            }
+        }
+        else if (this._mode === IIABehaviour.Escape) {
+            if (distance > 100) {
+                this._mode = IIABehaviour.Track;
+            }
+        }
+    };
+    SpaceShipIA.prototype.track = function (dt, direction, distance) {
+        if (distance > 20) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    SpaceShipIA.prototype.escape = function (dt, direction, distance) {
+        this._spaceShip.forward += this._forwardPow * dt;
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        yawInput = -BABYLON.MathTools.Sign(yawInput) * (1 - Math.abs(yawInput));
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        pitchInput = -BABYLON.MathTools.Sign(pitchInput) * (1 - Math.abs(pitchInput));
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    return SpaceShipIA;
+}());
 var SpaceShipInputs = (function () {
     function SpaceShipInputs(spaceShip, scene) {
-        this._forwardPow = 20;
+        this._forwardPow = 30;
         this._backwardPow = 10;
         this._rollPow = 3;
         this._yawPow = 1;
