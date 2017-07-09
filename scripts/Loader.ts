@@ -22,7 +22,7 @@ class Loader {
           if (meshes[i] instanceof BABYLON.Mesh) {
             let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
             Loader._loadedStatics[name].push(mesh);
-            mesh.material = Loader._loadMaterial(name, scene);
+            Loader._loadMaterial(mesh.material, name, scene);
             for (let j: number = 0; j < mesh.instances.length; j++) {
               Loader._loadedStatics[name].push(mesh.instances[j]);
               mesh.instances[j].isVisible = false;
@@ -39,12 +39,11 @@ class Loader {
     );
   }
 
-  private static _loadMaterial(name: string, scene: BABYLON.Scene): BABYLON.StandardMaterial {
-    let material: BABYLON.StandardMaterial = new BABYLON.StandardMaterial(name, scene);
-    material.specularColor.copyFromFloats(0.5, 0.5, 0.5);
-    material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
-    material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
-    return material;
+  private static _loadMaterial(material: BABYLON.Material, name: string, scene: BABYLON.Scene): void {
+    if (material instanceof BABYLON.StandardMaterial) {
+      material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
+      material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
+    }
   }
 
   private static _cloneStaticIntoScene(

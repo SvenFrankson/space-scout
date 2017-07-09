@@ -147,7 +147,6 @@ class SpaceShip extends BABYLON.Mesh {
       this._mesh.rotation.z = (-this.yaw + this._mesh.rotation.z) / 2;
     }
 
-    console.log(this._localZ);
     this._collide();
   }
 

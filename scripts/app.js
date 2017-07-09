@@ -29,7 +29,7 @@ var Loader = (function () {
                 if (meshes[i] instanceof BABYLON.Mesh) {
                     var mesh = meshes[i];
                     Loader._loadedStatics[name].push(mesh);
-                    mesh.material = Loader._loadMaterial(name, scene);
+                    Loader._loadMaterial(mesh.material, name, scene);
                     for (var j = 0; j < mesh.instances.length; j++) {
                         Loader._loadedStatics[name].push(mesh.instances[j]);
                         mesh.instances[j].isVisible = false;
@@ -44,12 +44,11 @@ var Loader = (function () {
             }
         });
     };
-    Loader._loadMaterial = function (name, scene) {
-        var material = new BABYLON.StandardMaterial(name, scene);
-        material.specularColor.copyFromFloats(0.5, 0.5, 0.5);
-        material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
-        material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
-        return material;
+    Loader._loadMaterial = function (material, name, scene) {
+        if (material instanceof BABYLON.StandardMaterial) {
+            material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
+            material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
+        }
     };
     Loader._cloneStaticIntoScene = function (sources, x, y, z, s, rX, rY, rZ, callback) {
         if (s === void 0) { s = 1; }
@@ -289,7 +288,6 @@ var SpaceShip = (function (_super) {
         if (this._mesh) {
             this._mesh.rotation.z = (-this.yaw + this._mesh.rotation.z) / 2;
         }
-        console.log(this._localZ);
         this._collide();
     };
     SpaceShip.prototype._drag = function () {
