@@ -87,6 +87,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 
+  new TrailMesh("Test", player, Main.Scene);
+
   let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
   foe.initialize(
     "./datas/spaceship.babylon",

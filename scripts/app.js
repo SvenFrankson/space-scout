@@ -158,6 +158,7 @@ window.addEventListener("DOMContentLoaded", function () {
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
+    new TrailMesh("Test", player, Main.Scene);
     var foe = new SpaceShip("Player", Main.Scene);
     foe.initialize("./datas/spaceship.babylon", function () {
         var foeIA = new SpaceShipIA(foe, player, Main.Scene);
@@ -603,3 +604,66 @@ var SpaceShipInputs = (function () {
     };
     return SpaceShipInputs;
 }());
+var TrailMesh = (function (_super) {
+    __extends(TrailMesh, _super);
+    function TrailMesh(name, generator, scene) {
+        var _this = _super.call(this, name, scene) || this;
+        _this._diameter = 0.5;
+        _this._length = 240;
+        _this._sectionPolygonPointsCount = 6;
+        _this._generator = generator;
+        _this._sectionVectors = [];
+        for (var i = 0; i < _this._sectionPolygonPointsCount; i++) {
+            _this._sectionVectors[i] = BABYLON.Vector3.Zero();
+        }
+        _this._createMesh();
+        scene.registerBeforeRender(function () {
+            _this.update();
+        });
+        return _this;
+    }
+    TrailMesh.prototype._createMesh = function () {
+        var data = new BABYLON.VertexData();
+        var positions = [];
+        var indices = [];
+        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            positions.push(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, -this._length);
+        }
+        for (var i = 1; i <= this._length; i++) {
+            for (var j = 0; j < this._sectionPolygonPointsCount; j++) {
+                positions.push(Math.cos(j * alpha) * this._diameter, Math.sin(j * alpha) * this._diameter, -this._length + i);
+            }
+            var l = positions.length / 3 - 2 * this._sectionPolygonPointsCount;
+            for (var j = 0; j < this._sectionPolygonPointsCount - 1; j++) {
+                indices.push(l + j, l + j + this._sectionPolygonPointsCount, l + j + this._sectionPolygonPointsCount + 1);
+                indices.push(l + j, l + j + this._sectionPolygonPointsCount + 1, l + j + 1);
+            }
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount, l + this._sectionPolygonPointsCount + 1);
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount + 1, l + 1);
+        }
+        data.positions = positions;
+        data.indices = indices;
+        data.applyToMesh(this);
+    };
+    TrailMesh.prototype.update = function () {
+        var data = BABYLON.VertexData.ExtractFromMesh(this);
+        for (var i = 3 * this._sectionPolygonPointsCount; i < data.positions.length; i++) {
+            data.positions[i - 3 * this._sectionPolygonPointsCount] = data.positions[i];
+        }
+        var l = data.positions.length - 3 * this._sectionPolygonPointsCount;
+        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            this._sectionVectors[i].copyFromFloats(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, 0);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._sectionVectors[i], this._generator.getWorldMatrix(), this._sectionVectors[i]);
+        }
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            data.positions[l + 3 * i] = this._sectionVectors[i].x;
+            data.positions[l + 3 * i + 1] = this._sectionVectors[i].y;
+            data.positions[l + 3 * i + 2] = this._sectionVectors[i].z;
+        }
+        data.positions = data.positions;
+        data.applyToMesh(this);
+    };
+    return TrailMesh;
+}(BABYLON.Mesh));
