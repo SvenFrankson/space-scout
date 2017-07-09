@@ -16,24 +16,40 @@ class Main {
   createScene(): void {
     Main.Scene = new BABYLON.Scene(Main.Engine);
 
-    Main.Light = new BABYLON.HemisphericLight("AmbientLight",new BABYLON.Vector3(0, 1, 0), Main.Scene);
-    Main.Light.diffuse = new BABYLON.Color3(1, 1, 1);
-    Main.Light.specular = new BABYLON.Color3(0.5, 0.5, 0.5);
+    let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.93, 0.06, 0.36), Main.Scene);
+    sun.intensity = 0.8;
+    let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(-0.75, 0.66, 0.07), Main.Scene);
+    cloud.intensity = 0.3;
+    cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
+    cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
 
-    let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("SkyBox", {size : 1000}, Main.Scene);
-    skybox.infiniteDistance = true;
-    let skyboxMaterial : BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SkyBoxMaterial", Main.Scene);
+    let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, Main.Scene);
+    let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
     skyboxMaterial.backFaceCulling = false;
-    skyboxMaterial.disableLighting = true;
+    skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
+      "./datas/skyboxes/green-nebulae",
+      Main.Scene,
+      ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+    skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+    skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+    skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     skybox.material = skyboxMaterial;
-    skyboxMaterial.diffuseColor = BABYLON.Color3.Black();
-    skyboxMaterial.specularColor = BABYLON.Color3.Black();
-    skyboxMaterial.emissiveTexture = new BABYLON.Texture("./datas/stars.png", Main.Scene);
 
-    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20);
-    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 10, 20, 2);
-    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 30, 20, 4);
-    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 40, 20, 8);
+    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20, 1, 0, 0, 0, () => {
+      for (let i: number = 0; i < 100; i++) {
+        Loader.AddStaticIntoScene(
+          "asteroid-2",
+          Main.Scene,
+          Math.random() * 200 - 100,
+          Math.random() * 20 - 10,
+          Math.random() * 200 - 100,
+          Math.random() * 4.5 + 0.5,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2
+        );
+      }
+    });
 
     let w: number = Main.Canvas.width * 0.95;
     let h: number = Main.Canvas.height * 0.95;
