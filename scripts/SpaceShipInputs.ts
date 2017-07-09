@@ -1,4 +1,5 @@
 class SpaceShipInputs {
+  private _active: boolean = false;
   private _spaceShip: SpaceShip;
   private _forwardPow: number = 30;
   private _forward: boolean;
@@ -53,10 +54,26 @@ class SpaceShipInputs {
         }
       }
     );
+    canvas.addEventListener(
+      "mouseover",
+      (e: MouseEvent) => {
+        this._active = true;
+      }
+    );
+    canvas.addEventListener(
+      "mouseout",
+      (e: MouseEvent) => {
+        this._active = false;
+      }
+    );
   }
 
   public checkInputs(dt: number): void {
     if (!this._canvas) {
+      return;
+    }
+    if (!this._active) {
+      this.updateUI(new BABYLON.Vector2(0, 0));
       return;
     }
     if (this._forward) {
