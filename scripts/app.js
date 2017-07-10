@@ -17,8 +17,45 @@ var Intersection = (function () {
         directionFromBox.subtractInPlace(vector);
         return (sphere.radiusWorld - num);
     };
+    Intersection.MeshSphere = function (mesh, sphere) {
+        if (!BABYLON.BoundingSphere.Intersects(mesh.getBoundingInfo().boundingSphere, sphere)) {
+            return {
+                intersect: false,
+                depth: 0
+            };
+        }
+        var intersection = {
+            intersect: false,
+            depth: 0
+        };
+        var depth = 0;
+        var vertex = Intersection._v;
+        var world = mesh.getWorldMatrix();
+        var vertices = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        var normals = mesh.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+        for (var i = 0; i < vertices.length / 3; i++) {
+            vertex.copyFromFloats(vertices[3 * i], vertices[3 * i + 1], vertices[3 * i + 2]);
+            BABYLON.Vector3.TransformCoordinatesToRef(vertex, world, vertex);
+            depth = sphere.radiusWorld - BABYLON.Vector3.Distance(sphere.centerWorld, vertex);
+            if (depth > intersection.depth) {
+                intersection.intersect = true;
+                intersection.depth = depth;
+                if (!intersection.point) {
+                    intersection.point = BABYLON.Vector3.Zero();
+                }
+                if (!intersection.direction) {
+                    intersection.direction = BABYLON.Vector3.Zero();
+                }
+                intersection.point.copyFrom(vertex);
+                intersection.direction.copyFromFloats(normals[3 * i], normals[3 * i + 1], normals[3 * i + 2]);
+                BABYLON.Vector3.TransformNormalToRef(intersection.direction, world, intersection.direction);
+            }
+        }
+        return intersection;
+    };
     return Intersection;
 }());
+Intersection._v = BABYLON.Vector3.Zero();
 var Loader = (function () {
     function Loader() {
     }
@@ -161,19 +198,16 @@ window.addEventListener("DOMContentLoaded", function () {
     });
     new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 480);
     new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 480);
-    var foe = new SpaceShip("Player", Main.Scene);
-    foe.initialize("./datas/spaceship.babylon", function () {
-        var foeIA = new SpaceShipIA(foe, player, Main.Scene);
-        foe.attachControler(foeIA);
-    });
-    foe.position.copyFromFloats(-30, -30, -30);
-    var friend = new SpaceShip("Player", Main.Scene);
-    friend.initialize("./datas/spaceship.babylon", function () {
-        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
-        friend.attachControler(friendIA);
-    });
-    friend.position.copyFromFloats(30, 30, 30);
 });
+var Flash = (function () {
+    function Flash() {
+        this.source = BABYLON.Vector3.Zero();
+        this.distance = 11;
+        this.speed = 0.02;
+        this.resetLimit = 10;
+    }
+    return Flash;
+}());
 var ShieldMaterial = (function (_super) {
     __extends(ShieldMaterial, _super);
     function ShieldMaterial(name, scene) {
@@ -182,18 +216,22 @@ var ShieldMaterial = (function (_super) {
             uniforms: ["world", "worldView", "worldViewProjection"],
             needAlphaBlending: true
         }) || this;
+        _this._flash1 = new Flash();
         _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
-        var k = 0;
         _this.getScene().registerBeforeRender(function () {
-            _this.setVector3("source1", new BABYLON.Vector3(0, 0, 3));
-            _this.setFloat("sqrSourceDist1", k * k / 1000);
-            k++;
-            if (k > 300) {
-                k = 0;
-            }
+            _this._flash1.distance += _this._flash1.speed;
+            _this.setVector3("source1", _this._flash1.source);
+            _this.setFloat("sqrSourceDist1", _this._flash1.distance * _this._flash1.distance);
         });
         return _this;
     }
+    ShieldMaterial.prototype.flashAt = function (position, speed) {
+        if (this._flash1.distance > this._flash1.resetLimit) {
+            this._flash1.distance = 0.01;
+            this._flash1.source.copyFrom(position);
+            this._flash1.speed = speed;
+        }
+    };
     return ShieldMaterial;
 }(BABYLON.ShaderMaterial));
 var SpaceMath = (function () {
@@ -240,9 +278,21 @@ var Shield = (function (_super) {
                 var data = BABYLON.VertexData.ExtractFromMesh(shield);
                 data.applyToMesh(_this);
                 shield.dispose();
-                _this.material = new ShieldMaterial(_this.name, _this.getScene());
+                var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
+                _this.material = shieldMaterial;
             }
         });
+    };
+    Shield.prototype.flashAt = function (position, space, speed) {
+        if (space === void 0) { space = BABYLON.Space.LOCAL; }
+        if (speed === void 0) { speed = 0.1; }
+        if (this.material instanceof ShieldMaterial) {
+            if (space === BABYLON.Space.WORLD) {
+                var worldToLocal = BABYLON.Matrix.Invert(this.getWorldMatrix());
+                BABYLON.Vector3.TransformCoordinatesToRef(position, worldToLocal, position);
+            }
+            this.material.flashAt(position, speed);
+        }
     };
     return Shield;
 }(BABYLON.Mesh));
@@ -428,17 +478,13 @@ var SpaceShip = (function (_super) {
             var thisSphere = this._mesh.getBoundingInfo().boundingSphere;
             for (var i = 0; i < Obstacle.SphereInstances.length; i++) {
                 var sphere = Obstacle.SphereInstances[i];
-                if (Intersection.SphereSphere(thisSphere, sphere) > 0) {
-                    for (var j = 0; j < this._colliders.length; j++) {
-                        this._updateColliders();
-                        var collisionDepth = Intersection.SphereSphere(sphere, this._colliders[j]);
-                        if (collisionDepth > 0) {
-                            var forcedDisplacement = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
-                            forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
-                            this.position.addInPlace(forcedDisplacement);
-                            return;
-                        }
-                    }
+                var intersection = Intersection.MeshSphere(this._shield, sphere);
+                if (intersection.intersect) {
+                    var forcedDisplacement = intersection.direction.multiplyByFloats(-1, -1, -1);
+                    forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(intersection.depth, intersection.depth, intersection.depth));
+                    this.position.addInPlace(forcedDisplacement);
+                    this._shield.flashAt(intersection.point, BABYLON.Space.WORLD);
+                    return;
                 }
             }
             for (var i = 0; i < Obstacle.BoxInstances.length; i++) {

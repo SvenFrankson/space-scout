@@ -21,9 +21,20 @@ class Shield extends BABYLON.Mesh {
           let data: BABYLON.VertexData = BABYLON.VertexData.ExtractFromMesh(shield);
           data.applyToMesh(this);
           shield.dispose();
-          this.material = new ShieldMaterial(this.name, this.getScene());
+          let shieldMaterial: ShieldMaterial = new ShieldMaterial(this.name, this.getScene());
+          this.material = shieldMaterial;
         }
       }
     );
+  }
+
+  public flashAt(position: BABYLON.Vector3, space: BABYLON.Space = BABYLON.Space.LOCAL, speed: number = 0.1): void {
+    if (this.material instanceof ShieldMaterial) {
+      if (space === BABYLON.Space.WORLD) {
+        let worldToLocal: BABYLON.Matrix = BABYLON.Matrix.Invert(this.getWorldMatrix());
+        BABYLON.Vector3.TransformCoordinatesToRef(position, worldToLocal, position);
+      }
+      this.material.flashAt(position, speed);
+    }
   }
 }

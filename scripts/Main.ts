@@ -92,6 +92,7 @@ window.addEventListener("DOMContentLoaded", () => {
   new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 480);
   new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 480);
 
+  /*
   let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
   foe.initialize(
     "./datas/spaceship.babylon",
@@ -111,4 +112,5 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
   friend.position.copyFromFloats(30, 30, 30);
+  */
 });

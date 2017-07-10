@@ -203,17 +203,13 @@ class SpaceShip extends BABYLON.Mesh {
       let thisSphere: BABYLON.BoundingSphere = this._mesh.getBoundingInfo().boundingSphere;
       for (let i: number = 0; i < Obstacle.SphereInstances.length; i++) {
         let sphere: BABYLON.BoundingSphere = Obstacle.SphereInstances[i];
-        if (Intersection.SphereSphere(thisSphere, sphere) > 0) {
-          for (let j: number = 0; j < this._colliders.length; j++) {
-            this._updateColliders();
-            let collisionDepth: number = Intersection.SphereSphere(sphere, this._colliders[j]);
-            if (collisionDepth > 0) {
-              let forcedDisplacement: BABYLON.Vector3 = this._colliders[j].centerWorld.subtract(sphere.centerWorld).normalize();
-              forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
-              this.position.addInPlace(forcedDisplacement);
-              return;
-            }
-          }
+        let intersection: IIntersectionInfo = Intersection.MeshSphere(this._shield, sphere);
+        if (intersection.intersect) {
+          let forcedDisplacement: BABYLON.Vector3 = intersection.direction.multiplyByFloats(-1, -1, -1);
+          forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(intersection.depth, intersection.depth, intersection.depth));
+          this.position.addInPlace(forcedDisplacement);
+          this._shield.flashAt(intersection.point, BABYLON.Space.WORLD);
+          return;
         }
       }
       for (let i: number = 0; i < Obstacle.BoxInstances.length; i++) {
