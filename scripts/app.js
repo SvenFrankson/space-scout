@@ -174,6 +174,28 @@ window.addEventListener("DOMContentLoaded", function () {
     });
     friend.position.copyFromFloats(30, 30, 30);
 });
+var ShieldMaterial = (function (_super) {
+    __extends(ShieldMaterial, _super);
+    function ShieldMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "shield", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
+        var k = 0;
+        _this.getScene().registerBeforeRender(function () {
+            _this.setVector3("source1", new BABYLON.Vector3(0, 0, 3));
+            _this.setFloat("sqrSourceDist1", k * k / 1000);
+            k++;
+            if (k > 300) {
+                k = 0;
+            }
+        });
+        return _this;
+    }
+    return ShieldMaterial;
+}(BABYLON.ShaderMaterial));
 var SpaceMath = (function () {
     function SpaceMath() {
     }
@@ -203,15 +225,6 @@ var Obstacle = (function () {
 }());
 Obstacle.SphereInstances = [];
 Obstacle.BoxInstances = [];
-var SpaceShaderStore = (function () {
-    function SpaceShaderStore() {
-    }
-    SpaceShaderStore.RegisterSpaceShaderToShaderStore = function () {
-        BABYLON.Effect.ShadersStore["" + "TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 world;\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vPositionW = vec3(world * vec4(position, 1.0));\n        vNormalW = normalize(vec3(world * vec4(normal, 0.0)));\n      }\n    ";
-        BABYLON.Effect.ShadersStore["" + "TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      uniform vec3 diffuseColor;\n      uniform float alpha;\n      uniform float fresnelPower;\n      uniform float fresnelBias;\n      uniform float specularPower;\n      uniform vec3 cameraPosition;\n      uniform sampler2D textureSampler;\n\n      void main(void) {\n        vec3 viewDirectionW = normalize(cameraPosition - vPositionW);\n\n        // Fresnel\n        float fresnelTerm = dot(viewDirectionW, vNormalW);\n        fresnelTerm = clamp(\n          fresnelTerm,\n          0.,\n          1.\n        );\n\n        vec3 col1 = vec3(0.8, 1., 0.8);\n        vec3 col2 = vec3(0.5, 0.5, 1.);\n\n        gl_FragColor = vec4(fresnelTerm * col1 + (1. - fresnelTerm) * col2, 0.5);\n      }\n    ";
-    };
-    return SpaceShaderStore;
-}());
 var Shield = (function (_super) {
     __extends(Shield, _super);
     function Shield(spaceShip) {
@@ -227,23 +240,7 @@ var Shield = (function (_super) {
                 var data = BABYLON.VertexData.ExtractFromMesh(shield);
                 data.applyToMesh(_this);
                 shield.dispose();
-                BABYLON.Engine.ShadersRepository = "./shaders/";
-                var glassMaterial_1 = new BABYLON.ShaderMaterial("Glass", Main.Scene, "glass", {
-                    attributes: ["position", "normal", "uv"],
-                    uniforms: ["world", "worldView", "worldViewProjection"],
-                    needAlphaBlending: true
-                });
-                glassMaterial_1.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
-                var k_1 = 0;
-                _this.getScene().registerBeforeRender(function () {
-                    glassMaterial_1.setVector3("source1", new BABYLON.Vector3(0, 0, 3));
-                    glassMaterial_1.setFloat("sqrSourceDist1", k_1 * k_1 / 1000);
-                    k_1++;
-                    if (k_1 > 300) {
-                        k_1 = 0;
-                    }
-                });
-                _this.material = glassMaterial_1;
+                _this.material = new ShieldMaterial(_this.name, _this.getScene());
             }
         });
     };
