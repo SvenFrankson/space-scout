@@ -2,7 +2,7 @@ class TrailMesh extends BABYLON.Mesh {
   private _generator: BABYLON.Mesh;
   private _diameter: number = 0.5;
   private _length: number = 240;
-  private _sectionPolygonPointsCount: number = 4;
+  private _sectionPolygonPointsCount: number = 8;
   private _sectionVectors: Array<BABYLON.Vector3>;
   private _sectionNormalVectors: Array<BABYLON.Vector3>;
 
@@ -82,6 +82,23 @@ class TrailMesh extends BABYLON.Mesh {
     data.normals = normals;
     data.indices = indices;
     data.applyToMesh(this, true);
+
+    let trailMaterial: BABYLON.ShaderMaterial = new BABYLON.ShaderMaterial("Trail", this.getScene(), {
+            vertex: "Trail",
+            fragment: "Trail"
+        },
+        {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        });
+    this.material = trailMaterial;
+
+    this.getScene().registerBeforeRender(() => {
+      if (trailMaterial) {
+        trailMaterial.setVector3("cameraPosition", Main.Camera.position);
+      }
+    });
   }
 
   public update(): void {
@@ -114,6 +131,9 @@ class TrailMesh extends BABYLON.Mesh {
       positions[l + 3 * i] = this._sectionVectors[i].x;
       positions[l + 3 * i + 1] = this._sectionVectors[i].y;
       positions[l + 3 * i + 2] = this._sectionVectors[i].z;
+      normals[l + 3 * i] = this._sectionNormalVectors[i].x;
+      normals[l + 3 * i + 1] = this._sectionNormalVectors[i].y;
+      normals[l + 3 * i + 2] = this._sectionNormalVectors[i].z;
     }
     this.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, true, false);
     this.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true, false);

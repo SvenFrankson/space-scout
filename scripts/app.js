@@ -107,6 +107,7 @@ var Main = (function () {
     function Main(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true);
+        SpaceShaderStore.RegisterSpaceShaderToShaderStore();
     }
     Main.prototype.createScene = function () {
         Main.Scene = new BABYLON.Scene(Main.Engine);
@@ -152,7 +153,7 @@ window.addEventListener("DOMContentLoaded", function () {
     game.createScene();
     game.animate();
     var player = new SpaceShip("Player", Main.Scene);
-    new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+    Main.Camera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
     player.initialize("./datas/spaceship.babylon", function () {
         var playerControl = new SpaceShipInputs(player, Main.Scene);
         player.attachControler(playerControl);
@@ -201,6 +202,15 @@ var Obstacle = (function () {
 }());
 Obstacle.SphereInstances = [];
 Obstacle.BoxInstances = [];
+var SpaceShaderStore = (function () {
+    function SpaceShaderStore() {
+    }
+    SpaceShaderStore.RegisterSpaceShaderToShaderStore = function () {
+        BABYLON.Effect.ShadersStore["TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 world;\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vPositionW = vec3(world * vec4(position, 1.0));\n        vNormalW = normalize(vec3(world * vec4(normal, 0.0)));\n      }\n    ";
+        BABYLON.Effect.ShadersStore["TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      uniform vec3 diffuseColor;\n      uniform float alpha;\n      uniform float fresnelPower;\n      uniform float fresnelBias;\n      uniform float specularPower;\n      uniform vec3 cameraPosition;\n      uniform sampler2D textureSampler;\n\n      void main(void) {\n        vec3 viewDirectionW = normalize(cameraPosition - vPositionW);\n\n        // Fresnel\n        float fresnelTerm = dot(viewDirectionW, vNormalW);\n        fresnelTerm = clamp(\n          pow(\n            (cos(pow(fresnelTerm, 2.)*3.1415)+1.)/2.,\n            8.\n          ),\n          0.,\n          1.\n        );\n\n        gl_FragColor = vec4(vec3(1), fresnelTerm);\n      }\n    ";
+    };
+    return SpaceShaderStore;
+}());
 var SpaceShip = (function (_super) {
     __extends(SpaceShip, _super);
     function SpaceShip(name, scene) {
@@ -621,7 +631,7 @@ var TrailMesh = (function (_super) {
         var _this = _super.call(this, name, scene) || this;
         _this._diameter = 0.5;
         _this._length = 240;
-        _this._sectionPolygonPointsCount = 4;
+        _this._sectionPolygonPointsCount = 8;
         _this._generator = generator;
         _this._sectionVectors = [];
         _this._sectionNormalVectors = [];
@@ -662,6 +672,20 @@ var TrailMesh = (function (_super) {
         data.normals = normals;
         data.indices = indices;
         data.applyToMesh(this, true);
+        var trailMaterial = new BABYLON.ShaderMaterial("Trail", this.getScene(), {
+            vertex: "Trail",
+            fragment: "Trail"
+        }, {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        });
+        this.material = trailMaterial;
+        this.getScene().registerBeforeRender(function () {
+            if (trailMaterial) {
+                trailMaterial.setVector3("cameraPosition", Main.Camera.position);
+            }
+        });
     };
     TrailMesh.prototype.update = function () {
         var positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
@@ -684,6 +708,9 @@ var TrailMesh = (function (_super) {
             positions[l + 3 * i] = this._sectionVectors[i].x;
             positions[l + 3 * i + 1] = this._sectionVectors[i].y;
             positions[l + 3 * i + 2] = this._sectionVectors[i].z;
+            normals[l + 3 * i] = this._sectionNormalVectors[i].x;
+            normals[l + 3 * i + 1] = this._sectionNormalVectors[i].y;
+            normals[l + 3 * i + 2] = this._sectionNormalVectors[i].z;
         }
         this.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, true, false);
         this.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true, false);

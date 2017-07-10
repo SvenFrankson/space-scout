@@ -7,10 +7,12 @@ class Main {
   public static Engine: BABYLON.Engine;
   public static Scene: BABYLON.Scene;
   public static Light: BABYLON.HemisphericLight;
+  public static Camera: BABYLON.FreeCamera;
 
   constructor(canvasElement: string) {
     Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
     Main.Engine = new BABYLON.Engine(Main.Canvas, true);
+    SpaceShaderStore.RegisterSpaceShaderToShaderStore();
   }
 
   createScene(): void {
@@ -77,7 +79,7 @@ window.addEventListener("DOMContentLoaded", () => {
   game.animate();
 
   let player: SpaceShip = new SpaceShip("Player", Main.Scene);
-  new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+  Main.Camera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
   player.initialize(
     "./datas/spaceship.babylon",
     () => {
