@@ -159,7 +159,8 @@ window.addEventListener("DOMContentLoaded", function () {
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
-    new TrailMesh("Test", player, Main.Scene);
+    new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 240);
+    new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 240);
     var foe = new SpaceShip("Player", Main.Scene);
     foe.initialize("./datas/spaceship.babylon", function () {
         var foeIA = new SpaceShipIA(foe, player, Main.Scene);
@@ -235,6 +236,12 @@ var SpaceShip = (function (_super) {
         _this._rY = BABYLON.Quaternion.Identity();
         _this._rZ = BABYLON.Quaternion.Identity();
         _this._controler = new SpaceShipInputs(_this, scene);
+        _this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
+        _this.wingTipLeft.parent = _this;
+        _this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
+        _this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
+        _this.wingTipRight.parent = _this;
+        _this.wingTipRight.position.copyFromFloats(2, 0, 0);
         _this.createColliders();
         scene.registerBeforeRender(function () {
             _this._move();
@@ -315,6 +322,8 @@ var SpaceShip = (function (_super) {
             if (spaceship instanceof BABYLON.Mesh) {
                 spaceship.parent = _this;
                 _this._mesh = spaceship;
+                _this.wingTipLeft.parent = _this._mesh;
+                _this.wingTipRight.parent = _this._mesh;
                 var spaceshipMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", _this.getScene());
                 spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/diffuse.png", Main.Scene);
                 spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/normals.png", Main.Scene);
@@ -524,11 +533,11 @@ var SpaceShipIA = (function () {
 var SpaceShipInputs = (function () {
     function SpaceShipInputs(spaceShip, scene) {
         this._active = false;
-        this._forwardPow = 30;
+        this._forwardPow = 60;
         this._backwardPow = 10;
-        this._rollPow = 3;
-        this._yawPow = 1;
-        this._pitchPow = 1;
+        this._rollPow = 5;
+        this._yawPow = 3;
+        this._pitchPow = 3;
         this._spaceShip = spaceShip;
         this._scene = scene;
     }
@@ -627,12 +636,14 @@ var SpaceShipInputs = (function () {
 }());
 var TrailMesh = (function (_super) {
     __extends(TrailMesh, _super);
-    function TrailMesh(name, generator, scene) {
+    function TrailMesh(name, generator, scene, diameter, length) {
+        if (diameter === void 0) { diameter = 1; }
+        if (length === void 0) { length = 60; }
         var _this = _super.call(this, name, scene) || this;
-        _this._diameter = 0.5;
-        _this._length = 240;
-        _this._sectionPolygonPointsCount = 8;
+        _this._sectionPolygonPointsCount = 4;
         _this._generator = generator;
+        _this._diameter = diameter;
+        _this._length = length;
         _this._sectionVectors = [];
         _this._sectionNormalVectors = [];
         for (var i = 0; i < _this._sectionPolygonPointsCount; i++) {
@@ -652,12 +663,12 @@ var TrailMesh = (function (_super) {
         var indices = [];
         var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
         for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
-            positions.push(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, 0);
+            positions.push(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, -this._length);
             normals.push(Math.cos(i * alpha), Math.sin(i * alpha), 0);
         }
         for (var i = 1; i <= this._length; i++) {
             for (var j = 0; j < this._sectionPolygonPointsCount; j++) {
-                positions.push(Math.cos(j * alpha) * this._diameter, Math.sin(j * alpha) * this._diameter, 0);
+                positions.push(Math.cos(j * alpha) * this._diameter, Math.sin(j * alpha) * this._diameter, -this._length + i);
                 normals.push(Math.cos(j * alpha), Math.sin(j * alpha), 0);
             }
             var l = positions.length / 3 - 2 * this._sectionPolygonPointsCount;
@@ -665,8 +676,8 @@ var TrailMesh = (function (_super) {
                 indices.push(l + j, l + j + this._sectionPolygonPointsCount, l + j + this._sectionPolygonPointsCount + 1);
                 indices.push(l + j, l + j + this._sectionPolygonPointsCount + 1, l + j + 1);
             }
-            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount, l + this._sectionPolygonPointsCount + 1);
-            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount + 1, l + 1);
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount, l + this._sectionPolygonPointsCount);
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount, l);
         }
         data.positions = positions;
         data.normals = normals;
@@ -691,7 +702,7 @@ var TrailMesh = (function (_super) {
         var positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
         var normals = this.getVerticesData(BABYLON.VertexBuffer.NormalKind);
         for (var i = 3 * this._sectionPolygonPointsCount; i < positions.length; i++) {
-            positions[i - 3 * this._sectionPolygonPointsCount] = positions[i];
+            positions[i - 3 * this._sectionPolygonPointsCount] = positions[i] - normals[i] / this._length * this._diameter;
         }
         for (var i = 3 * this._sectionPolygonPointsCount; i < normals.length; i++) {
             normals[i - 3 * this._sectionPolygonPointsCount] = normals[i];

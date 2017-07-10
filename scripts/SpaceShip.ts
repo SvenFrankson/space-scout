@@ -62,6 +62,8 @@ class SpaceShip extends BABYLON.Mesh {
   }
   private _controler: ISpaceShipControler;
   private _colliders: Array<BABYLON.BoundingSphere> = [];
+  public wingTipRight: BABYLON.Mesh;
+  public wingTipLeft: BABYLON.Mesh;
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(name, scene);
@@ -74,6 +76,12 @@ class SpaceShip extends BABYLON.Mesh {
     this._rY = BABYLON.Quaternion.Identity();
     this._rZ = BABYLON.Quaternion.Identity();
     this._controler = new SpaceShipInputs(this, scene);
+    this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
+    this.wingTipLeft.parent = this;
+    this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
+    this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
+    this.wingTipRight.parent = this;
+    this.wingTipRight.position.copyFromFloats(2, 0, 0);
     this.createColliders();
     scene.registerBeforeRender(
       () => {
@@ -100,6 +108,8 @@ class SpaceShip extends BABYLON.Mesh {
         if (spaceship instanceof BABYLON.Mesh) {
           spaceship.parent = this;
           this._mesh = spaceship;
+          this.wingTipLeft.parent = this._mesh;
+          this.wingTipRight.parent = this._mesh;
           let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
           spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/diffuse.png", Main.Scene);
           spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/normals.png", Main.Scene);

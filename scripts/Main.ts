@@ -89,7 +89,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 
-  new TrailMesh("Test", player, Main.Scene);
+  new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 240);
+  new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 240);
 
   let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
   foe.initialize(

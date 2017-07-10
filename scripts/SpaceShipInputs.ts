@@ -1,15 +1,15 @@
 class SpaceShipInputs {
   private _active: boolean = false;
   private _spaceShip: SpaceShip;
-  private _forwardPow: number = 30;
+  private _forwardPow: number = 60;
   private _forward: boolean;
   private _backwardPow: number = 10;
   private _backward: boolean;
-  private _rollPow: number = 3;
+  private _rollPow: number = 5;
   private _right: boolean;
   private _left: boolean;
-  private _yawPow: number = 1;
-  private _pitchPow: number = 1;
+  private _yawPow: number = 3;
+  private _pitchPow: number = 3;
   private _scene: BABYLON.Scene;
   private _canvas: HTMLCanvasElement;
 

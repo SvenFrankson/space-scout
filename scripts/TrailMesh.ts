@@ -1,14 +1,16 @@
 class TrailMesh extends BABYLON.Mesh {
   private _generator: BABYLON.Mesh;
-  private _diameter: number = 0.5;
-  private _length: number = 240;
-  private _sectionPolygonPointsCount: number = 8;
+  private _diameter: number;
+  private _length: number;
+  private _sectionPolygonPointsCount: number = 4;
   private _sectionVectors: Array<BABYLON.Vector3>;
   private _sectionNormalVectors: Array<BABYLON.Vector3>;
 
-  constructor(name: string, generator: BABYLON.Mesh, scene: BABYLON.Scene) {
+  constructor(name: string, generator: BABYLON.Mesh, scene: BABYLON.Scene, diameter: number = 1, length: number = 60) {
     super(name, scene);
     this._generator = generator;
+    this._diameter = diameter;
+    this._length = length;
     this._sectionVectors = [];
     this._sectionNormalVectors = [];
     for (let i: number = 0; i < this._sectionPolygonPointsCount; i++) {
@@ -32,7 +34,7 @@ class TrailMesh extends BABYLON.Mesh {
       positions.push(
         Math.cos(i * alpha) * this._diameter,
         Math.sin(i * alpha) * this._diameter,
-        0
+        -this._length
       );
       normals.push(
         Math.cos(i * alpha),
@@ -45,7 +47,7 @@ class TrailMesh extends BABYLON.Mesh {
         positions.push(
           Math.cos(j * alpha) * this._diameter,
           Math.sin(j * alpha) * this._diameter,
-          0
+          -this._length + i
         );
         normals.push(
           Math.cos(j * alpha),
@@ -69,12 +71,12 @@ class TrailMesh extends BABYLON.Mesh {
       indices.push(
         l + this._sectionPolygonPointsCount - 1,
         l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount,
-        l + this._sectionPolygonPointsCount + 1,
+        l + this._sectionPolygonPointsCount,
       );
       indices.push(
         l + this._sectionPolygonPointsCount - 1,
-        l + this._sectionPolygonPointsCount + 1,
-        l + 1
+        l + this._sectionPolygonPointsCount,
+        l
       );
     }
 
@@ -106,7 +108,7 @@ class TrailMesh extends BABYLON.Mesh {
     let normals: Array<number> | Float32Array = this.getVerticesData(BABYLON.VertexBuffer.NormalKind);
 
     for (let i: number = 3 * this._sectionPolygonPointsCount; i < positions.length; i++) {
-      positions[i - 3 * this._sectionPolygonPointsCount] = positions[i];
+      positions[i - 3 * this._sectionPolygonPointsCount] = positions[i] - normals[i] / this._length * this._diameter;
     }
     for (let i: number = 3 * this._sectionPolygonPointsCount; i < normals.length; i++) {
       normals[i - 3 * this._sectionPolygonPointsCount] = normals[i];
