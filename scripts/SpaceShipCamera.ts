@@ -18,8 +18,8 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     super(name, position, scene);
     this._targetPosition = BABYLON.Vector3.Zero();
     this._targetRotation = BABYLON.Quaternion.Identity();
-    this._offset = new BABYLON.Vector3(0, 6, -15);
-    this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 65);
+    this._offset = new BABYLON.Vector3(0, 4, -10);
+    this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();
     this._spaceShip = spaceShip;

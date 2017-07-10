@@ -6,7 +6,7 @@ varying vec3 vPositionW;
 varying vec3 vNormalW;
 
 uniform vec3 cameraPosition;
-uniform sampler2D textureSampler;
+uniform vec3 color;
 uniform vec3 source1;
 uniform float sqrSourceDist1;
 
@@ -27,6 +27,6 @@ void main(void) {
     1.
   );
 
-  gl_FragColor = vec4(0.5, 0.5, 1., 1.) + vec4(vec3(fresnelTerm), 1.);
+  gl_FragColor = vec4(color + vec3(fresnelTerm), 1.);
   gl_FragColor.a = rangeTerm1 * (1. + fresnelTerm);
 }

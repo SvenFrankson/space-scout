@@ -228,6 +228,7 @@ var ShieldMaterial = (function (_super) {
             needAlphaBlending: true
         }) || this;
         _this._flash1 = new Flash();
+        _this._color = new BABYLON.Color3(1, 1, 1);
         _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
         _this.getScene().registerBeforeRender(function () {
             _this._flash1.distance += _this._flash1.speed;
@@ -236,6 +237,17 @@ var ShieldMaterial = (function (_super) {
         });
         return _this;
     }
+    Object.defineProperty(ShieldMaterial.prototype, "color", {
+        get: function () {
+            return this._color;
+        },
+        set: function (v) {
+            this._color = v;
+            this.setColor3("color", this._color);
+        },
+        enumerable: true,
+        configurable: true
+    });
     ShieldMaterial.prototype.flashAt = function (position, speed) {
         if (this._flash1.distance > this._flash1.resetLimit) {
             this._flash1.distance = 0.01;
@@ -330,6 +342,7 @@ var Shield = (function (_super) {
                 data.applyToMesh(_this);
                 shield.dispose();
                 var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
+                shieldMaterial.color = new BABYLON.Color3(0.5, 0.8, 1);
                 _this.material = shieldMaterial;
             }
         });
@@ -567,8 +580,8 @@ var SpaceShipCamera = (function (_super) {
         _this._smoothnessRotation = 16;
         _this._targetPosition = BABYLON.Vector3.Zero();
         _this._targetRotation = BABYLON.Quaternion.Identity();
-        _this._offset = new BABYLON.Vector3(0, 6, -15);
-        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 65);
+        _this._offset = new BABYLON.Vector3(0, 4, -10);
+        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
         _this.rotation.copyFromFloats(0, 0, 0);
         _this.rotationQuaternion = BABYLON.Quaternion.Identity();
         _this._spaceShip = spaceShip;

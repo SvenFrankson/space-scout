@@ -7,6 +7,14 @@ class Flash {
 
 class ShieldMaterial extends BABYLON.ShaderMaterial {
   private _flash1: Flash = new Flash();
+  private _color: BABYLON.Color3 = new BABYLON.Color3(1, 1, 1);
+  public get color(): BABYLON.Color3 {
+    return this._color;
+  }
+  public set color(v: BABYLON.Color3) {
+    this._color = v;
+    this.setColor3("color", this._color);
+  }
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(
