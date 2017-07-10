@@ -62,6 +62,7 @@ class SpaceShip extends BABYLON.Mesh {
   }
   private _controler: ISpaceShipControler;
   private _colliders: Array<BABYLON.BoundingSphere> = [];
+  private _shield: Shield;
   public wingTipRight: BABYLON.Mesh;
   public wingTipLeft: BABYLON.Mesh;
 
@@ -75,7 +76,8 @@ class SpaceShip extends BABYLON.Mesh {
     this._rX = BABYLON.Quaternion.Identity();
     this._rY = BABYLON.Quaternion.Identity();
     this._rZ = BABYLON.Quaternion.Identity();
-    this._controler = new SpaceShipInputs(this, scene);
+    this._shield = new Shield(this);
+    this._shield.initialize();
     this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
     this.wingTipLeft.parent = this;
     this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
@@ -108,6 +110,7 @@ class SpaceShip extends BABYLON.Mesh {
         if (spaceship instanceof BABYLON.Mesh) {
           spaceship.parent = this;
           this._mesh = spaceship;
+          this._shield.parent = this._mesh;
           this.wingTipLeft.parent = this._mesh;
           this.wingTipRight.parent = this._mesh;
           let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());

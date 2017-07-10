@@ -159,8 +159,8 @@ window.addEventListener("DOMContentLoaded", function () {
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
-    new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 240);
-    new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 240);
+    new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 480);
+    new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 480);
     var foe = new SpaceShip("Player", Main.Scene);
     foe.initialize("./datas/spaceship.babylon", function () {
         var foeIA = new SpaceShipIA(foe, player, Main.Scene);
@@ -207,11 +207,35 @@ var SpaceShaderStore = (function () {
     function SpaceShaderStore() {
     }
     SpaceShaderStore.RegisterSpaceShaderToShaderStore = function () {
-        BABYLON.Effect.ShadersStore["TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec2 vNormalS;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vec4 clipSpacePos = worldViewProjection * vec4(position + normal, 1.0);\n        vNormalS = normalize(clipSpacePos.xy - outPosition.xy);\n      }\n    ";
-        BABYLON.Effect.ShadersStore["TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec2 vNormalS;\n\n      void main(void) {\n        gl_FragColor = vec4(vec3(1), max(0., vNormalS.y) * max(0., vNormalS.y));\n      }\n    ";
+        BABYLON.Effect.ShadersStore["" + "TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 world;\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vPositionW = vec3(world * vec4(position, 1.0));\n        vNormalW = normalize(vec3(world * vec4(normal, 0.0)));\n      }\n    ";
+        BABYLON.Effect.ShadersStore["" + "TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      uniform vec3 diffuseColor;\n      uniform float alpha;\n      uniform float fresnelPower;\n      uniform float fresnelBias;\n      uniform float specularPower;\n      uniform vec3 cameraPosition;\n      uniform sampler2D textureSampler;\n\n      void main(void) {\n        vec3 viewDirectionW = normalize(cameraPosition - vPositionW);\n\n        // Fresnel\n        float fresnelTerm = dot(viewDirectionW, vNormalW);\n        fresnelTerm = clamp(\n          fresnelTerm,\n          0.,\n          1.\n        );\n\n        vec3 col1 = vec3(0.8, 1., 0.8);\n        vec3 col2 = vec3(0.5, 0.5, 1.);\n\n        gl_FragColor = vec4(fresnelTerm * col1 + (1. - fresnelTerm) * col2, 0.5);\n      }\n    ";
     };
     return SpaceShaderStore;
 }());
+var Shield = (function (_super) {
+    __extends(Shield, _super);
+    function Shield(spaceShip) {
+        var _this = _super.call(this, spaceShip.name + "-Shield", spaceShip.getScene()) || this;
+        _this._spaceShip = spaceShip;
+        return _this;
+    }
+    Shield.prototype.initialize = function () {
+        var _this = this;
+        BABYLON.SceneLoader.ImportMesh("", "./datas/shield.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
+            var shield = meshes[0];
+            if (shield instanceof BABYLON.Mesh) {
+                var data = BABYLON.VertexData.ExtractFromMesh(shield);
+                data.applyToMesh(_this);
+                shield.dispose();
+                var material = new BABYLON.StandardMaterial(_this.name, _this.getScene());
+                material.diffuseTexture = new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene());
+                material.alpha = 0.2;
+                _this.material = material;
+            }
+        });
+    };
+    return Shield;
+}(BABYLON.Mesh));
 var SpaceShip = (function (_super) {
     __extends(SpaceShip, _super);
     function SpaceShip(name, scene) {
@@ -235,7 +259,8 @@ var SpaceShip = (function (_super) {
         _this._rX = BABYLON.Quaternion.Identity();
         _this._rY = BABYLON.Quaternion.Identity();
         _this._rZ = BABYLON.Quaternion.Identity();
-        _this._controler = new SpaceShipInputs(_this, scene);
+        _this._shield = new Shield(_this);
+        _this._shield.initialize();
         _this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
         _this.wingTipLeft.parent = _this;
         _this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
@@ -322,6 +347,7 @@ var SpaceShip = (function (_super) {
             if (spaceship instanceof BABYLON.Mesh) {
                 spaceship.parent = _this;
                 _this._mesh = spaceship;
+                _this._shield.parent = _this._mesh;
                 _this.wingTipLeft.parent = _this._mesh;
                 _this.wingTipRight.parent = _this._mesh;
                 var spaceshipMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", _this.getScene());
