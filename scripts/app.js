@@ -107,7 +107,7 @@ var Main = (function () {
     function Main(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
         Main.Engine = new BABYLON.Engine(Main.Canvas, true);
-        SpaceShaderStore.RegisterSpaceShaderToShaderStore();
+        BABYLON.Engine.ShadersRepository = "./shaders/";
     }
     Main.prototype.createScene = function () {
         Main.Scene = new BABYLON.Scene(Main.Engine);
@@ -227,10 +227,23 @@ var Shield = (function (_super) {
                 var data = BABYLON.VertexData.ExtractFromMesh(shield);
                 data.applyToMesh(_this);
                 shield.dispose();
-                var material = new BABYLON.StandardMaterial(_this.name, _this.getScene());
-                material.diffuseTexture = new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene());
-                material.alpha = 0.2;
-                _this.material = material;
+                BABYLON.Engine.ShadersRepository = "./shaders/";
+                var glassMaterial_1 = new BABYLON.ShaderMaterial("Glass", Main.Scene, "glass", {
+                    attributes: ["position", "normal", "uv"],
+                    uniforms: ["world", "worldView", "worldViewProjection"],
+                    needAlphaBlending: true
+                });
+                glassMaterial_1.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
+                var k_1 = 0;
+                _this.getScene().registerBeforeRender(function () {
+                    glassMaterial_1.setVector3("source1", new BABYLON.Vector3(0, 0, 3));
+                    glassMaterial_1.setFloat("sqrSourceDist1", k_1 * k_1 / 1000);
+                    k_1++;
+                    if (k_1 > 300) {
+                        k_1 = 0;
+                    }
+                });
+                _this.material = glassMaterial_1;
             }
         });
     };

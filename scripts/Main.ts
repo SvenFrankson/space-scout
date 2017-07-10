@@ -12,7 +12,7 @@ class Main {
   constructor(canvasElement: string) {
     Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
     Main.Engine = new BABYLON.Engine(Main.Canvas, true);
-    SpaceShaderStore.RegisterSpaceShaderToShaderStore();
+    BABYLON.Engine.ShadersRepository = "./shaders/";
   }
 
   createScene(): void {
