@@ -27,6 +27,6 @@ void main(void) {
     1.
   );
 
-  gl_FragColor = texture2D(textureSampler, vUv) + vec4(vec3(rangeTerm1), 1.) + vec4(vec3(fresnelTerm), 1.);
+  gl_FragColor = vec4(0.5, 0.5, 1., 1.) + vec4(vec3(fresnelTerm), 1.);
   gl_FragColor.a = rangeTerm1 * (1. + fresnelTerm);
 }

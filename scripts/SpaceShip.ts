@@ -80,10 +80,12 @@ class SpaceShip extends BABYLON.Mesh {
     this._shield.initialize();
     this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
     this.wingTipLeft.parent = this;
-    this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
+    this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
     this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
     this.wingTipRight.parent = this;
-    this.wingTipRight.position.copyFromFloats(2, 0, 0);
+    this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
+    new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
+    new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
     this.createColliders();
     scene.registerBeforeRender(
       () => {

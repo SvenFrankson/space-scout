@@ -26,6 +26,7 @@ class Main {
     cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
 
     let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, Main.Scene);
+    skybox.infiniteDistance = true;
     let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
     skyboxMaterial.backFaceCulling = false;
     skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
@@ -89,10 +90,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 
-  new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 480);
-  new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 480);
-
-  /*
   let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
   foe.initialize(
     "./datas/spaceship.babylon",
@@ -112,5 +109,4 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
   friend.position.copyFromFloats(30, 30, 30);
-  */
 });

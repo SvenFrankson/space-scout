@@ -155,6 +155,7 @@ var Main = (function () {
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
         var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, Main.Scene);
+        skybox.infiniteDistance = true;
         var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
         skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("./datas/skyboxes/green-nebulae", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
@@ -196,8 +197,18 @@ window.addEventListener("DOMContentLoaded", function () {
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
-    new TrailMesh("Test", player.wingTipLeft, Main.Scene, 0.1, 480);
-    new TrailMesh("Test", player.wingTipRight, Main.Scene, 0.1, 480);
+    var foe = new SpaceShip("Player", Main.Scene);
+    foe.initialize("./datas/spaceship.babylon", function () {
+        var foeIA = new SpaceShipIA(foe, player, Main.Scene);
+        foe.attachControler(foeIA);
+    });
+    foe.position.copyFromFloats(-30, -30, -30);
+    var friend = new SpaceShip("Player", Main.Scene);
+    friend.initialize("./datas/spaceship.babylon", function () {
+        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
+        friend.attachControler(friendIA);
+    });
+    friend.position.copyFromFloats(30, 30, 30);
 });
 var Flash = (function () {
     function Flash() {
@@ -233,6 +244,46 @@ var ShieldMaterial = (function (_super) {
         }
     };
     return ShieldMaterial;
+}(BABYLON.ShaderMaterial));
+var TrailMaterial = (function (_super) {
+    __extends(TrailMaterial, _super);
+    function TrailMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "trail", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this._diffuseColor1 = new BABYLON.Color4(1, 1, 1, 1);
+        _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
+        _this.getScene().registerBeforeRender(function () {
+            _this.setFloat("alpha", _this.alpha);
+            _this.setVector3("cameraPosition", Main.Camera.position);
+        });
+        return _this;
+    }
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor1", {
+        get: function () {
+            return this._diffuseColor1;
+        },
+        set: function (v) {
+            this._diffuseColor1 = v;
+            this.setColor4("diffuseColor1", this._diffuseColor1);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor2", {
+        get: function () {
+            return this._diffuseColor2;
+        },
+        set: function (v) {
+            this._diffuseColor2 = v;
+            this.setColor4("diffuseColor2", this._diffuseColor2);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return TrailMaterial;
 }(BABYLON.ShaderMaterial));
 var SpaceMath = (function () {
     function SpaceMath() {
@@ -323,10 +374,12 @@ var SpaceShip = (function (_super) {
         _this._shield.initialize();
         _this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
         _this.wingTipLeft.parent = _this;
-        _this.wingTipLeft.position.copyFromFloats(-2, 0, 0);
+        _this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
         _this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
         _this.wingTipRight.parent = _this;
-        _this.wingTipRight.position.copyFromFloats(2, 0, 0);
+        _this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
+        new TrailMesh("Test", _this.wingTipLeft, Main.Scene, 0.1, 120);
+        new TrailMesh("Test", _this.wingTipRight, Main.Scene, 0.1, 120);
         _this.createColliders();
         scene.registerBeforeRender(function () {
             _this._move();
@@ -615,11 +668,11 @@ var SpaceShipIA = (function () {
 var SpaceShipInputs = (function () {
     function SpaceShipInputs(spaceShip, scene) {
         this._active = false;
-        this._forwardPow = 60;
+        this._forwardPow = 30;
         this._backwardPow = 10;
-        this._rollPow = 5;
-        this._yawPow = 3;
-        this._pitchPow = 3;
+        this._rollPow = 2.5;
+        this._yawPow = 1.5;
+        this._pitchPow = 1.5;
         this._spaceShip = spaceShip;
         this._scene = scene;
     }
@@ -765,20 +818,10 @@ var TrailMesh = (function (_super) {
         data.normals = normals;
         data.indices = indices;
         data.applyToMesh(this, true);
-        var trailMaterial = new BABYLON.ShaderMaterial("Trail", this.getScene(), {
-            vertex: "Trail",
-            fragment: "Trail"
-        }, {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        });
+        var trailMaterial = new TrailMaterial(this.name, this.getScene());
+        trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
+        trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
         this.material = trailMaterial;
-        this.getScene().registerBeforeRender(function () {
-            if (trailMaterial) {
-                trailMaterial.setVector3("cameraPosition", Main.Camera.position);
-            }
-        });
     };
     TrailMesh.prototype.update = function () {
         var positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);

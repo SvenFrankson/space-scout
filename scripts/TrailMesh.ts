@@ -84,23 +84,10 @@ class TrailMesh extends BABYLON.Mesh {
     data.normals = normals;
     data.indices = indices;
     data.applyToMesh(this, true);
-
-    let trailMaterial: BABYLON.ShaderMaterial = new BABYLON.ShaderMaterial("Trail", this.getScene(), {
-            vertex: "Trail",
-            fragment: "Trail"
-        },
-        {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        });
+    let trailMaterial: TrailMaterial = new TrailMaterial(this.name, this.getScene());
+    trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
+    trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
     this.material = trailMaterial;
-
-    this.getScene().registerBeforeRender(() => {
-      if (trailMaterial) {
-        trailMaterial.setVector3("cameraPosition", Main.Camera.position);
-      }
-    });
   }
 
   public update(): void {

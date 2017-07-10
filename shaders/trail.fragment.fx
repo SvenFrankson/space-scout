@@ -3,13 +3,10 @@ precision highp float;
 varying vec3 vPositionW;
 varying vec3 vNormalW;
 
-uniform vec3 diffuseColor;
+uniform vec4 diffuseColor1;
+uniform vec4 diffuseColor2;
 uniform float alpha;
-uniform float fresnelPower;
-uniform float fresnelBias;
-uniform float specularPower;
 uniform vec3 cameraPosition;
-uniform sampler2D textureSampler;
 
 void main(void) {
   vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
@@ -22,8 +19,6 @@ void main(void) {
     1.
   );
 
-  vec3 col1 = vec3(0.8, 1., 0.8);
-  vec3 col2 = vec3(0.5, 0.5, 1.);
-
-  gl_FragColor = vec4(fresnelTerm * col1 + (1. - fresnelTerm) * col2, 0.5);
+  gl_FragColor = vec4(fresnelTerm * diffuseColor1 + (1. - fresnelTerm) * diffuseColor2);
+  gl_FragColor.a = gl_FragColor.a * alpha;
 }
