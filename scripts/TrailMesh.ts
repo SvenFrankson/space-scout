@@ -91,7 +91,7 @@ class TrailMesh extends BABYLON.Mesh {
         },
         {
             attributes: ["position", "normal", "uv"],
-            uniforms: ["world", "worldView", "worldViewProjection"],
+            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
             needAlphaBlending: true
         });
     this.material = trailMaterial;

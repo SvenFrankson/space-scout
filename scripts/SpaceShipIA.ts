@@ -47,7 +47,7 @@ class SpaceShipIA {
   }
 
   public track(dt: number, direction: BABYLON.Vector3, distance: number): void {
-    if (distance > 20) {
+    if (distance > 10) {
       this._spaceShip.forward += this._forwardPow * dt;
     }
 

@@ -207,8 +207,8 @@ var SpaceShaderStore = (function () {
     function SpaceShaderStore() {
     }
     SpaceShaderStore.RegisterSpaceShaderToShaderStore = function () {
-        BABYLON.Effect.ShadersStore["TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 world;\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vPositionW = vec3(world * vec4(position, 1.0));\n        vNormalW = normalize(vec3(world * vec4(normal, 0.0)));\n      }\n    ";
-        BABYLON.Effect.ShadersStore["TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec3 vPositionW;\n      varying vec3 vNormalW;\n\n      uniform vec3 diffuseColor;\n      uniform float alpha;\n      uniform float fresnelPower;\n      uniform float fresnelBias;\n      uniform float specularPower;\n      uniform vec3 cameraPosition;\n      uniform sampler2D textureSampler;\n\n      void main(void) {\n        vec3 viewDirectionW = normalize(cameraPosition - vPositionW);\n\n        // Fresnel\n        float fresnelTerm = dot(viewDirectionW, vNormalW);\n        fresnelTerm = clamp(\n          pow(\n            (cos(pow(fresnelTerm, 2.)*3.1415)+1.)/2.,\n            8.\n          ),\n          0.,\n          1.\n        );\n\n        gl_FragColor = vec4(vec3(1), fresnelTerm);\n      }\n    ";
+        BABYLON.Effect.ShadersStore["TrailVertexShader"] = "\n      precision highp float;\n\n      // Attributes\n      attribute vec3 position;\n      attribute vec3 normal;\n\n      // Uniforms\n      uniform mat4 worldViewProjection;\n\n      // Varying\n      varying vec2 vNormalS;\n\n      void main(void) {\n        vec4 outPosition = worldViewProjection * vec4(position, 1.0);\n        gl_Position = outPosition;\n\n        vec4 clipSpacePos = worldViewProjection * vec4(position + normal, 1.0);\n        vNormalS = normalize(clipSpacePos.xy - outPosition.xy);\n      }\n    ";
+        BABYLON.Effect.ShadersStore["TrailFragmentShader"] = "\n      precision highp float;\n\n      varying vec2 vNormalS;\n\n      void main(void) {\n        gl_FragColor = vec4(vec3(1), max(0., vNormalS.y) * max(0., vNormalS.y));\n      }\n    ";
     };
     return SpaceShaderStore;
 }());
@@ -501,7 +501,7 @@ var SpaceShipIA = (function () {
         }
     };
     SpaceShipIA.prototype.track = function (dt, direction, distance) {
-        if (distance > 20) {
+        if (distance > 10) {
             this._spaceShip.forward += this._forwardPow * dt;
         }
         var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
@@ -688,7 +688,7 @@ var TrailMesh = (function (_super) {
             fragment: "Trail"
         }, {
             attributes: ["position", "normal", "uv"],
-            uniforms: ["world", "worldView", "worldViewProjection"],
+            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
             needAlphaBlending: true
         });
         this.material = trailMaterial;
