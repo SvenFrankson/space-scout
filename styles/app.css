@@ -69,4 +69,15 @@
     position: absolute;
     pointer-events: none;
   }
+
+  #panel-right {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  #speed-display {
+    position: absolute;
+    pointer-events: none;
+    clip: rect(100px, 290px, 290px, 0px);
+  }
 </style>

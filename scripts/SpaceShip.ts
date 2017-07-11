@@ -4,7 +4,7 @@ interface ISpaceShipControler {
 
 class SpaceShip extends BABYLON.Mesh {
 
-  private _forwardDrag: number = 0.1;
+  private _forwardDrag: number = 0.01;
   private _backwardDrag: number = 1;
   private _forward: number = 0;
   public get forward(): number {

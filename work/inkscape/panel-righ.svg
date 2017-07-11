@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="512"
+   height="512"
+   viewBox="0 0 135.46666 135.46667"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.0 r15299"
+   sodipodi:docname="panel-righ.svg">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.3488292"
+     inkscape:cx="101.92476"
+     inkscape:cy="239.93267"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:pagecheckerboard="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="161"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-161.53332)">
+    <path
+       style="fill:#000000;fill-opacity:0.50196081;stroke:none;stroke-width:1.99999988;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 303.57227 22.808594 C 154.50704 22.808291 33.66572 143.64963 33.666016 292.71484 C 33.756323 379.74221 75.803786 461.38653 146.59961 512 L 512 512 L 512 121.5293 C 460.78831 59.102349 384.31725 22.882295 303.57227 22.808594 z "
+       transform="matrix(0.26458333,0,0,0.26458333,0,161.53332)"
+       id="path5211" />
+    <path
+       style="fill:#3a0000;fill-opacity:0;stroke:#fefcfc;stroke-width:2.0050354;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 303.57227 9.2851562 C 147.03829 9.28494 20.142366 136.18089 20.142578 292.71484 C 20.21168 377.72883 58.438033 458.22218 124.28125 512 L 146.59961 512 C 75.803791 461.38653 33.756323 379.74221 33.666016 292.71484 C 33.66572 143.64964 154.50704 22.808294 303.57227 22.808594 C 384.31725 22.882259 460.7883 59.102351 512 121.5293 L 512 101.16211 C 458.42845 42.73827 382.83912 9.4177778 303.57227 9.2851562 z M 431.73438 9.5683594 L 428.95508 24.589844 C 459.79891 39.170596 487.89331 58.967964 512 83.109375 L 512 62.707031 C 488.16294 40.938147 461.0838 23.010816 431.73438 9.5683594 z M 171.02344 11.582031 C 164.44841 14.692483 158.00532 18.028888 151.69727 21.572266 L 155.82617 35.929688 C 159.73654 33.67925 163.70036 31.509334 167.72266 29.433594 L 171.02344 11.582031 z M 139.41992 28.839844 C 113.08952 45.262267 89.42627 65.491444 69.173828 88.804688 L 79.583984 98.824219 C 98.117832 77.415566 119.66499 58.724676 143.59766 43.365234 L 139.41992 28.839844 z M 60.332031 99.458984 C 53.298679 108.32275 46.740509 117.58694 40.685547 127.21094 L 52.611328 135.26953 C 58.214052 126.34183 64.272236 117.73866 70.759766 109.49609 L 60.332031 99.458984 z M 33.578125 139.07227 C 30.946791 143.69912 28.430524 148.40222 26.03125 153.17773 L 43.271484 151.23047 C 44.014506 149.86379 44.779402 148.51142 45.542969 147.1582 L 33.578125 139.07227 z M 31.978516 410.13672 L 16.429688 411.89453 C 31.242006 447.50991 52.546713 480.06104 79.257812 507.88867 L 82.628906 489.65625 C 61.610092 466.02252 44.51026 439.17633 31.978516 410.13672 z "
+       id="path5078"
+       transform="matrix(0.26458333,0,0,0.26458333,0,161.53332)" />
+  </g>
+</svg>

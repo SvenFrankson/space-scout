@@ -60,14 +60,6 @@ class Main {
     skybox.material = skyboxMaterial;
 
     Loader.LoadScene("scene-0", Main.Scene);
-
-    let w: number = Main.Canvas.width * 0.95;
-    let h: number = Main.Canvas.height * 0.95;
-    let size: number = Math.min(w, h);
-    $("#target1").css("width", size + "px");
-    $("#target1").css("height", size + "px");
-    $("#target1").css("top", Main.Canvas.height / 2 - size / 2);
-    $("#target1").css("left", Main.Canvas.width / 2 - size / 2);
   }
 
   public animate(): void {
@@ -82,13 +74,28 @@ class Main {
 
   public resize(): void {
     Main.Engine.resize();
-    let w: number = Main.Canvas.width * 0.95;
-    let h: number = Main.Canvas.height * 0.95;
-    let size: number = Math.min(w, h) * 0.8;
-    $(".cinematic-frame").css("width", size);
-    $(".cinematic-frame").css("height", size);
-    $(".cinematic-frame").css("bottom", h / 2 - size / 2);
-    $(".cinematic-frame").css("left", w / 2 - size / 2);
+    let w: number = Main.Canvas.width;
+    let h: number = Main.Canvas.height;
+    let size: number = Math.min(w, h);
+    $(".cinematic-frame").css("width", size * 0.8);
+    $(".cinematic-frame").css("height", size * 0.8);
+    $(".cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
+    $(".cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+
+    $("#target1").css("width", size * 0.9 + "px");
+    $("#target1").css("height", size * 0.9 + "px");
+    $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
+    $("#target1").css("left", Main.Canvas.width / 2 - size * 0.9 / 2);
+
+    $("#panel-right").css("width", size / 2 + "px");
+    $("#panel-right").css("height", size / 2 + "px");
+    $("#panel-right").css("top", Main.Canvas.height - size / 2);
+    $("#panel-right").css("left", Main.Canvas.width - size / 2);
+
+    $("#speed-display").css("width", size / 2 + "px");
+    $("#speed-display").css("height", size / 2 + "px");
+    $("#speed-display").css("top", Main.Canvas.height - size / 2);
+    $("#speed-display").css("left", Main.Canvas.width - size / 2);
   }
 
   public static OnClick(): void {
@@ -102,6 +109,8 @@ class Main {
     $("#target1").show();
     $("#target2").show();
     $("#target3").show();
+    $("#panel-right").show();
+    $("#speed-display").show();
     $("#play-frame").hide();
     Main.Scene.activeCamera = Main.GameCamera;
   }

@@ -1,7 +1,7 @@
 class SpaceShipInputs {
   private _active: boolean = false;
   private _spaceShip: SpaceShip;
-  private _forwardPow: number = 30;
+  private _forwardPow: number = 10;
   private _forward: boolean;
   private _backwardPow: number = 10;
   private _backward: boolean;
@@ -123,5 +123,11 @@ class SpaceShipInputs {
     $("#target3").css("height", size + "px");
     $("#target3").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 2);
     $("#target3").css("left", Main.Canvas.width / 2 - size / 2 + r * mouseInput.x / 2);
+
+    let wSDisplay: number = parseInt($("#speed-display").css("width"), 10);
+    let hSDisplay: number = parseInt($("#speed-display").css("height"), 10);
+    let clip: number = 0.72 * hSDisplay - (this._spaceShip.forward) / 40 * 0.38 * hSDisplay;
+    clip = Math.floor(clip);
+    $("#speed-display").css("clip", "rect(" + clip +  "px, " + wSDisplay + "px, " + hSDisplay + "px, 0px)");
   }
 }

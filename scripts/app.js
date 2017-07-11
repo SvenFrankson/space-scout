@@ -231,13 +231,6 @@ var Main = (function () {
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
         Loader.LoadScene("scene-0", Main.Scene);
-        var w = Main.Canvas.width * 0.95;
-        var h = Main.Canvas.height * 0.95;
-        var size = Math.min(w, h);
-        $("#target1").css("width", size + "px");
-        $("#target1").css("height", size + "px");
-        $("#target1").css("top", Main.Canvas.height / 2 - size / 2);
-        $("#target1").css("left", Main.Canvas.width / 2 - size / 2);
     };
     Main.prototype.animate = function () {
         var _this = this;
@@ -250,13 +243,25 @@ var Main = (function () {
     };
     Main.prototype.resize = function () {
         Main.Engine.resize();
-        var w = Main.Canvas.width * 0.95;
-        var h = Main.Canvas.height * 0.95;
-        var size = Math.min(w, h) * 0.8;
-        $(".cinematic-frame").css("width", size);
-        $(".cinematic-frame").css("height", size);
-        $(".cinematic-frame").css("bottom", h / 2 - size / 2);
-        $(".cinematic-frame").css("left", w / 2 - size / 2);
+        var w = Main.Canvas.width;
+        var h = Main.Canvas.height;
+        var size = Math.min(w, h);
+        $(".cinematic-frame").css("width", size * 0.8);
+        $(".cinematic-frame").css("height", size * 0.8);
+        $(".cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
+        $(".cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+        $("#target1").css("width", size * 0.9 + "px");
+        $("#target1").css("height", size * 0.9 + "px");
+        $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
+        $("#target1").css("left", Main.Canvas.width / 2 - size * 0.9 / 2);
+        $("#panel-right").css("width", size / 2 + "px");
+        $("#panel-right").css("height", size / 2 + "px");
+        $("#panel-right").css("top", Main.Canvas.height - size / 2);
+        $("#panel-right").css("left", Main.Canvas.width - size / 2);
+        $("#speed-display").css("width", size / 2 + "px");
+        $("#speed-display").css("height", size / 2 + "px");
+        $("#speed-display").css("top", Main.Canvas.height - size / 2);
+        $("#speed-display").css("left", Main.Canvas.width - size / 2);
     };
     Main.OnClick = function () {
         if (Main.State === State.Ready) {
@@ -268,6 +273,8 @@ var Main = (function () {
         $("#target1").show();
         $("#target2").show();
         $("#target3").show();
+        $("#panel-right").show();
+        $("#speed-display").show();
         $("#play-frame").hide();
         Main.Scene.activeCamera = Main.GameCamera;
     };
@@ -441,7 +448,7 @@ var SpaceShip = (function (_super) {
     __extends(SpaceShip, _super);
     function SpaceShip(name, scene) {
         var _this = _super.call(this, name, scene) || this;
-        _this._forwardDrag = 0.1;
+        _this._forwardDrag = 0.01;
         _this._backwardDrag = 1;
         _this._forward = 0;
         _this._rollDrag = 0.9;
@@ -761,7 +768,7 @@ var SpaceShipIA = (function () {
 var SpaceShipInputs = (function () {
     function SpaceShipInputs(spaceShip, scene) {
         this._active = false;
-        this._forwardPow = 30;
+        this._forwardPow = 10;
         this._backwardPow = 10;
         this._rollPow = 2.5;
         this._yawPow = 1.5;
@@ -859,6 +866,11 @@ var SpaceShipInputs = (function () {
         $("#target3").css("height", size + "px");
         $("#target3").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 2);
         $("#target3").css("left", Main.Canvas.width / 2 - size / 2 + r * mouseInput.x / 2);
+        var wSDisplay = parseInt($("#speed-display").css("width"), 10);
+        var hSDisplay = parseInt($("#speed-display").css("height"), 10);
+        var clip = 0.72 * hSDisplay - (this._spaceShip.forward) / 40 * 0.38 * hSDisplay;
+        clip = Math.floor(clip);
+        $("#speed-display").css("clip", "rect(" + clip + "px, " + wSDisplay + "px, " + hSDisplay + "px, 0px)");
     };
     return SpaceShipInputs;
 }());
