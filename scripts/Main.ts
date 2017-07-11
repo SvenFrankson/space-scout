@@ -1,8 +1,21 @@
 /// <reference path="../lib/babylon.d.ts"/>
 /// <reference path="../lib/jquery.d.ts"/>
 
+enum State {
+  Menu,
+  Ready,
+  Game
+};
+
 class Main {
 
+  private static _state: State = State.Menu;
+  public static get State(): State {
+    return Main._state;
+  }
+  public static set State(v: State) {
+    Main._state = v;
+  }
   public static Canvas: HTMLCanvasElement;
   public static Engine: BABYLON.Engine;
   public static Scene: BABYLON.Scene;
@@ -12,6 +25,9 @@ class Main {
 
   constructor(canvasElement: string) {
     Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
+    Main.Canvas.addEventListener("click", () => {
+      Main.OnClick();
+    });
     Main.Engine = new BABYLON.Engine(Main.Canvas, true);
     BABYLON.Engine.ShadersRepository = "./shaders/";
   }
@@ -75,7 +91,14 @@ class Main {
     $(".cinematic-frame").css("left", w / 2 - size / 2);
   }
 
+  public static OnClick(): void {
+    if (Main.State === State.Ready) {
+      Main.Play();
+    }
+  }
+
   public static Play(): void {
+    Main.State = State.Game;
     $("#target1").show();
     $("#target2").show();
     $("#target3").show();
@@ -122,8 +145,4 @@ window.addEventListener("DOMContentLoaded", () => {
   );
   friend.position.copyFromFloats(30, 30, 30);
   */
-
-  $("#play").on("click", () => {
-    Main.Play();
-  });
 });

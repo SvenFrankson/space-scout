@@ -60,6 +60,7 @@ class Loader {
       );
     } else {
       $("#play-frame").show();
+      Main.State = State.Ready;
     }
   }
 

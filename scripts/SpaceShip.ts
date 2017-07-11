@@ -151,6 +151,10 @@ class SpaceShip extends BABYLON.Mesh {
     BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
     BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
 
+    if (!(Main.State === State.Game)) {
+      return;
+    }
+
     if (this._controler) {
       this._controler.checkInputs(this._dt);
     }

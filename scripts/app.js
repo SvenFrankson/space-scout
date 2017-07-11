@@ -85,6 +85,7 @@ var Loader = (function () {
         }
         else {
             $("#play-frame").show();
+            Main.State = State.Ready;
         }
     };
     Loader._loadSceneData = function (data, scene) {
@@ -183,12 +184,32 @@ var Loader = (function () {
     return Loader;
 }());
 Loader._loadedStatics = [];
+var State;
+(function (State) {
+    State[State["Menu"] = 0] = "Menu";
+    State[State["Ready"] = 1] = "Ready";
+    State[State["Game"] = 2] = "Game";
+})(State || (State = {}));
+;
 var Main = (function () {
     function Main(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
+        Main.Canvas.addEventListener("click", function () {
+            Main.OnClick();
+        });
         Main.Engine = new BABYLON.Engine(Main.Canvas, true);
         BABYLON.Engine.ShadersRepository = "./shaders/";
     }
+    Object.defineProperty(Main, "State", {
+        get: function () {
+            return Main._state;
+        },
+        set: function (v) {
+            Main._state = v;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Main.prototype.createScene = function () {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
@@ -237,7 +258,13 @@ var Main = (function () {
         $(".cinematic-frame").css("bottom", h / 2 - size / 2);
         $(".cinematic-frame").css("left", w / 2 - size / 2);
     };
+    Main.OnClick = function () {
+        if (Main.State === State.Ready) {
+            Main.Play();
+        }
+    };
     Main.Play = function () {
+        Main.State = State.Game;
         $("#target1").show();
         $("#target2").show();
         $("#target3").show();
@@ -246,6 +273,7 @@ var Main = (function () {
     };
     return Main;
 }());
+Main._state = State.Menu;
 window.addEventListener("DOMContentLoaded", function () {
     var game = new Main("render-canvas");
     game.createScene();
@@ -257,9 +285,6 @@ window.addEventListener("DOMContentLoaded", function () {
         var playerControl = new SpaceShipInputs(player, Main.Scene);
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
-    });
-    $("#play").on("click", function () {
-        Main.Play();
     });
 });
 var Flash = (function () {
@@ -555,6 +580,9 @@ var SpaceShip = (function (_super) {
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
+        if (!(Main.State === State.Game)) {
+            return;
+        }
         if (this._controler) {
             this._controler.checkInputs(this._dt);
         }

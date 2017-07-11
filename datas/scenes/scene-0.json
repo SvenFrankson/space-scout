@@ -7,19 +7,19 @@
     [
       {
         "htmlId": "scene-0-1",
-        "delay": "4000"
+        "delay": "100"
       },
       {
         "htmlId": "scene-0-2",
-        "delay": "4000"
+        "delay": "100"
       },
       {
         "htmlId": "scene-0-3",
-        "delay": "4000"
+        "delay": "100"
       },
       {
         "htmlId": "scene-0-4",
-        "delay": "4000"
+        "delay": "100"
       }
     ]
   },
