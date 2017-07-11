@@ -59,6 +59,37 @@ Intersection._v = BABYLON.Vector3.Zero();
 var Loader = (function () {
     function Loader() {
     }
+    Loader.LoadScene = function (name, scene) {
+        $.ajax({
+            url: "./datas/scenes/" + name + ".json",
+            success: function (data) {
+                Main.Scene.activeCamera = Main.MenuCamera;
+                Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
+                Loader.RunCinematic(data.cinematic);
+                Loader._loadSceneData(data, scene);
+            }
+        });
+    };
+    Loader.RunCinematic = function (data, frameIndex) {
+        if (frameIndex === void 0) { frameIndex = 0; }
+        if (data.frames[frameIndex - 1]) {
+            var lastId = data.frames[frameIndex - 1].htmlId;
+            $("#" + lastId).hide();
+        }
+        if (data.frames[frameIndex]) {
+            var currentId = data.frames[frameIndex].htmlId;
+            $("#" + currentId).show();
+            setTimeout(function () {
+                Loader.RunCinematic(data, frameIndex + 1);
+            }, data.frames[frameIndex].delay);
+        }
+        else {
+            $("#play-frame").show();
+        }
+    };
+    Loader._loadSceneData = function (data, scene) {
+        Loader.AddStaticsIntoScene(data.statics, scene, undefined, 20);
+    };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
             Loader._loadedStatics[name] = [];
@@ -123,17 +154,29 @@ var Loader = (function () {
             callback();
         }
     };
-    Loader.AddStaticIntoScene = function (name, scene, x, y, z, s, rX, rY, rZ, callback) {
-        if (s === void 0) { s = 1; }
-        if (rX === void 0) { rX = 0; }
-        if (rY === void 0) { rY = 0; }
-        if (rZ === void 0) { rZ = 0; }
-        if (Loader._loadedStatics[name]) {
-            Loader._cloneStaticIntoScene(Loader._loadedStatics[name], x, y, z, s, rX, rY, rZ, callback);
+    Loader.AddStaticsIntoScene = function (datas, scene, callback, delay, index) {
+        if (delay === void 0) { delay = 0; }
+        if (index === void 0) { index = 0; }
+        if (datas[index]) {
+            Loader.AddStaticIntoScene(datas[index], scene, function () {
+                setTimeout(function () {
+                    Loader.AddStaticsIntoScene(datas, scene, callback, delay, index + 1);
+                }, delay);
+            });
         }
         else {
-            Loader._loadStatic(name, scene, function (loadedMeshes) {
-                Loader._cloneStaticIntoScene(loadedMeshes, x, y, z, s, rX, rY, rZ, callback);
+            if (callback) {
+                callback();
+            }
+        }
+    };
+    Loader.AddStaticIntoScene = function (data, scene, callback) {
+        if (Loader._loadedStatics[data.name]) {
+            Loader._cloneStaticIntoScene(Loader._loadedStatics[data.name], data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
+        }
+        else {
+            Loader._loadStatic(data.name, scene, function (loadedMeshes) {
+                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
             });
         }
     };
@@ -148,12 +191,15 @@ var Main = (function () {
     }
     Main.prototype.createScene = function () {
         Main.Scene = new BABYLON.Scene(Main.Engine);
+        this.resize();
         var sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.93, 0.06, 0.36), Main.Scene);
         sun.intensity = 0.8;
         var cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(-0.75, 0.66, 0.07), Main.Scene);
         cloud.intensity = 0.3;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+        Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
+        Main.Scene.activeCamera = Main.MenuCamera;
         var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, Main.Scene);
         skybox.infiniteDistance = true;
         var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
@@ -163,11 +209,7 @@ var Main = (function () {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
-        Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20, 1, 0, 0, 0, function () {
-            for (var i = 0; i < 200; i++) {
-                Loader.AddStaticIntoScene("asteroid-2", Main.Scene, Math.random() * 400 - 200, Math.random() * 40 - 20, Math.random() * 400 - 200, Math.random() * 4.5 + 0.5, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2, Math.random() * Math.PI * 2);
-            }
-        });
+        Loader.LoadScene("scene-0", Main.Scene);
         var w = Main.Canvas.width * 0.95;
         var h = Main.Canvas.height * 0.95;
         var size = Math.min(w, h);
@@ -177,12 +219,30 @@ var Main = (function () {
         $("#target1").css("left", Main.Canvas.width / 2 - size / 2);
     };
     Main.prototype.animate = function () {
+        var _this = this;
         Main.Engine.runRenderLoop(function () {
             Main.Scene.render();
         });
         window.addEventListener("resize", function () {
-            Main.Engine.resize();
+            _this.resize();
         });
+    };
+    Main.prototype.resize = function () {
+        Main.Engine.resize();
+        var w = Main.Canvas.width * 0.95;
+        var h = Main.Canvas.height * 0.95;
+        var size = Math.min(w, h) * 0.8;
+        $(".cinematic-frame").css("width", size);
+        $(".cinematic-frame").css("height", size);
+        $(".cinematic-frame").css("bottom", h / 2 - size / 2);
+        $(".cinematic-frame").css("left", w / 2 - size / 2);
+    };
+    Main.Play = function () {
+        $("#target1").show();
+        $("#target2").show();
+        $("#target3").show();
+        $("#play-frame").hide();
+        Main.Scene.activeCamera = Main.GameCamera;
     };
     return Main;
 }());
@@ -191,24 +251,16 @@ window.addEventListener("DOMContentLoaded", function () {
     game.createScene();
     game.animate();
     var player = new SpaceShip("Player", Main.Scene);
-    Main.Camera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+    Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+    Main.GameCamera.setEnabled(false);
     player.initialize("./datas/spaceship.babylon", function () {
         var playerControl = new SpaceShipInputs(player, Main.Scene);
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
-    var foe = new SpaceShip("Player", Main.Scene);
-    foe.initialize("./datas/spaceship.babylon", function () {
-        var foeIA = new SpaceShipIA(foe, player, Main.Scene);
-        foe.attachControler(foeIA);
+    $("#play").on("click", function () {
+        Main.Play();
     });
-    foe.position.copyFromFloats(-30, -30, -30);
-    var friend = new SpaceShip("Player", Main.Scene);
-    friend.initialize("./datas/spaceship.babylon", function () {
-        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
-        friend.attachControler(friendIA);
-    });
-    friend.position.copyFromFloats(30, 30, 30);
 });
 var Flash = (function () {
     function Flash() {
@@ -269,7 +321,7 @@ var TrailMaterial = (function (_super) {
         _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
         _this.getScene().registerBeforeRender(function () {
             _this.setFloat("alpha", _this.alpha);
-            _this.setVector3("cameraPosition", Main.Camera.position);
+            _this.setVector3("cameraPosition", Main.MenuCamera.position);
         });
         return _this;
     }

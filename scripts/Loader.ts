@@ -1,6 +1,71 @@
+interface IScene {
+  cinematic: ICinematic;
+  statics: IStatic[];
+}
+
+interface IStatic {
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  s?: number;
+  rX?: number;
+  rY?: number;
+  rZ?: number;
+}
+
+interface ICinematic {
+  xCam: number;
+  yCam: number;
+  zCam: number;
+  frames: ICinematicFrame[];
+}
+
+interface ICinematicFrame {
+  htmlId: string;
+  delay: number;
+}
+
 class Loader {
 
   private static _loadedStatics: Array<Array<BABYLON.AbstractMesh>> = [];
+
+  public static LoadScene(name: string, scene: BABYLON.Scene): void {
+    $.ajax(
+      {
+        url: "./datas/scenes/" + name + ".json",
+        success: (data: IScene) => {
+          Main.Scene.activeCamera = Main.MenuCamera;
+          Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
+          Loader.RunCinematic(data.cinematic);
+          Loader._loadSceneData(data, scene);
+        }
+      }
+    );
+  }
+
+  public static RunCinematic(data: ICinematic, frameIndex: number = 0): void {
+    if (data.frames[frameIndex - 1]) {
+      let lastId: string = data.frames[frameIndex - 1].htmlId;
+      $("#" + lastId).hide();
+    }
+    if (data.frames[frameIndex]) {
+      let currentId: string = data.frames[frameIndex].htmlId;
+      $("#" + currentId).show();
+      setTimeout(
+        () => {
+          Loader.RunCinematic(data, frameIndex + 1);
+        },
+        data.frames[frameIndex].delay
+      );
+    } else {
+      $("#play-frame").show();
+    }
+  }
+
+  public static _loadSceneData(data: IScene, scene: BABYLON.Scene): void {
+    Loader.AddStaticsIntoScene(data.statics, scene, undefined, 20);
+  }
 
   private static _loadStatic(
     name: string,
@@ -88,36 +153,56 @@ class Loader {
     }
   }
 
-  public static AddStaticIntoScene(
-    name: string,
+  public static AddStaticsIntoScene(
+    datas: IStatic[],
     scene: BABYLON.Scene,
-    x: number,
-    y: number,
-    z: number,
-    s: number = 1,
-    rX: number = 0,
-    rY: number = 0,
-    rZ: number = 0,
+    callback?: () => void,
+    delay: number = 0,
+    index: number = 0
+  ): void {
+    if (datas[index]) {
+      Loader.AddStaticIntoScene(
+        datas[index],
+        scene,
+        () => {
+          setTimeout(
+            () => {
+              Loader.AddStaticsIntoScene(datas, scene, callback, delay, index + 1);
+            },
+            delay
+          );
+        }
+      );
+    } else {
+      if (callback) {
+        callback();
+      }
+    }
+  }
+
+  public static AddStaticIntoScene(
+    data: IStatic,
+    scene: BABYLON.Scene,
     callback?: () => void
   ): void {
-    if (Loader._loadedStatics[name]) {
+    if (Loader._loadedStatics[data.name]) {
       Loader._cloneStaticIntoScene(
-        Loader._loadedStatics[name],
-        x, y, z,
-        s,
-        rX, rY, rZ,
+        Loader._loadedStatics[data.name],
+        data.x, data.y, data.z,
+        data.s,
+        data.rX, data.rY, data.rZ,
         callback
       );
     } else {
       Loader._loadStatic(
-        name,
+        data.name,
         scene,
         (loadedMeshes: Array<BABYLON.AbstractMesh>) => {
           Loader._cloneStaticIntoScene(
             loadedMeshes,
-            x, y, z,
-            s,
-            rX, rY, rZ,
+            data.x, data.y, data.z,
+            data.s,
+            data.rX, data.rY, data.rZ,
             callback
           );
         }

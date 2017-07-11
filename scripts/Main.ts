@@ -7,7 +7,8 @@ class Main {
   public static Engine: BABYLON.Engine;
   public static Scene: BABYLON.Scene;
   public static Light: BABYLON.HemisphericLight;
-  public static Camera: BABYLON.FreeCamera;
+  public static MenuCamera: BABYLON.ArcRotateCamera;
+  public static GameCamera: SpaceShipCamera;
 
   constructor(canvasElement: string) {
     Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -17,6 +18,7 @@ class Main {
 
   createScene(): void {
     Main.Scene = new BABYLON.Scene(Main.Engine);
+    this.resize();
 
     let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.93, 0.06, 0.36), Main.Scene);
     sun.intensity = 0.8;
@@ -24,6 +26,9 @@ class Main {
     cloud.intensity = 0.3;
     cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
     cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+
+    Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
+    Main.Scene.activeCamera = Main.MenuCamera;
 
     let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, Main.Scene);
     skybox.infiniteDistance = true;
@@ -38,21 +43,7 @@ class Main {
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     skybox.material = skyboxMaterial;
 
-    Loader.AddStaticIntoScene("asteroid-2", Main.Scene, 0, 0, 20, 1, 0, 0, 0, () => {
-      for (let i: number = 0; i < 200; i++) {
-        Loader.AddStaticIntoScene(
-          "asteroid-2",
-          Main.Scene,
-          Math.random() * 400 - 200,
-          Math.random() * 40 - 20,
-          Math.random() * 400 - 200,
-          Math.random() * 4.5 + 0.5,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2,
-          Math.random() * Math.PI * 2
-        );
-      }
-    });
+    Loader.LoadScene("scene-0", Main.Scene);
 
     let w: number = Main.Canvas.width * 0.95;
     let h: number = Main.Canvas.height * 0.95;
@@ -69,8 +60,27 @@ class Main {
     });
 
     window.addEventListener("resize", () => {
-      Main.Engine.resize();
+      this.resize();
     });
+  }
+
+  public resize(): void {
+    Main.Engine.resize();
+    let w: number = Main.Canvas.width * 0.95;
+    let h: number = Main.Canvas.height * 0.95;
+    let size: number = Math.min(w, h) * 0.8;
+    $(".cinematic-frame").css("width", size);
+    $(".cinematic-frame").css("height", size);
+    $(".cinematic-frame").css("bottom", h / 2 - size / 2);
+    $(".cinematic-frame").css("left", w / 2 - size / 2);
+  }
+
+  public static Play(): void {
+    $("#target1").show();
+    $("#target2").show();
+    $("#target3").show();
+    $("#play-frame").hide();
+    Main.Scene.activeCamera = Main.GameCamera;
   }
 }
 
@@ -80,7 +90,8 @@ window.addEventListener("DOMContentLoaded", () => {
   game.animate();
 
   let player: SpaceShip = new SpaceShip("Player", Main.Scene);
-  Main.Camera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+  Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+  Main.GameCamera.setEnabled(false);
   player.initialize(
     "./datas/spaceship.babylon",
     () => {
@@ -90,6 +101,7 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 
+  /*
   let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
   foe.initialize(
     "./datas/spaceship.babylon",
@@ -109,4 +121,9 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
   friend.position.copyFromFloats(30, 30, 30);
+  */
+
+  $("#play").on("click", () => {
+    Main.Play();
+  });
 });

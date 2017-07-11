@@ -12,7 +12,7 @@
 </head>
 <body>
   <div class="page-header text-center">
-    <h1>BabylonJS - SpaceScout</h1>
+    <h1 style="font-family: 'oneday'">BabylonJS - SpaceScout</h1>
     requires modern webGL compatible web-browser with javascript enabled. Not mobile responsive (yet...)
   </div>
   <div class="row">
@@ -20,9 +20,32 @@
     </div>
     <div class="col-xs-10" id="canvas-zone">
       <canvas id="render-canvas"></canvas>
-      <img id="target1" src="./datas/target1.png"></img>
-      <img id="target2" src="./datas/target2.png"></img>
-      <img id="target3" src="./datas/target3.png"></img>
+      <img id="target1" src="./datas/target1.png" hidden></img>
+      <img id="target2" src="./datas/target2.png" hidden></img>
+      <img id="target3" src="./datas/target3.png" hidden></img>
+      <div id="play-frame" class="cinematic-frame" hidden>
+        <div id="play">Play</div>
+      </div>
+      <div id="scene-0-1" class="cinematic-frame" hidden>
+        <p><h3 class="cinematic-title">Location</h3>NGC  3132  -  Area  3  -  Sector  7</p>
+        <p><h3 class="cinematic-title">Date</h3>Thursday,  May  4th  3054</p>
+        <div class="cinematic-text"><b>1031 years</b> has passed since earthling civilizations united and started spreading through their galaxy.</div>
+      </div>
+      <div id="scene-0-2" class="cinematic-frame" hidden>
+        <p><h3 class="cinematic-title">Location</h3>NGC  3132  -  Area  3  -  Sector  7</p>
+        <p><h3 class="cinematic-title">Date</h3>Thursday,  May  4th  3054</p>
+        <div class="cinematic-text">Under one Man impulse, mankind <b>boundaries where pushed away</b>, reaching new stars to behold and new worlds to explore.</div>
+      </div>
+      <div id="scene-0-3" class="cinematic-frame" hidden>
+        <p><h3 class="cinematic-title">Location</h3>NGC  3132  -  Area  3  -  Sector  7</p>
+        <p><h3 class="cinematic-title">Date</h3>Thursday,  May  4th  3054</p>
+        <div class="cinematic-text">Today, Captain of scout fleet <b>Jack Chems</b> is finding a way for the convoy between asteroids, 1 parsec ahead the mothership.</div>
+      </div>
+      <div id="scene-0-4" class="cinematic-frame" hidden>
+        <p><h3 class="cinematic-title">Location</h3>NGC  3132  -  Area  3  -  Sector  7</p>
+        <p><h3 class="cinematic-title">Date</h3>Thursday,  May  4th  3054</p>
+        <div class="cinematic-text">Once again, no-one is further from earth than Captain of scout fleet <b>Jack Chems</b>.</div>
+      </div>
     </div>
     <div class="col-xs-1">
     </div>

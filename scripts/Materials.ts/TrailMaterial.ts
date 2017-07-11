@@ -30,7 +30,7 @@ class TrailMaterial extends BABYLON.ShaderMaterial {
     );
     this.getScene().registerBeforeRender(() => {
       this.setFloat("alpha", this.alpha);
-      this.setVector3("cameraPosition", Main.Camera.position);
+      this.setVector3("cameraPosition", Main.MenuCamera.position);
     });
   }
 }
