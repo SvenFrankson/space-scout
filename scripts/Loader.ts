@@ -28,6 +28,7 @@ interface ICinematicFrame {
 
 class Loader {
 
+  private static _overrideDelay: number;
   private static _loadedStatics: Array<Array<BABYLON.AbstractMesh>> = [];
 
   public static LoadScene(name: string, scene: BABYLON.Scene): void {
@@ -56,7 +57,7 @@ class Loader {
         () => {
           Loader.RunCinematic(data, frameIndex + 1);
         },
-        data.frames[frameIndex].delay
+        Loader._overrideDelay?Loader._overrideDelay:data.frames[frameIndex].delay
       );
     } else {
       $("#play-frame").show();

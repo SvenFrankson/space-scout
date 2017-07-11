@@ -81,7 +81,7 @@ var Loader = (function () {
             $("#" + currentId).show();
             setTimeout(function () {
                 Loader.RunCinematic(data, frameIndex + 1);
-            }, data.frames[frameIndex].delay);
+            }, Loader._overrideDelay ? Loader._overrideDelay : data.frames[frameIndex].delay);
         }
         else {
             $("#play-frame").show();
