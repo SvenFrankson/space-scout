@@ -1,13 +1,8 @@
-var __extends = (this && this.__extends) || (function () {
-    var extendStatics = Object.setPrototypeOf ||
-        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
-        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
-    return function (d, b) {
-        extendStatics(d, b);
-        function __() { this.constructor = d; }
-        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-    };
-})();
+var __extends = (this && this.__extends) || function (d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+};
 var Comlink = (function () {
     function Comlink() {
     }
@@ -207,6 +202,7 @@ var Loader = (function () {
     };
     return Loader;
 }());
+Loader._overrideDelay = 100;
 Loader._loadedStatics = [];
 var State;
 (function (State) {
@@ -317,7 +313,100 @@ window.addEventListener("DOMContentLoaded", function () {
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
     });
+    var friend = new SpaceShip("Player", Main.Scene);
+    friend.initialize("./datas/spaceship.babylon", function () {
+        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
+        friend.attachControler(friendIA);
+    });
+    friend.position.copyFromFloats(30, 30, 30);
 });
+var Flash = (function () {
+    function Flash() {
+        this.source = BABYLON.Vector3.Zero();
+        this.distance = 11;
+        this.speed = 0.02;
+        this.resetLimit = 10;
+    }
+    return Flash;
+}());
+var ShieldMaterial = (function (_super) {
+    __extends(ShieldMaterial, _super);
+    function ShieldMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "shield", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this._flash1 = new Flash();
+        _this._color = new BABYLON.Color3(1, 1, 1);
+        _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
+        _this.getScene().registerBeforeRender(function () {
+            _this._flash1.distance += _this._flash1.speed;
+            _this.setVector3("source1", _this._flash1.source);
+            _this.setFloat("sqrSourceDist1", _this._flash1.distance * _this._flash1.distance);
+        });
+        return _this;
+    }
+    Object.defineProperty(ShieldMaterial.prototype, "color", {
+        get: function () {
+            return this._color;
+        },
+        set: function (v) {
+            this._color = v;
+            this.setColor3("color", this._color);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ShieldMaterial.prototype.flashAt = function (position, speed) {
+        if (this._flash1.distance > this._flash1.resetLimit) {
+            this._flash1.distance = 0.01;
+            this._flash1.source.copyFrom(position);
+            this._flash1.speed = speed;
+        }
+    };
+    return ShieldMaterial;
+}(BABYLON.ShaderMaterial));
+var TrailMaterial = (function (_super) {
+    __extends(TrailMaterial, _super);
+    function TrailMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "trail", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this._diffuseColor1 = new BABYLON.Color4(1, 1, 1, 1);
+        _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
+        _this.getScene().registerBeforeRender(function () {
+            _this.setFloat("alpha", _this.alpha);
+            _this.setVector3("cameraPosition", Main.MenuCamera.position);
+        });
+        return _this;
+    }
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor1", {
+        get: function () {
+            return this._diffuseColor1;
+        },
+        set: function (v) {
+            this._diffuseColor1 = v;
+            this.setColor4("diffuseColor1", this._diffuseColor1);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor2", {
+        get: function () {
+            return this._diffuseColor2;
+        },
+        set: function (v) {
+            this._diffuseColor2 = v;
+            this.setColor4("diffuseColor2", this._diffuseColor2);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return TrailMaterial;
+}(BABYLON.ShaderMaterial));
 var SpaceMath = (function () {
     function SpaceMath() {
     }
@@ -636,43 +725,74 @@ var IIABehaviour;
 (function (IIABehaviour) {
     IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
     IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
+    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
+    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
 })(IIABehaviour || (IIABehaviour = {}));
 var SpaceShipIA = (function () {
     function SpaceShipIA(spaceShip, target, scene) {
-        this._forwardPow = 20;
-        this._rollPow = 3;
-        this._yawPow = 3;
-        this._pitchPow = 3;
-        this._mode = IIABehaviour.Track;
+        this._forwardPow = 10;
+        this._rollPow = 2.5;
+        this._yawPow = 1.5;
+        this._pitchPow = 1.5;
+        this._mode = IIABehaviour.Follow;
         this._spaceShip = spaceShip;
         this._target = target;
         this._scene = scene;
     }
     SpaceShipIA.prototype.checkInputs = function (dt) {
-        var direction = this._target.position.subtract(this._spaceShip.position);
-        var distance = direction.length();
-        direction.normalize();
-        this._checkMode(dt, direction, distance);
+        this._checkMode(dt);
         if (this._mode === IIABehaviour.Track) {
-            this.track(dt, direction, distance);
+            this.track(dt);
         }
         else if (this._mode === IIABehaviour.Escape) {
-            this.escape(dt, direction, distance);
+            this.escape(dt);
+        }
+        else if (this._mode === IIABehaviour.Follow) {
+            this.follow(dt);
+        }
+        else if (this._mode === IIABehaviour.GoTo) {
+            this.goTo(dt);
         }
     };
-    SpaceShipIA.prototype._checkMode = function (dt, direction, distance) {
+    SpaceShipIA.prototype._checkMode = function (dt) {
         if (this._mode === IIABehaviour.Track) {
+            var direction = this._target.position.subtract(this._spaceShip.position);
+            var distance = direction.length();
+            direction.normalize();
             if (distance < 10) {
                 this._mode = IIABehaviour.Escape;
             }
         }
         else if (this._mode === IIABehaviour.Escape) {
+            var direction = this._target.position.subtract(this._spaceShip.position);
+            var distance = direction.length();
+            direction.normalize();
             if (distance > 100) {
                 this._mode = IIABehaviour.Track;
             }
         }
+        else if (this._mode === IIABehaviour.Follow) {
+            var direction = this._target.position.subtract(this._spaceShip.position);
+            var distance = direction.length();
+            direction.normalize();
+            if (distance < 20) {
+                this._targetPosition = this._target.position.add(this._target.localZ.scale(50));
+                this._mode = IIABehaviour.GoTo;
+            }
+        }
+        else if (this._mode === IIABehaviour.GoTo) {
+            var direction = this._targetPosition.subtract(this._spaceShip.position);
+            var distance = direction.length();
+            direction.normalize();
+            if (distance < 10) {
+                this._mode = IIABehaviour.Follow;
+            }
+        }
     };
-    SpaceShipIA.prototype.track = function (dt, direction, distance) {
+    SpaceShipIA.prototype.track = function (dt) {
+        var direction = this._target.position.subtract(this._spaceShip.position);
+        var distance = direction.length();
+        direction.normalize();
         if (distance > 10) {
             this._spaceShip.forward += this._forwardPow * dt;
         }
@@ -686,7 +806,40 @@ var SpaceShipIA = (function () {
         var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
         this._spaceShip.roll += this._rollPow * rollInput * dt;
     };
-    SpaceShipIA.prototype.escape = function (dt, direction, distance) {
+    SpaceShipIA.prototype.follow = function (dt) {
+        var direction = this._target.position.subtract(this._spaceShip.position);
+        var distance = direction.length();
+        direction.normalize();
+        if (distance > 20) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    SpaceShipIA.prototype.goTo = function (dt) {
+        var direction = this._targetPosition.subtract(this._spaceShip.position);
+        var distance = direction.length();
+        direction.normalize();
+        if (distance > 10) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+    };
+    SpaceShipIA.prototype.escape = function (dt) {
+        var direction = this._target.position.subtract(this._spaceShip.position);
+        direction.normalize();
         this._spaceShip.forward += this._forwardPow * dt;
         var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
         var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
@@ -895,90 +1048,3 @@ var TrailMesh = (function (_super) {
     };
     return TrailMesh;
 }(BABYLON.Mesh));
-var Flash = (function () {
-    function Flash() {
-        this.source = BABYLON.Vector3.Zero();
-        this.distance = 11;
-        this.speed = 0.02;
-        this.resetLimit = 10;
-    }
-    return Flash;
-}());
-var ShieldMaterial = (function (_super) {
-    __extends(ShieldMaterial, _super);
-    function ShieldMaterial(name, scene) {
-        var _this = _super.call(this, name, scene, "shield", {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        }) || this;
-        _this._flash1 = new Flash();
-        _this._color = new BABYLON.Color3(1, 1, 1);
-        _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
-        _this.getScene().registerBeforeRender(function () {
-            _this._flash1.distance += _this._flash1.speed;
-            _this.setVector3("source1", _this._flash1.source);
-            _this.setFloat("sqrSourceDist1", _this._flash1.distance * _this._flash1.distance);
-        });
-        return _this;
-    }
-    Object.defineProperty(ShieldMaterial.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (v) {
-            this._color = v;
-            this.setColor3("color", this._color);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ShieldMaterial.prototype.flashAt = function (position, speed) {
-        if (this._flash1.distance > this._flash1.resetLimit) {
-            this._flash1.distance = 0.01;
-            this._flash1.source.copyFrom(position);
-            this._flash1.speed = speed;
-        }
-    };
-    return ShieldMaterial;
-}(BABYLON.ShaderMaterial));
-var TrailMaterial = (function (_super) {
-    __extends(TrailMaterial, _super);
-    function TrailMaterial(name, scene) {
-        var _this = _super.call(this, name, scene, "trail", {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        }) || this;
-        _this._diffuseColor1 = new BABYLON.Color4(1, 1, 1, 1);
-        _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
-        _this.getScene().registerBeforeRender(function () {
-            _this.setFloat("alpha", _this.alpha);
-            _this.setVector3("cameraPosition", Main.MenuCamera.position);
-        });
-        return _this;
-    }
-    Object.defineProperty(TrailMaterial.prototype, "diffuseColor1", {
-        get: function () {
-            return this._diffuseColor1;
-        },
-        set: function (v) {
-            this._diffuseColor1 = v;
-            this.setColor4("diffuseColor1", this._diffuseColor1);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TrailMaterial.prototype, "diffuseColor2", {
-        get: function () {
-            return this._diffuseColor2;
-        },
-        set: function (v) {
-            this._diffuseColor2 = v;
-            this.setColor4("diffuseColor2", this._diffuseColor2);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return TrailMaterial;
-}(BABYLON.ShaderMaterial));

@@ -133,17 +133,6 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
 
-  /*
-  let foe: SpaceShip = new SpaceShip("Player", Main.Scene);
-  foe.initialize(
-    "./datas/spaceship.babylon",
-    () => {
-      let foeIA: SpaceShipIA = new SpaceShipIA(foe, player, Main.Scene);
-      foe.attachControler(foeIA);
-    }
-  );
-  foe.position.copyFromFloats(-30, -30, -30);
-
   let friend: SpaceShip = new SpaceShip("Player", Main.Scene);
   friend.initialize(
     "./datas/spaceship.babylon",
@@ -153,5 +142,4 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   );
   friend.position.copyFromFloats(30, 30, 30);
-  */
 });
