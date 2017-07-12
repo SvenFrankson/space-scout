@@ -788,6 +788,7 @@ var SpaceShipIA = (function () {
                 this._mode = IIABehaviour.Follow;
             }
         }
+        $("#behaviour").text(IIABehaviour[this._mode] + "");
     };
     SpaceShipIA.prototype.track = function (dt) {
         var direction = this._target.position.subtract(this._spaceShip.position);

@@ -68,6 +68,7 @@ class SpaceShipIA {
         this._mode = IIABehaviour.Follow;
       }
     }
+    $("#behaviour").text(IIABehaviour[this._mode] + "");
   }
 
   public track(dt: number): void {
