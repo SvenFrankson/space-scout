@@ -3,6 +3,86 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var IIABehaviour;
+(function (IIABehaviour) {
+    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
+    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
+    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
+    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
+})(IIABehaviour || (IIABehaviour = {}));
+var SpaceShipAI = (function () {
+    function SpaceShipAI(spaceShip, scene) {
+        this._forwardPow = 10;
+        this._rollPow = 2.5;
+        this._yawPow = 3;
+        this._pitchPow = 3;
+        this._spaceShip = spaceShip;
+        this._scene = scene;
+    }
+    return SpaceShipAI;
+}());
+var WingManAI = (function (_super) {
+    __extends(WingManAI, _super);
+    function WingManAI(spaceShip, leader, groupPosition, scene) {
+        var _this = _super.call(this, spaceShip, scene) || this;
+        _this._targetPosition = BABYLON.Vector3.Zero();
+        _this._direction = new BABYLON.Vector3(0, 0, 1);
+        _this._distance = 1;
+        _this._leader = leader;
+        _this._groupPosition = groupPosition;
+        _this._mode = IIABehaviour.Follow;
+        return _this;
+    }
+    WingManAI.prototype.checkInputs = function (dt) {
+        this._checkMode(dt);
+        this._goTo(dt);
+    };
+    WingManAI.prototype.commandPosition = function (newPosition) {
+        this._targetPosition.copyFrom(newPosition);
+        this._mode = IIABehaviour.GoTo;
+        Comlink.Display(Dialogs.randomNeutralCommand(), 5000);
+    };
+    WingManAI.prototype._checkMode = function (dt) {
+        if (this._mode === IIABehaviour.Follow) {
+            this._targetPosition.copyFrom(this._groupPosition);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.getWorldMatrix(), this._targetPosition);
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._targetPosition.copyFromFloats(-this._groupPosition.x, this._groupPosition.y, this._groupPosition.z);
+                BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.getWorldMatrix(), this._targetPosition);
+                this._mode = IIABehaviour.GoTo;
+            }
+        }
+        else if (this._mode === IIABehaviour.GoTo) {
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._mode = IIABehaviour.Follow;
+            }
+        }
+        $("#behaviour").text(IIABehaviour[this._mode]);
+    };
+    WingManAI.prototype._goTo = function (dt) {
+        if (this._distance > 2 * this._spaceShip.forward) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._leader.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    return WingManAI;
+}(SpaceShipAI));
 var Comlink = (function () {
     function Comlink() {
     }
@@ -22,6 +102,22 @@ var Comlink = (function () {
     };
     return Comlink;
 }());
+var Dialogs = (function () {
+    function Dialogs() {
+    }
+    Dialogs.randomNeutralCommand = function () {
+        var index = Math.floor(Math.random() * Dialogs.neutralCommands.length);
+        return Dialogs.neutralCommands[index];
+    };
+    return Dialogs;
+}());
+Dialogs.neutralCommands = [
+    ["- Copy that."],
+    ["- Loud and clear, I'm on it."],
+    ["- I'll check it for you captain."],
+    ["- Affirmative."],
+    ["- Roger. Wilco."]
+];
 var Intersection = (function () {
     function Intersection() {
     }
@@ -312,13 +408,14 @@ window.addEventListener("DOMContentLoaded", function () {
         var playerControl = new SpaceShipInputs(player, Main.Scene);
         player.attachControler(playerControl);
         playerControl.attachControl(Main.Canvas);
+        var friend = new SpaceShip("Player", Main.Scene);
+        friend.initialize("./datas/spaceship.babylon", function () {
+            var friendIA = new WingManAI(friend, player, new BABYLON.Vector3(30, -15, -10), Main.Scene);
+            friend.attachControler(friendIA);
+            playerControl.wingMen.push(friendIA);
+        });
+        friend.position.copyFromFloats(30, 30, 30);
     });
-    var friend = new SpaceShip("Player", Main.Scene);
-    friend.initialize("./datas/spaceship.babylon", function () {
-        var friendIA = new SpaceShipIA(friend, player, Main.Scene);
-        friend.attachControler(friendIA);
-    });
-    friend.position.copyFromFloats(30, 30, 30);
 });
 var Flash = (function () {
     function Flash() {
@@ -721,141 +818,6 @@ var SpaceShipCamera = (function (_super) {
     };
     return SpaceShipCamera;
 }(BABYLON.FreeCamera));
-var IIABehaviour;
-(function (IIABehaviour) {
-    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
-    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
-    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
-    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
-})(IIABehaviour || (IIABehaviour = {}));
-var SpaceShipIA = (function () {
-    function SpaceShipIA(spaceShip, target, scene) {
-        this._forwardPow = 10;
-        this._rollPow = 2.5;
-        this._yawPow = 1.5;
-        this._pitchPow = 1.5;
-        this._mode = IIABehaviour.Follow;
-        this._spaceShip = spaceShip;
-        this._target = target;
-        this._scene = scene;
-    }
-    SpaceShipIA.prototype.checkInputs = function (dt) {
-        this._checkMode(dt);
-        if (this._mode === IIABehaviour.Track) {
-            this.track(dt);
-        }
-        else if (this._mode === IIABehaviour.Escape) {
-            this.escape(dt);
-        }
-        else if (this._mode === IIABehaviour.Follow) {
-            this.follow(dt);
-        }
-        else if (this._mode === IIABehaviour.GoTo) {
-            this.goTo(dt);
-        }
-    };
-    SpaceShipIA.prototype._checkMode = function (dt) {
-        if (this._mode === IIABehaviour.Track) {
-            var direction = this._target.position.subtract(this._spaceShip.position);
-            var distance = direction.length();
-            direction.normalize();
-            if (distance < 10) {
-                this._mode = IIABehaviour.Escape;
-            }
-        }
-        else if (this._mode === IIABehaviour.Escape) {
-            var direction = this._target.position.subtract(this._spaceShip.position);
-            var distance = direction.length();
-            direction.normalize();
-            if (distance > 100) {
-                this._mode = IIABehaviour.Track;
-            }
-        }
-        else if (this._mode === IIABehaviour.Follow) {
-            var direction = this._target.position.subtract(this._spaceShip.position);
-            var distance = direction.length();
-            direction.normalize();
-            if (distance < 20) {
-                this._targetPosition = this._target.position.add(this._target.localZ.scale(50));
-                this._mode = IIABehaviour.GoTo;
-            }
-        }
-        else if (this._mode === IIABehaviour.GoTo) {
-            var direction = this._targetPosition.subtract(this._spaceShip.position);
-            var distance = direction.length();
-            direction.normalize();
-            if (distance < 10) {
-                this._mode = IIABehaviour.Follow;
-            }
-        }
-        $("#behaviour").text(IIABehaviour[this._mode] + "");
-    };
-    SpaceShipIA.prototype.track = function (dt) {
-        var direction = this._target.position.subtract(this._spaceShip.position);
-        var distance = direction.length();
-        direction.normalize();
-        if (distance > 10) {
-            this._spaceShip.forward += this._forwardPow * dt;
-        }
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
-    };
-    SpaceShipIA.prototype.follow = function (dt) {
-        var direction = this._target.position.subtract(this._spaceShip.position);
-        var distance = direction.length();
-        direction.normalize();
-        if (distance > 20) {
-            this._spaceShip.forward += this._forwardPow * dt;
-        }
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
-    };
-    SpaceShipIA.prototype.goTo = function (dt) {
-        var direction = this._targetPosition.subtract(this._spaceShip.position);
-        var distance = direction.length();
-        direction.normalize();
-        if (distance > 10) {
-            this._spaceShip.forward += this._forwardPow * dt;
-        }
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-    };
-    SpaceShipIA.prototype.escape = function (dt) {
-        var direction = this._target.position.subtract(this._spaceShip.position);
-        direction.normalize();
-        this._spaceShip.forward += this._forwardPow * dt;
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        yawInput = -BABYLON.MathTools.Sign(yawInput) * (1 - Math.abs(yawInput));
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        pitchInput = -BABYLON.MathTools.Sign(pitchInput) * (1 - Math.abs(pitchInput));
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-        var angleAroundZ = SpaceMath.AngleFromToAround(this._target.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
-    };
-    return SpaceShipIA;
-}());
 var SpaceShipInputs = (function () {
     function SpaceShipInputs(spaceShip, scene) {
         this._active = false;
@@ -864,6 +826,7 @@ var SpaceShipInputs = (function () {
         this._rollPow = 2.5;
         this._yawPow = 1.5;
         this._pitchPow = 1.5;
+        this.wingMen = [];
         this._spaceShip = spaceShip;
         this._scene = scene;
     }
@@ -896,6 +859,11 @@ var SpaceShipInputs = (function () {
             }
             if (e.keyCode === 81) {
                 _this._left = false;
+            }
+            if (e.keyCode === 69) {
+                if (_this.wingMen[0]) {
+                    _this.wingMen[0].commandPosition(BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(0, 0, 100), _this._spaceShip.getWorldMatrix()));
+                }
             }
         });
         canvas.addEventListener("mouseover", function (e) {

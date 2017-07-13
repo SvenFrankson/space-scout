@@ -13,6 +13,8 @@ class SpaceShipInputs {
   private _scene: BABYLON.Scene;
   private _canvas: HTMLCanvasElement;
 
+  public wingMen: WingManAI[] = [];
+
   constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
     this._spaceShip = spaceShip;
     this._scene = scene;
@@ -51,6 +53,15 @@ class SpaceShipInputs {
         }
         if (e.keyCode === 81) {
           this._left = false;
+        }
+        if (e.keyCode === 69) {
+          if (this.wingMen[0]) {
+            this.wingMen[0].commandPosition(
+              BABYLON.Vector3.TransformCoordinates(
+                new BABYLON.Vector3(0, 0, 100),
+                this._spaceShip.getWorldMatrix())
+            );
+          }
         }
       }
     );
