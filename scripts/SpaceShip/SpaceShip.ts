@@ -1,7 +1,3 @@
-interface ISpaceShipControler {
-  checkInputs: (dt: number) => void;
-}
-
 class SpaceShip extends BABYLON.Mesh {
 
   private _forwardDrag: number = 0.01;
@@ -60,7 +56,7 @@ class SpaceShip extends BABYLON.Mesh {
   public get localZ(): BABYLON.Vector3 {
     return this._localZ;
   }
-  private _controler: ISpaceShipControler;
+  private _controler: SpaceShipControler;
   private _colliders: Array<BABYLON.BoundingSphere> = [];
   private _shield: Shield;
   public wingTipRight: BABYLON.Mesh;
@@ -134,7 +130,7 @@ class SpaceShip extends BABYLON.Mesh {
     this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
   }
 
-  public attachControler(controler: ISpaceShipControler): void {
+  public attachControler(controler: SpaceShipControler): void {
     this._controler = controler;
   }
 

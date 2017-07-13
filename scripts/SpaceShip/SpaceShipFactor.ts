@@ -1,0 +1,37 @@
+enum ISquadRole {
+  Leader,
+  WingMan
+}
+
+interface ISpaceShip {
+  name: string;
+  x: number;
+  y: number;
+  z: number;
+  team: number;
+  role: ISquadRole;
+}
+
+class SpaceShipFactory {
+  public static AddSpaceShipToScene(
+    data: ISpaceShip,
+    scene: BABYLON.Scene,
+    callback?: () => {}
+  ): void {
+    let spaceShip: SpaceShip = new SpaceShip(data.name, Main.Scene);
+    spaceShip.initialize(
+      "./datas/spaceship.babylon",
+      () => {
+        let spaceshipAI: WingManAI;
+        if (data.role === ISquadRole.WingMan) {
+          spaceshipAI = new WingManAI(spaceShip, new BABYLON.Vector3(30, -15, -10), data.role, data.team, Main.Scene);
+        }
+        spaceShip.attachControler(spaceshipAI);
+        if (callback) {
+          callback();
+        }
+      }
+    );
+    spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+  }
+}

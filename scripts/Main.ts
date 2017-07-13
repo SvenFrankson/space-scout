@@ -130,16 +130,16 @@ window.addEventListener("DOMContentLoaded", () => {
       let playerControl: SpaceShipInputs = new SpaceShipInputs(player, Main.Scene);
       player.attachControler(playerControl);
       playerControl.attachControl(Main.Canvas);
-      let friend: SpaceShip = new SpaceShip("Player", Main.Scene);
-      friend.initialize(
-        "./datas/spaceship.babylon",
-        () => {
-          let friendIA: WingManAI = new WingManAI(friend, player, new BABYLON.Vector3(30, -15, -10), Main.Scene);
-          friend.attachControler(friendIA);
-          playerControl.wingMen.push(friendIA);
-        }
-      );
-      friend.position.copyFromFloats(30, 30, 30);
     }
+  );
+
+  SpaceShipFactory.AddSpaceShipToScene(
+    {
+      name: "Johnson",
+      x: 0, y: 0, z: 30,
+      team: 0,
+      role: ISquadRole.WingMan
+    },
+    Main.Scene
   );
 });

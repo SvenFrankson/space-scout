@@ -1,3 +1,5 @@
+/// <reference path="../SpaceShipControler.ts"/>
+
 enum IIABehaviour {
   Track,
   Escape,
@@ -5,8 +7,7 @@ enum IIABehaviour {
   GoTo
 }
 
-class SpaceShipAI {
-  protected _spaceShip: SpaceShip;
+abstract class SpaceShipAI extends SpaceShipControler {
   protected _forwardPow: number = 10;
   // private _backwardPow: number = 10;
   protected _rollPow: number = 2.5;
@@ -16,8 +17,10 @@ class SpaceShipAI {
   // private _canvas: HTMLCanvasElement;
   protected _mode: IIABehaviour;
 
-  constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
-    this._spaceShip = spaceShip;
+  constructor(spaceShip: SpaceShip, role: ISquadRole, team: number, scene: BABYLON.Scene) {
+    super(spaceShip, role, team);
     this._scene = scene;
   }
+
+  public abstract checkInputs(dt: number): void;
 }

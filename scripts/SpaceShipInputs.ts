@@ -1,6 +1,5 @@
-class SpaceShipInputs {
+class SpaceShipInputs extends SpaceShipControler {
   private _active: boolean = false;
-  private _spaceShip: SpaceShip;
   private _forwardPow: number = 10;
   private _forward: boolean;
   private _backwardPow: number = 10;
@@ -18,6 +17,7 @@ class SpaceShipInputs {
   private _pointerDisc: BABYLON.Mesh;
 
   constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
+    super(spaceShip, ISquadRole.Leader, 0);
     this._spaceShip = spaceShip;
     this._scene = scene;
     this._loadPointer();
@@ -160,6 +160,7 @@ class SpaceShipInputs {
   }
 
   public commandWingManGoTo(): void {
+    this._findWingMen();
     if (this.wingMen[0]) {
       let targetPosition: BABYLON.Vector3 = BABYLON.Vector3.TransformCoordinates(
         new BABYLON.Vector3(0, 0, 100),
@@ -240,5 +241,17 @@ class SpaceShipInputs {
     let clip: number = 0.72 * hSDisplay - (this._spaceShip.forward) / 40 * 0.38 * hSDisplay;
     clip = Math.floor(clip);
     $("#speed-display").css("clip", "rect(" + clip +  "px, " + wSDisplay + "px, " + hSDisplay + "px, 0px)");
+  }
+
+  private _findWingMen(): void {
+    for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
+      if (SpaceShipControler.Instances[i].team === this.team) {
+        if (SpaceShipControler.Instances[i] instanceof WingManAI) {
+          if (this.wingMen.indexOf(SpaceShipControler.Instances[i] as WingManAI) === -1) {
+            this.wingMen.push(SpaceShipControler.Instances[i] as WingManAI);
+          }
+        }
+      }
+    }
   }
 }
