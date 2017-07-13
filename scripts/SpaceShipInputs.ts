@@ -14,10 +14,96 @@ class SpaceShipInputs {
   private _canvas: HTMLCanvasElement;
 
   public wingMen: WingManAI[] = [];
+  private _pointerCursor: BABYLON.Mesh;
+  private _pointerDisc: BABYLON.Mesh;
 
   constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
     this._spaceShip = spaceShip;
     this._scene = scene;
+    this._loadPointer();
+  }
+
+  private _loadPointer(): void {
+    BABYLON.SceneLoader.ImportMesh(
+      "",
+      "./datas/target.babylon",
+      "",
+      Main.Scene,
+      (
+        meshes: Array<BABYLON.AbstractMesh>,
+        particleSystems: Array<BABYLON.ParticleSystem>,
+        skeletons: Array<BABYLON.Skeleton>
+      ) => {
+        for (let i: number = 0; i < meshes.length; i++) {
+          meshes[i].rotationQuaternion = BABYLON.Quaternion.Identity();
+          meshes[i].material.alpha = 0;
+          meshes[i].enableEdgesRendering();
+          meshes[i].edgesColor.copyFromFloats(1, 1, 1, 1);
+          meshes[i].edgesWidth = 2;
+          if (meshes[i].name.indexOf("Cursor") !== -1) {
+            this._pointerCursor = meshes[i] as BABYLON.Mesh;
+            let anim: BABYLON.Animation = new BABYLON.Animation(
+              "popoff",
+              "scaling",
+              60,
+              BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+              BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+            );
+
+            let keys: Array<{frame: number, value: BABYLON.Vector3}> = new Array<{frame: number, value: BABYLON.Vector3}>();
+            keys.push({
+              frame: 0,
+              value: new BABYLON.Vector3(10, 10, 10)
+            });
+            keys.push({
+              frame: 60,
+              value: new BABYLON.Vector3(0.1, 0.1, 0.1)
+            });
+            anim.setKeys(keys);
+            anim.addEvent(
+              new BABYLON.AnimationEvent(
+                60,
+                () => {
+                  this._pointerCursor.isVisible = false;
+                }
+              )
+            );
+            this._pointerCursor.animations.push(anim);
+          }
+          if (meshes[i].name.indexOf("Disc") !== -1) {
+            this._pointerDisc = meshes[i] as BABYLON.Mesh;
+            let anim: BABYLON.Animation = new BABYLON.Animation(
+              "popon",
+              "scaling",
+              60,
+              BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
+              BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT
+            );
+
+            let keys: Array<{frame: number, value: BABYLON.Vector3}> = new Array<{frame: number, value: BABYLON.Vector3}>();
+            keys.push({
+              frame: 0,
+              value: new BABYLON.Vector3(0.1, 0.1, 0.1)
+            });
+            keys.push({
+              frame: 60,
+              value: new BABYLON.Vector3(10, 10, 10)
+            });
+            anim.setKeys(keys);
+            anim.addEvent(
+              new BABYLON.AnimationEvent(
+                60,
+                () => {
+                  this._pointerDisc.isVisible = false;
+                }
+              )
+            );
+            this._pointerDisc.animations.push(anim);
+          }
+          meshes[i].isVisible = false;
+        }
+      }
+    );
   }
 
   public attachControl(canvas: HTMLCanvasElement): void {
@@ -55,13 +141,7 @@ class SpaceShipInputs {
           this._left = false;
         }
         if (e.keyCode === 69) {
-          if (this.wingMen[0]) {
-            this.wingMen[0].commandPosition(
-              BABYLON.Vector3.TransformCoordinates(
-                new BABYLON.Vector3(0, 0, 100),
-                this._spaceShip.getWorldMatrix())
-            );
-          }
+          this.commandWingManGoTo();
         }
       }
     );
@@ -77,6 +157,26 @@ class SpaceShipInputs {
         this._active = false;
       }
     );
+  }
+
+  public commandWingManGoTo(): void {
+    if (this.wingMen[0]) {
+      let targetPosition: BABYLON.Vector3 = BABYLON.Vector3.TransformCoordinates(
+        new BABYLON.Vector3(0, 0, 100),
+        this._spaceShip.getWorldMatrix()
+      );
+      this.wingMen[0].commandPosition(
+        targetPosition
+      );
+      this._pointerDisc.isVisible = true;
+      this._pointerCursor.isVisible = true;
+      this._pointerDisc.position.copyFrom(targetPosition);
+      this._pointerCursor.position.copyFrom(targetPosition);
+      this._pointerDisc.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
+      this._pointerCursor.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
+      this._scene.beginAnimation(this._pointerDisc, 0, 60);
+      this._scene.beginAnimation(this._pointerCursor, 0, 60);
+    }
   }
 
   public checkInputs(dt: number): void {

@@ -2,7 +2,7 @@ class Comlink {
 
   private static _clearHandle: number;
 
-  public static Display(lines: string[], delay: number = 5000) {
+  public static Display(lines: string[], delay: number = 5000): void {
     if (!isNaN(Comlink._clearHandle)) {
       clearTimeout(Comlink._clearHandle);
     }
@@ -11,7 +11,7 @@ class Comlink {
       text += "<br/>" + lines[i];
     }
     $("#com-link").html(text);
-    setTimeout(
+    Comlink._clearHandle = setTimeout(
       () => {
         $("#com-link").html("");
       },

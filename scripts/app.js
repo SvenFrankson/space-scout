@@ -96,7 +96,7 @@ var Comlink = (function () {
             text += "<br/>" + lines[i];
         }
         $("#com-link").html(text);
-        setTimeout(function () {
+        Comlink._clearHandle = setTimeout(function () {
             $("#com-link").html("");
         }, delay);
     };
@@ -829,7 +829,57 @@ var SpaceShipInputs = (function () {
         this.wingMen = [];
         this._spaceShip = spaceShip;
         this._scene = scene;
+        this._loadPointer();
     }
+    SpaceShipInputs.prototype._loadPointer = function () {
+        var _this = this;
+        BABYLON.SceneLoader.ImportMesh("", "./datas/target.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
+            for (var i = 0; i < meshes.length; i++) {
+                meshes[i].rotationQuaternion = BABYLON.Quaternion.Identity();
+                meshes[i].material.alpha = 0;
+                meshes[i].enableEdgesRendering();
+                meshes[i].edgesColor.copyFromFloats(1, 1, 1, 1);
+                meshes[i].edgesWidth = 2;
+                if (meshes[i].name.indexOf("Cursor") !== -1) {
+                    _this._pointerCursor = meshes[i];
+                    var anim = new BABYLON.Animation("popoff", "scaling", 60, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+                    var keys = new Array();
+                    keys.push({
+                        frame: 0,
+                        value: new BABYLON.Vector3(10, 10, 10)
+                    });
+                    keys.push({
+                        frame: 60,
+                        value: new BABYLON.Vector3(0.1, 0.1, 0.1)
+                    });
+                    anim.setKeys(keys);
+                    anim.addEvent(new BABYLON.AnimationEvent(60, function () {
+                        _this._pointerCursor.isVisible = false;
+                    }));
+                    _this._pointerCursor.animations.push(anim);
+                }
+                if (meshes[i].name.indexOf("Disc") !== -1) {
+                    _this._pointerDisc = meshes[i];
+                    var anim = new BABYLON.Animation("popon", "scaling", 60, BABYLON.Animation.ANIMATIONTYPE_VECTOR3, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+                    var keys = new Array();
+                    keys.push({
+                        frame: 0,
+                        value: new BABYLON.Vector3(0.1, 0.1, 0.1)
+                    });
+                    keys.push({
+                        frame: 60,
+                        value: new BABYLON.Vector3(10, 10, 10)
+                    });
+                    anim.setKeys(keys);
+                    anim.addEvent(new BABYLON.AnimationEvent(60, function () {
+                        _this._pointerDisc.isVisible = false;
+                    }));
+                    _this._pointerDisc.animations.push(anim);
+                }
+                meshes[i].isVisible = false;
+            }
+        });
+    };
     SpaceShipInputs.prototype.attachControl = function (canvas) {
         var _this = this;
         this._canvas = canvas;
@@ -861,9 +911,7 @@ var SpaceShipInputs = (function () {
                 _this._left = false;
             }
             if (e.keyCode === 69) {
-                if (_this.wingMen[0]) {
-                    _this.wingMen[0].commandPosition(BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(0, 0, 100), _this._spaceShip.getWorldMatrix()));
-                }
+                _this.commandWingManGoTo();
             }
         });
         canvas.addEventListener("mouseover", function (e) {
@@ -872,6 +920,20 @@ var SpaceShipInputs = (function () {
         canvas.addEventListener("mouseout", function (e) {
             _this._active = false;
         });
+    };
+    SpaceShipInputs.prototype.commandWingManGoTo = function () {
+        if (this.wingMen[0]) {
+            var targetPosition = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(0, 0, 100), this._spaceShip.getWorldMatrix());
+            this.wingMen[0].commandPosition(targetPosition);
+            this._pointerDisc.isVisible = true;
+            this._pointerCursor.isVisible = true;
+            this._pointerDisc.position.copyFrom(targetPosition);
+            this._pointerCursor.position.copyFrom(targetPosition);
+            this._pointerDisc.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
+            this._pointerCursor.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
+            this._scene.beginAnimation(this._pointerDisc, 0, 60);
+            this._scene.beginAnimation(this._pointerCursor, 0, 60);
+        }
     };
     SpaceShipInputs.prototype.checkInputs = function (dt) {
         if (!this._canvas) {
