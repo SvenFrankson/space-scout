@@ -105,12 +105,22 @@ var Comlink = (function () {
 var Dialogs = (function () {
     function Dialogs() {
     }
+    Dialogs.randomTipsCommand = function () {
+        var index = Math.floor(Math.random() * Dialogs.tipsCommands.length);
+        return Dialogs.tipsCommands[index];
+    };
     Dialogs.randomNeutralCommand = function () {
         var index = Math.floor(Math.random() * Dialogs.neutralCommands.length);
         return Dialogs.neutralCommands[index];
     };
     return Dialogs;
 }());
+Dialogs.tipsCommands = [
+    ["- Sir, you may pilot using your mouse.", "- Move cursor around, the ship should follow, Sir."],
+    ["- Sir, you may accelerate using W.", "- And brake by pressing S, Sir."],
+    ["- Sir, assign tasks to your squad using E or R.", "- Check top-left Team-panel for supervision, Sir."],
+    ["- Sir, use A and D to roll.", "- Do a barrel-roll, Sir."]
+];
 Dialogs.neutralCommands = [
     ["- Copy that."],
     ["- Loud and clear, I'm on it."],
