@@ -31,7 +31,8 @@ class Loader {
   private static _overrideDelay: number = 100;
   private static _loadedStatics: Array<Array<BABYLON.AbstractMesh>> = [];
 
-  public static LoadScene(name: string, scene: BABYLON.Scene): void {
+  public static LoadScene(name: string, scene: BABYLON.Scene, callback?: () => void): void {
+    Main.Level = new Level0();
     $.ajax(
       {
         url: "./datas/scenes/" + name + ".json",
@@ -39,7 +40,16 @@ class Loader {
           Main.Scene.activeCamera = Main.MenuCamera;
           Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
           Loader.RunCinematic(data.cinematic);
-          Loader._loadSceneData(data, scene);
+          Loader._loadSceneData(
+            data,
+            scene,
+            () => {
+              Main.Level.LoadLevel();
+              if (callback) {
+                callback();
+              }
+            }
+          );
         }
       }
     );
@@ -65,8 +75,8 @@ class Loader {
     }
   }
 
-  public static _loadSceneData(data: IScene, scene: BABYLON.Scene): void {
-    Loader.AddStaticsIntoScene(data.statics, scene, undefined, 20);
+  public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {
+    Loader.AddStaticsIntoScene(data.statics, scene, callback, 20);
   }
 
   private static _loadStatic(

@@ -14,6 +14,10 @@ abstract class SpaceShipControler {
     return this._team;
   }
 
+  public get position(): BABYLON.Vector3 {
+    return this.spaceShip.position;
+  }
+
   constructor(spaceShip: SpaceShip, role: ISquadRole, team: number) {
     this._spaceShip = spaceShip;
     this._role = role;

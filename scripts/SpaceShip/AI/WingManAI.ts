@@ -48,7 +48,7 @@ class WingManAI extends SpaceShipAI {
         this._mode = IIABehaviour.Follow;
       }
     }
-    $("#behaviour").text(IIABehaviour[this._mode] + " " + this._targetPosition.x.toFixed(0) + " " + this._targetPosition.y.toFixed(0) + " " + this._targetPosition.z.toFixed(0) );
+    $("#behaviour").text(IIABehaviour[this._mode]);
   }
 
   private _goTo(dt: number): void {

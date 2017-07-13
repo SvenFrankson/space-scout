@@ -25,10 +25,6 @@ var Comlink = (function () {
 var Dialogs = (function () {
     function Dialogs() {
     }
-    Dialogs.randomTipsCommand = function () {
-        var index = Math.floor(Math.random() * Dialogs.tipsCommands.length);
-        return Dialogs.tipsCommands[index];
-    };
     Dialogs.randomNeutralCommand = function () {
         var index = Math.floor(Math.random() * Dialogs.neutralCommands.length);
         return Dialogs.neutralCommands[index];
@@ -101,17 +97,44 @@ var Intersection = (function () {
     return Intersection;
 }());
 Intersection._v = BABYLON.Vector3.Zero();
+var Level0 = (function () {
+    function Level0() {
+    }
+    Level0.prototype.LoadLevel = function () {
+    };
+    Level0.prototype.OnGameStart = function () {
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[0], 10000);
+        }, 3000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[1], 10000);
+        }, 16000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[2], 10000);
+        }, 29000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[3], 10000);
+        }, 42000);
+    };
+    return Level0;
+}());
 var Loader = (function () {
     function Loader() {
     }
-    Loader.LoadScene = function (name, scene) {
+    Loader.LoadScene = function (name, scene, callback) {
+        Main.Level = new Level0();
         $.ajax({
             url: "./datas/scenes/" + name + ".json",
             success: function (data) {
                 Main.Scene.activeCamera = Main.MenuCamera;
                 Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
                 Loader.RunCinematic(data.cinematic);
-                Loader._loadSceneData(data, scene);
+                Loader._loadSceneData(data, scene, function () {
+                    Main.Level.LoadLevel();
+                    if (callback) {
+                        callback();
+                    }
+                });
             }
         });
     };
@@ -133,8 +156,8 @@ var Loader = (function () {
             Main.State = State.Ready;
         }
     };
-    Loader._loadSceneData = function (data, scene) {
-        Loader.AddStaticsIntoScene(data.statics, scene, undefined, 20);
+    Loader._loadSceneData = function (data, scene, callback) {
+        Loader.AddStaticsIntoScene(data.statics, scene, callback, 20);
     };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
@@ -276,7 +299,7 @@ var Main = (function () {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
-        Loader.LoadScene("scene-0", Main.Scene);
+        Loader.LoadScene("level-0", Main.Scene);
     };
     Main.prototype.animate = function () {
         var _this = this;
@@ -323,6 +346,7 @@ var Main = (function () {
         $("#speed-display").show();
         $("#play-frame").hide();
         Main.Scene.activeCamera = Main.GameCamera;
+        Main.Level.OnGameStart();
     };
     return Main;
 }());
@@ -524,6 +548,13 @@ var SpaceShipControler = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(SpaceShipControler.prototype, "position", {
+        get: function () {
+            return this.spaceShip.position;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return SpaceShipControler;
 }());
 SpaceShipControler.Instances = [];
@@ -594,7 +625,7 @@ var WingManAI = (function (_super) {
                 this._mode = IIABehaviour.Follow;
             }
         }
-        $("#behaviour").text(IIABehaviour[this._mode] + " " + this._targetPosition.x.toFixed(0) + " " + this._targetPosition.y.toFixed(0) + " " + this._targetPosition.z.toFixed(0));
+        $("#behaviour").text(IIABehaviour[this._mode]);
     };
     WingManAI.prototype._goTo = function (dt) {
         if (this._distance > 2 * this._spaceShip.forward) {

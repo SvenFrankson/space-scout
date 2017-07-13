@@ -22,6 +22,7 @@ class Main {
   public static Light: BABYLON.HemisphericLight;
   public static MenuCamera: BABYLON.ArcRotateCamera;
   public static GameCamera: SpaceShipCamera;
+  public static Level: ILevel;
 
   constructor(canvasElement: string) {
     Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -59,7 +60,7 @@ class Main {
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     skybox.material = skyboxMaterial;
 
-    Loader.LoadScene("scene-0", Main.Scene);
+    Loader.LoadScene("level-0", Main.Scene);
   }
 
   public animate(): void {
@@ -113,6 +114,7 @@ class Main {
     $("#speed-display").show();
     $("#play-frame").hide();
     Main.Scene.activeCamera = Main.GameCamera;
+    Main.Level.OnGameStart();
   }
 }
 
