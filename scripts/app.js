@@ -8,8 +8,16 @@ var Comlink = (function () {
     }
     Comlink.Display = function (lines, delay) {
         if (delay === void 0) { delay = 5000; }
+        var _loop_1 = function (i) {
+            var id = "com-link-line-" + Comlink._lineCount;
+            Comlink._lineCount++;
+            $("#com-link").append("<div id='" + id + "'>" + lines[i] + "</div>");
+            setTimeout(function () {
+                $("#" + id).remove();
+            }, delay);
+        };
         for (var i = 0; i < lines.length; i++) {
-            $("#com-link").append("<div>" + lines[i] + "</div>");
+            _loop_1(i);
         }
         while ($("#com-link").children().length > 4) {
             $("#com-link").children().get(0).remove();
@@ -17,6 +25,7 @@ var Comlink = (function () {
     };
     return Comlink;
 }());
+Comlink._lineCount = 0;
 var Dialogs = (function () {
     function Dialogs() {
     }

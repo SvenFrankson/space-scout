@@ -78,6 +78,10 @@
     text-align: center;
   }
 
+  .com-link-line {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
   #play-frame {
     position: absolute;
     top: 50%;
