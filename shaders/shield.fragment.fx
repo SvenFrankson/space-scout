@@ -15,7 +15,9 @@ void main(void) {
   float delta1 = sqrSourceDist1 - vSqrSourceDist1;
   float rangeTerm1 = 0.;
   if (delta1 > 0.) {
-    rangeTerm1 = 1. / (delta1 + 1.) * 2.;
+    if (delta1 < 1.) {
+      rangeTerm1 = (cos(delta1 * 2. * 3.14)+1.)/4. + 0.5;
+    }
   }
 
   vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
@@ -27,6 +29,6 @@ void main(void) {
     1.
   );
 
-  gl_FragColor = vec4(color + vec3(fresnelTerm), 1.);
-  gl_FragColor.a = rangeTerm1 * (1. + fresnelTerm);
+  gl_FragColor = vec4(color, 1.);
+  gl_FragColor.a = rangeTerm1;
 }
