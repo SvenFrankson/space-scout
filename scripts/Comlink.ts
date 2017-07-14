@@ -1,21 +1,11 @@
 class Comlink {
 
-  private static _clearHandle: number;
-
   public static Display(lines: string[], delay: number = 5000): void {
-    if (!isNaN(Comlink._clearHandle)) {
-      clearTimeout(Comlink._clearHandle);
+    for (let i: number = 0; i < lines.length; i++) {
+      $("#com-link").append("<div>" + lines[i] + "</div>");
     }
-    let text: string = lines[0];
-    for (let i: number = 1; i < lines.length; i++) {
-      text += "<br/>" + lines[i];
+    while ($("#com-link").children().length > 4) {
+      $("#com-link").children().get(0).remove();
     }
-    $("#com-link").html(text);
-    Comlink._clearHandle = setTimeout(
-      () => {
-        $("#com-link").html("");
-      },
-      delay
-    );
   }
 }

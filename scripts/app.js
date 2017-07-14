@@ -8,17 +8,12 @@ var Comlink = (function () {
     }
     Comlink.Display = function (lines, delay) {
         if (delay === void 0) { delay = 5000; }
-        if (!isNaN(Comlink._clearHandle)) {
-            clearTimeout(Comlink._clearHandle);
+        for (var i = 0; i < lines.length; i++) {
+            $("#com-link").append("<div>" + lines[i] + "</div>");
         }
-        var text = lines[0];
-        for (var i = 1; i < lines.length; i++) {
-            text += "<br/>" + lines[i];
+        while ($("#com-link").children().length > 4) {
+            $("#com-link").children().get(0).remove();
         }
-        $("#com-link").html(text);
-        Comlink._clearHandle = setTimeout(function () {
-            $("#com-link").html("");
-        }, delay);
     };
     return Comlink;
 }());
@@ -251,7 +246,7 @@ var Loader = (function () {
     };
     return Loader;
 }());
-Loader._overrideDelay = 100;
+Loader._overrideDelay = 10;
 Loader._loadedStatics = [];
 var State;
 (function (State) {
