@@ -1,23 +1,39 @@
 class Level0 implements ILevel {
 
-  private _spaceShipIndex: number = 0;
-
   public LoadLevel(scene: BABYLON.Scene): void {
     let beaconMaster: BABYLON.Mesh = Loader.LoadedStatics["beacon"][0];
     if (beaconMaster) {
       let instances: BABYLON.InstancedMesh[] = beaconMaster.instances;
       for (let i: number = 0; i < instances.length; i++) {
         let b: BABYLON.InstancedMesh = instances[i];
+        let emit: BABYLON.Mesh;
+        BABYLON.SceneLoader.ImportMesh(
+          "",
+          "./datas/beacon-emit.babylon",
+          "",
+          scene,
+          (
+            meshes: BABYLON.AbstractMesh[],
+            particleSystems: BABYLON.ParticleSystem[],
+            skeletons: BABYLON.Skeleton[]
+          ) => {
+            if (meshes[0] instanceof BABYLON.Mesh) {
+              emit = meshes[0] as BABYLON.Mesh;
+              emit.position.copyFrom(b.position);
+              emit.rotation.copyFrom(b.rotation);
+              emit.material = new ShieldMaterial("Emiter" + i, scene);
+            }
+          }
+        )
         scene.registerBeforeRender(
           () => {
-            this._spaceShipIndex++;
-            let spaceShip: SpaceShipControler = SpaceShipControler.Instances[this._spaceShipIndex];
-            if (!spaceShip) {
-              this._spaceShipIndex = 0;
-              spaceShip = SpaceShipControler.Instances[this._spaceShipIndex];
-            }
-            if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
-              Comlink.Display(["- Beacon found !"]);
+            for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
+              let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
+              if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                if (emit.material instanceof ShieldMaterial) {
+                  emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
+                }
+              }
             }
           }
         );

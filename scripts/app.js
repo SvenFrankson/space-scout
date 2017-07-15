@@ -578,24 +578,30 @@ var TrailMesh = (function (_super) {
 }(BABYLON.Mesh));
 var Level0 = (function () {
     function Level0() {
-        this._spaceShipIndex = 0;
     }
     Level0.prototype.LoadLevel = function (scene) {
-        var _this = this;
         var beaconMaster = Loader.LoadedStatics["beacon"][0];
         if (beaconMaster) {
             var instances = beaconMaster.instances;
             var _loop_2 = function (i) {
                 var b = instances[i];
-                scene.registerBeforeRender(function () {
-                    _this._spaceShipIndex++;
-                    var spaceShip = SpaceShipControler.Instances[_this._spaceShipIndex];
-                    if (!spaceShip) {
-                        _this._spaceShipIndex = 0;
-                        spaceShip = SpaceShipControler.Instances[_this._spaceShipIndex];
+                var emit;
+                BABYLON.SceneLoader.ImportMesh("", "./datas/beacon-emit.babylon", "", scene, function (meshes, particleSystems, skeletons) {
+                    if (meshes[0] instanceof BABYLON.Mesh) {
+                        emit = meshes[0];
+                        emit.position.copyFrom(b.position);
+                        emit.rotation.copyFrom(b.rotation);
+                        emit.material = new ShieldMaterial("Emiter" + i, scene);
                     }
-                    if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
-                        Comlink.Display(["- Beacon found !"]);
+                });
+                scene.registerBeforeRender(function () {
+                    for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
+                        var spaceShip = SpaceShipControler.Instances[i_1];
+                        if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                            if (emit.material instanceof ShieldMaterial) {
+                                emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
+                            }
+                        }
                     }
                 });
             };
