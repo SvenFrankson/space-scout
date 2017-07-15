@@ -15,8 +15,8 @@ void main(void) {
   float delta1 = sourceDist1 - vSourceDist1;
   float rangeTerm1 = 0.;
   if (delta1 > 0.) {
-    if (delta1 < 2.) {
-        rangeTerm1 = ((sin(delta1*1.5*3.14)+1.)/2.)*((sin(delta1*2.5*3.14)+1.)/2.)*((sin(delta1*3.5*3.14)+1.)/2.) + 0.2;
+    if (delta1 < 1.) {
+        rangeTerm1 = ((sin(delta1*3.*3.14)+1.)/2.)*((sin(delta1*5.*3.14)+1.)/2.)*((sin(delta1*7.*3.14)+1.)/2.) + 0.2;
     }
   }
 
