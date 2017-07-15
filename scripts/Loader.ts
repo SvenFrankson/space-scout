@@ -29,7 +29,7 @@ interface ICinematicFrame {
 class Loader {
 
   private static _overrideDelay: number = 10;
-  private static _loadedStatics: Array<Array<BABYLON.AbstractMesh>> = [];
+  public static LoadedStatics: Array<Array<BABYLON.Mesh>> = [];
 
   public static LoadScene(name: string, scene: BABYLON.Scene, callback?: () => void): void {
     Main.Level = new Level0();
@@ -44,7 +44,7 @@ class Loader {
             data,
             scene,
             () => {
-              Main.Level.LoadLevel();
+              Main.Level.LoadLevel(scene);
               if (callback) {
                 callback();
               }
@@ -94,14 +94,14 @@ class Loader {
         particleSystems: Array<BABYLON.ParticleSystem>,
         skeletons: Array<BABYLON.Skeleton>
       ) => {
-        Loader._loadedStatics[name] = [];
+        Loader.LoadedStatics[name] = [];
         for (let i: number = 0; i < meshes.length; i++) {
           if (meshes[i] instanceof BABYLON.Mesh) {
             let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
-            Loader._loadedStatics[name].push(mesh);
+            Loader.LoadedStatics[name].push(mesh);
             Loader._loadMaterial(mesh.material, name, scene);
             for (let j: number = 0; j < mesh.instances.length; j++) {
-              Loader._loadedStatics[name].push(mesh.instances[j]);
+              Loader.LoadedStatics[name].push(mesh.instances[j]);
               mesh.instances[j].isVisible = false;
               mesh.instances[j].isPickable = false;
             }
@@ -110,7 +110,7 @@ class Loader {
           }
         }
         if (callback) {
-          callback(Loader._loadedStatics[name]);
+          callback(Loader.LoadedStatics[name]);
         }
       }
     );
@@ -149,7 +149,7 @@ class Loader {
           instance.getBoundingInfo().boundingSphere.radius = parseFloat(radius);
           instance.getBoundingInfo().boundingSphere.radiusWorld = parseFloat(radius) * s;
         }
-        Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
+        Obstacle.PushSphere(instance.getBoundingInfo().boundingSphere);
       } else if (sources[i] instanceof BABYLON.InstancedMesh) {
         let source: BABYLON.InstancedMesh = sources[i] as BABYLON.InstancedMesh;
         instance = source.sourceMesh.createInstance(source.name);
@@ -157,7 +157,7 @@ class Loader {
         instance.rotation.copyFromFloats(rX, rY, rZ);
         instance.computeWorldMatrix();
         instance.freezeWorldMatrix();
-        Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
+        // Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
       }
     }
     if (callback) {
@@ -197,9 +197,9 @@ class Loader {
     scene: BABYLON.Scene,
     callback?: () => void
   ): void {
-    if (Loader._loadedStatics[data.name]) {
+    if (Loader.LoadedStatics[data.name]) {
       Loader._cloneStaticIntoScene(
-        Loader._loadedStatics[data.name],
+        Loader.LoadedStatics[data.name],
         data.x, data.y, data.z,
         data.s,
         data.rX, data.rY, data.rZ,

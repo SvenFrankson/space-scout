@@ -1,8 +1,13 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var Comlink = (function () {
     function Comlink() {
     }
@@ -101,27 +106,6 @@ var Intersection = (function () {
     return Intersection;
 }());
 Intersection._v = BABYLON.Vector3.Zero();
-var Level0 = (function () {
-    function Level0() {
-    }
-    Level0.prototype.LoadLevel = function () {
-    };
-    Level0.prototype.OnGameStart = function () {
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[0], 10000);
-        }, 3000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[1], 10000);
-        }, 16000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[2], 10000);
-        }, 29000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[3], 10000);
-        }, 42000);
-    };
-    return Level0;
-}());
 var Loader = (function () {
     function Loader() {
     }
@@ -134,7 +118,7 @@ var Loader = (function () {
                 Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
                 Loader.RunCinematic(data.cinematic);
                 Loader._loadSceneData(data, scene, function () {
-                    Main.Level.LoadLevel();
+                    Main.Level.LoadLevel(scene);
                     if (callback) {
                         callback();
                     }
@@ -165,14 +149,14 @@ var Loader = (function () {
     };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
-            Loader._loadedStatics[name] = [];
+            Loader.LoadedStatics[name] = [];
             for (var i = 0; i < meshes.length; i++) {
                 if (meshes[i] instanceof BABYLON.Mesh) {
                     var mesh = meshes[i];
-                    Loader._loadedStatics[name].push(mesh);
+                    Loader.LoadedStatics[name].push(mesh);
                     Loader._loadMaterial(mesh.material, name, scene);
                     for (var j = 0; j < mesh.instances.length; j++) {
-                        Loader._loadedStatics[name].push(mesh.instances[j]);
+                        Loader.LoadedStatics[name].push(mesh.instances[j]);
                         mesh.instances[j].isVisible = false;
                         mesh.instances[j].isPickable = false;
                     }
@@ -181,7 +165,7 @@ var Loader = (function () {
                 }
             }
             if (callback) {
-                callback(Loader._loadedStatics[name]);
+                callback(Loader.LoadedStatics[name]);
             }
         });
     };
@@ -211,7 +195,7 @@ var Loader = (function () {
                     instance.getBoundingInfo().boundingSphere.radius = parseFloat(radius);
                     instance.getBoundingInfo().boundingSphere.radiusWorld = parseFloat(radius) * s;
                 }
-                Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
+                Obstacle.PushSphere(instance.getBoundingInfo().boundingSphere);
             }
             else if (sources[i] instanceof BABYLON.InstancedMesh) {
                 var source = sources[i];
@@ -220,7 +204,6 @@ var Loader = (function () {
                 instance.rotation.copyFromFloats(rX, rY, rZ);
                 instance.computeWorldMatrix();
                 instance.freezeWorldMatrix();
-                Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
             }
         }
         if (callback) {
@@ -244,8 +227,8 @@ var Loader = (function () {
         }
     };
     Loader.AddStaticIntoScene = function (data, scene, callback) {
-        if (Loader._loadedStatics[data.name]) {
-            Loader._cloneStaticIntoScene(Loader._loadedStatics[data.name], data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
+        if (Loader.LoadedStatics[data.name]) {
+            Loader._cloneStaticIntoScene(Loader.LoadedStatics[data.name], data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
         }
         else {
             Loader._loadStatic(data.name, scene, function (loadedMeshes) {
@@ -256,7 +239,7 @@ var Loader = (function () {
     return Loader;
 }());
 Loader._overrideDelay = 10;
-Loader._loadedStatics = [];
+Loader.LoadedStatics = [];
 var State;
 (function (State) {
     State[State["Menu"] = 0] = "Menu";
@@ -374,6 +357,269 @@ window.addEventListener("DOMContentLoaded", function () {
         role: ISquadRole.WingMan
     }, Main.Scene);
 });
+var SpaceMath = (function () {
+    function SpaceMath() {
+    }
+    SpaceMath.ProjectPerpendicularAt = function (v, at) {
+        var p = BABYLON.Vector3.Zero();
+        var k = (v.x * at.x + v.y * at.y + v.z * at.z);
+        k = k / (at.x * at.x + at.y * at.y + at.z * at.z);
+        p.copyFrom(v);
+        p.subtractInPlace(at.multiplyByFloats(k, k, k));
+        return p;
+    };
+    SpaceMath.AngleFromToAround = function (from, to, around) {
+        var pFrom = SpaceMath.ProjectPerpendicularAt(from, around).normalize();
+        var pTo = SpaceMath.ProjectPerpendicularAt(to, around).normalize();
+        var angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        if (BABYLON.Vector3.Dot(BABYLON.Vector3.Cross(pFrom, pTo), around) < 0) {
+            angle = -angle;
+        }
+        return angle;
+    };
+    return SpaceMath;
+}());
+var Obstacle = (function () {
+    function Obstacle() {
+    }
+    Obstacle.SphereInstancesFromPosition = function (position) {
+        var xChunck = Math.floor(position.x / Obstacle.ChunckSize);
+        var yChunck = Math.floor(position.y / Obstacle.ChunckSize);
+        var zChunck = Math.floor(position.z / Obstacle.ChunckSize);
+        var spheres = [];
+        for (var x = xChunck - 1; x <= xChunck + 1; x++) {
+            for (var y = yChunck - 1; y <= yChunck + 1; y++) {
+                for (var z = zChunck - 1; z <= zChunck + 1; z++) {
+                    if (Obstacle.SphereInstances[x]) {
+                        if (Obstacle.SphereInstances[x][y]) {
+                            if (Obstacle.SphereInstances[x][y][z]) {
+                                spheres.push.apply(spheres, Obstacle.SphereInstances[x][y][z]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return spheres;
+    };
+    Obstacle.PushSphere = function (sphere) {
+        var xChunck = Math.floor(sphere.centerWorld.x / Obstacle.ChunckSize);
+        var yChunck = Math.floor(sphere.centerWorld.y / Obstacle.ChunckSize);
+        var zChunck = Math.floor(sphere.centerWorld.z / Obstacle.ChunckSize);
+        if (!Obstacle.SphereInstances[xChunck]) {
+            Obstacle.SphereInstances[xChunck] = [];
+        }
+        if (!Obstacle.SphereInstances[xChunck][yChunck]) {
+            Obstacle.SphereInstances[xChunck][yChunck] = [];
+        }
+        if (!Obstacle.SphereInstances[xChunck][yChunck][zChunck]) {
+            Obstacle.SphereInstances[xChunck][yChunck][zChunck] = [];
+        }
+        Obstacle.SphereInstances[xChunck][yChunck][zChunck].push(sphere);
+    };
+    return Obstacle;
+}());
+Obstacle.ChunckSize = 20;
+Obstacle.SphereInstances = [];
+Obstacle.BoxInstances = [];
+var Shield = (function (_super) {
+    __extends(Shield, _super);
+    function Shield(spaceShip) {
+        var _this = _super.call(this, spaceShip.name + "-Shield", spaceShip.getScene()) || this;
+        _this._spaceShip = spaceShip;
+        return _this;
+    }
+    Shield.prototype.initialize = function () {
+        var _this = this;
+        BABYLON.SceneLoader.ImportMesh("", "./datas/shield.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
+            var shield = meshes[0];
+            if (shield instanceof BABYLON.Mesh) {
+                var data = BABYLON.VertexData.ExtractFromMesh(shield);
+                data.applyToMesh(_this);
+                shield.dispose();
+                var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
+                shieldMaterial.color = new BABYLON.Color3(0.5, 0.8, 1);
+                _this.material = shieldMaterial;
+            }
+        });
+    };
+    Shield.prototype.flashAt = function (position, space, speed) {
+        if (space === void 0) { space = BABYLON.Space.LOCAL; }
+        if (speed === void 0) { speed = 0.1; }
+        if (this.material instanceof ShieldMaterial) {
+            if (space === BABYLON.Space.WORLD) {
+                var worldToLocal = BABYLON.Matrix.Invert(this.getWorldMatrix());
+                BABYLON.Vector3.TransformCoordinatesToRef(position, worldToLocal, position);
+            }
+            this.material.flashAt(position, speed);
+        }
+    };
+    return Shield;
+}(BABYLON.Mesh));
+var SpaceShipCamera = (function (_super) {
+    __extends(SpaceShipCamera, _super);
+    function SpaceShipCamera(name, position, scene, spaceShip, smoothness, smoothnessRotation) {
+        var _this = _super.call(this, name, position, scene) || this;
+        _this._smoothness = 32;
+        _this._smoothnessRotation = 16;
+        _this._targetPosition = BABYLON.Vector3.Zero();
+        _this._targetRotation = BABYLON.Quaternion.Identity();
+        _this._offset = new BABYLON.Vector3(0, 4, -10);
+        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
+        _this.rotation.copyFromFloats(0, 0, 0);
+        _this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        _this._spaceShip = spaceShip;
+        _this.maxZ = 1000;
+        if (!isNaN(smoothness)) {
+            _this._smoothness = smoothness;
+        }
+        if (!isNaN(smoothnessRotation)) {
+            _this._smoothnessRotation = smoothnessRotation;
+        }
+        return _this;
+    }
+    SpaceShipCamera.prototype._checkInputs = function () {
+        if (!this._spaceShip.getWorldMatrix()) {
+            return;
+        }
+        BABYLON.Vector3.TransformNormalToRef(this._offset, this._spaceShip.getWorldMatrix(), this._targetPosition);
+        this._targetPosition.addInPlace(this._spaceShip.position);
+        var s = this._smoothness - 1;
+        this.position.copyFromFloats((this._targetPosition.x + this.position.x * s) / this._smoothness, (this._targetPosition.y + this.position.y * s) / this._smoothness, (this._targetPosition.z + this.position.z * s) / this._smoothness);
+        this._targetRotation.copyFrom(this._spaceShip.rotationQuaternion);
+        this._targetRotation.multiplyInPlace(this._offsetRotation);
+        BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, this._targetRotation, 1 / this._smoothnessRotation, this.rotationQuaternion);
+    };
+    return SpaceShipCamera;
+}(BABYLON.FreeCamera));
+var TrailMesh = (function (_super) {
+    __extends(TrailMesh, _super);
+    function TrailMesh(name, generator, scene, diameter, length) {
+        if (diameter === void 0) { diameter = 1; }
+        if (length === void 0) { length = 60; }
+        var _this = _super.call(this, name, scene) || this;
+        _this._sectionPolygonPointsCount = 4;
+        _this._generator = generator;
+        _this._diameter = diameter;
+        _this._length = length;
+        _this._sectionVectors = [];
+        _this._sectionNormalVectors = [];
+        for (var i = 0; i < _this._sectionPolygonPointsCount; i++) {
+            _this._sectionVectors[i] = BABYLON.Vector3.Zero();
+            _this._sectionNormalVectors[i] = BABYLON.Vector3.Zero();
+        }
+        _this._createMesh();
+        scene.registerBeforeRender(function () {
+            _this.update();
+        });
+        return _this;
+    }
+    TrailMesh.prototype._createMesh = function () {
+        var data = new BABYLON.VertexData();
+        var positions = [];
+        var normals = [];
+        var indices = [];
+        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            positions.push(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, -this._length);
+            normals.push(Math.cos(i * alpha), Math.sin(i * alpha), 0);
+        }
+        for (var i = 1; i <= this._length; i++) {
+            for (var j = 0; j < this._sectionPolygonPointsCount; j++) {
+                positions.push(Math.cos(j * alpha) * this._diameter, Math.sin(j * alpha) * this._diameter, -this._length + i);
+                normals.push(Math.cos(j * alpha), Math.sin(j * alpha), 0);
+            }
+            var l = positions.length / 3 - 2 * this._sectionPolygonPointsCount;
+            for (var j = 0; j < this._sectionPolygonPointsCount - 1; j++) {
+                indices.push(l + j, l + j + this._sectionPolygonPointsCount, l + j + this._sectionPolygonPointsCount + 1);
+                indices.push(l + j, l + j + this._sectionPolygonPointsCount + 1, l + j + 1);
+            }
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount, l + this._sectionPolygonPointsCount);
+            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount, l);
+        }
+        data.positions = positions;
+        data.normals = normals;
+        data.indices = indices;
+        data.applyToMesh(this, true);
+        var trailMaterial = new TrailMaterial(this.name, this.getScene());
+        trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
+        trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
+        this.material = trailMaterial;
+    };
+    TrailMesh.prototype.update = function () {
+        var positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        var normals = this.getVerticesData(BABYLON.VertexBuffer.NormalKind);
+        for (var i = 3 * this._sectionPolygonPointsCount; i < positions.length; i++) {
+            positions[i - 3 * this._sectionPolygonPointsCount] = positions[i] - normals[i] / this._length * this._diameter;
+        }
+        for (var i = 3 * this._sectionPolygonPointsCount; i < normals.length; i++) {
+            normals[i - 3 * this._sectionPolygonPointsCount] = normals[i];
+        }
+        var l = positions.length - 3 * this._sectionPolygonPointsCount;
+        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            this._sectionVectors[i].copyFromFloats(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, 0);
+            this._sectionNormalVectors[i].copyFromFloats(Math.cos(i * alpha), Math.sin(i * alpha), 0);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._sectionVectors[i], this._generator.getWorldMatrix(), this._sectionVectors[i]);
+            BABYLON.Vector3.TransformNormalToRef(this._sectionNormalVectors[i], this._generator.getWorldMatrix(), this._sectionNormalVectors[i]);
+        }
+        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
+            positions[l + 3 * i] = this._sectionVectors[i].x;
+            positions[l + 3 * i + 1] = this._sectionVectors[i].y;
+            positions[l + 3 * i + 2] = this._sectionVectors[i].z;
+            normals[l + 3 * i] = this._sectionNormalVectors[i].x;
+            normals[l + 3 * i + 1] = this._sectionNormalVectors[i].y;
+            normals[l + 3 * i + 2] = this._sectionNormalVectors[i].z;
+        }
+        this.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, true, false);
+        this.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true, false);
+    };
+    return TrailMesh;
+}(BABYLON.Mesh));
+var Level0 = (function () {
+    function Level0() {
+        this._spaceShipIndex = 0;
+    }
+    Level0.prototype.LoadLevel = function (scene) {
+        var _this = this;
+        var beaconMaster = Loader.LoadedStatics["beacon"][0];
+        if (beaconMaster) {
+            var instances = beaconMaster.instances;
+            var _loop_2 = function (i) {
+                var b = instances[i];
+                scene.registerBeforeRender(function () {
+                    _this._spaceShipIndex++;
+                    var spaceShip = SpaceShipControler.Instances[_this._spaceShipIndex];
+                    if (!spaceShip) {
+                        _this._spaceShipIndex = 0;
+                        spaceShip = SpaceShipControler.Instances[_this._spaceShipIndex];
+                    }
+                    if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                        Comlink.Display(["- Beacon found !"]);
+                    }
+                });
+            };
+            for (var i = 0; i < instances.length; i++) {
+                _loop_2(i);
+            }
+        }
+    };
+    Level0.prototype.OnGameStart = function () {
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[0], 10000);
+        }, 3000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[1], 10000);
+        }, 16000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[2], 10000);
+        }, 29000);
+        setTimeout(function () {
+            Comlink.Display(Dialogs.tipsCommands[3], 10000);
+        }, 42000);
+    };
+    return Level0;
+}());
 var Flash = (function () {
     function Flash() {
         this.source = BABYLON.Vector3.Zero();
@@ -461,201 +707,6 @@ var TrailMaterial = (function (_super) {
     });
     return TrailMaterial;
 }(BABYLON.ShaderMaterial));
-var SpaceMath = (function () {
-    function SpaceMath() {
-    }
-    SpaceMath.ProjectPerpendicularAt = function (v, at) {
-        var p = BABYLON.Vector3.Zero();
-        var k = (v.x * at.x + v.y * at.y + v.z * at.z);
-        k = k / (at.x * at.x + at.y * at.y + at.z * at.z);
-        p.copyFrom(v);
-        p.subtractInPlace(at.multiplyByFloats(k, k, k));
-        return p;
-    };
-    SpaceMath.AngleFromToAround = function (from, to, around) {
-        var pFrom = SpaceMath.ProjectPerpendicularAt(from, around).normalize();
-        var pTo = SpaceMath.ProjectPerpendicularAt(to, around).normalize();
-        var angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
-        if (BABYLON.Vector3.Dot(BABYLON.Vector3.Cross(pFrom, pTo), around) < 0) {
-            angle = -angle;
-        }
-        return angle;
-    };
-    return SpaceMath;
-}());
-var Obstacle = (function () {
-    function Obstacle() {
-    }
-    return Obstacle;
-}());
-Obstacle.SphereInstances = [];
-Obstacle.BoxInstances = [];
-var Shield = (function (_super) {
-    __extends(Shield, _super);
-    function Shield(spaceShip) {
-        var _this = _super.call(this, spaceShip.name + "-Shield", spaceShip.getScene()) || this;
-        _this._spaceShip = spaceShip;
-        return _this;
-    }
-    Shield.prototype.initialize = function () {
-        var _this = this;
-        BABYLON.SceneLoader.ImportMesh("", "./datas/shield.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
-            var shield = meshes[0];
-            if (shield instanceof BABYLON.Mesh) {
-                var data = BABYLON.VertexData.ExtractFromMesh(shield);
-                data.applyToMesh(_this);
-                shield.dispose();
-                var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
-                shieldMaterial.color = new BABYLON.Color3(0.5, 0.8, 1);
-                _this.material = shieldMaterial;
-            }
-        });
-    };
-    Shield.prototype.flashAt = function (position, space, speed) {
-        if (space === void 0) { space = BABYLON.Space.LOCAL; }
-        if (speed === void 0) { speed = 0.1; }
-        if (this.material instanceof ShieldMaterial) {
-            if (space === BABYLON.Space.WORLD) {
-                var worldToLocal = BABYLON.Matrix.Invert(this.getWorldMatrix());
-                BABYLON.Vector3.TransformCoordinatesToRef(position, worldToLocal, position);
-            }
-            this.material.flashAt(position, speed);
-        }
-    };
-    return Shield;
-}(BABYLON.Mesh));
-var SpaceShipControler = (function () {
-    function SpaceShipControler(spaceShip, role, team) {
-        this._spaceShip = spaceShip;
-        this._role = role;
-        this._team = team;
-        SpaceShipControler.Instances.push(this);
-    }
-    Object.defineProperty(SpaceShipControler.prototype, "spaceShip", {
-        get: function () {
-            return this._spaceShip;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SpaceShipControler.prototype, "role", {
-        get: function () {
-            return this._role;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SpaceShipControler.prototype, "team", {
-        get: function () {
-            return this._team;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(SpaceShipControler.prototype, "position", {
-        get: function () {
-            return this.spaceShip.position;
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return SpaceShipControler;
-}());
-SpaceShipControler.Instances = [];
-var IIABehaviour;
-(function (IIABehaviour) {
-    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
-    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
-    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
-    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
-})(IIABehaviour || (IIABehaviour = {}));
-var SpaceShipAI = (function (_super) {
-    __extends(SpaceShipAI, _super);
-    function SpaceShipAI(spaceShip, role, team, scene) {
-        var _this = _super.call(this, spaceShip, role, team) || this;
-        _this._forwardPow = 10;
-        _this._rollPow = 2.5;
-        _this._yawPow = 3;
-        _this._pitchPow = 3;
-        _this._scene = scene;
-        return _this;
-    }
-    return SpaceShipAI;
-}(SpaceShipControler));
-var WingManAI = (function (_super) {
-    __extends(WingManAI, _super);
-    function WingManAI(spaceShip, groupPosition, role, team, scene) {
-        var _this = _super.call(this, spaceShip, role, team, scene) || this;
-        _this._targetPosition = BABYLON.Vector3.Zero();
-        _this._direction = new BABYLON.Vector3(0, 0, 1);
-        _this._distance = 1;
-        _this._groupPosition = groupPosition;
-        _this._mode = IIABehaviour.Follow;
-        return _this;
-    }
-    WingManAI.prototype.checkInputs = function (dt) {
-        this._checkMode(dt);
-        this._goTo(dt);
-    };
-    WingManAI.prototype.commandPosition = function (newPosition) {
-        this._targetPosition.copyFrom(newPosition);
-        this._mode = IIABehaviour.GoTo;
-        Comlink.Display(Dialogs.randomNeutralCommand(), 5000);
-    };
-    WingManAI.prototype._checkMode = function (dt) {
-        this._findLeader();
-        if (!this._leader) {
-            return;
-        }
-        if (this._mode === IIABehaviour.Follow) {
-            this._targetPosition.copyFrom(this._groupPosition);
-            BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
-            this._direction.copyFrom(this._targetPosition);
-            this._direction.subtractInPlace(this._spaceShip.position);
-            this._distance = this._direction.length();
-            this._direction.normalize();
-            if (this._distance < 10) {
-                this._targetPosition.copyFromFloats(-this._groupPosition.x, this._groupPosition.y, this._groupPosition.z);
-                BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
-                this._mode = IIABehaviour.GoTo;
-            }
-        }
-        else if (this._mode === IIABehaviour.GoTo) {
-            this._direction.copyFrom(this._targetPosition);
-            this._direction.subtractInPlace(this._spaceShip.position);
-            this._distance = this._direction.length();
-            this._direction.normalize();
-            if (this._distance < 10) {
-                this._mode = IIABehaviour.Follow;
-            }
-        }
-        $("#behaviour").text(IIABehaviour[this._mode]);
-    };
-    WingManAI.prototype._goTo = function (dt) {
-        if (this._distance > 2 * this._spaceShip.forward) {
-            this._spaceShip.forward += this._forwardPow * dt;
-        }
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-        var angleAroundZ = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
-    };
-    WingManAI.prototype._findLeader = function () {
-        for (var i = 0; i < SpaceShipControler.Instances.length; i++) {
-            if (SpaceShipControler.Instances[i].team === this.team) {
-                if (SpaceShipControler.Instances[i].role === ISquadRole.Leader) {
-                    this._leader = SpaceShipControler.Instances[i];
-                }
-            }
-        }
-    };
-    return WingManAI;
-}(SpaceShipAI));
 var SpaceShip = (function (_super) {
     __extends(SpaceShip, _super);
     function SpaceShip(name, scene) {
@@ -841,8 +892,9 @@ var SpaceShip = (function (_super) {
         if (this._mesh) {
             var tmpAxis = BABYLON.Vector3.Zero();
             var thisSphere = this._mesh.getBoundingInfo().boundingSphere;
-            for (var i = 0; i < Obstacle.SphereInstances.length; i++) {
-                var sphere = Obstacle.SphereInstances[i];
+            var spheres = Obstacle.SphereInstancesFromPosition(this.position);
+            for (var i = 0; i < spheres.length; i++) {
+                var sphere = spheres[i];
                 var intersection = Intersection.MeshSphere(this._shield, sphere);
                 if (intersection.intersect) {
                     var forcedDisplacement = intersection.direction.multiplyByFloats(-1, -1, -1);
@@ -853,7 +905,7 @@ var SpaceShip = (function (_super) {
                 }
             }
             for (var i = 0; i < Obstacle.BoxInstances.length; i++) {
-                var box = Obstacle.BoxInstances[i];
+                var box = Obstacle.BoxInstances[i][0][0][0];
                 if (Intersection.BoxSphere(box, thisSphere, tmpAxis) > 0) {
                     for (var j = 0; j < this._colliders.length; j++) {
                         this._updateColliders();
@@ -871,6 +923,44 @@ var SpaceShip = (function (_super) {
     };
     return SpaceShip;
 }(BABYLON.Mesh));
+var SpaceShipControler = (function () {
+    function SpaceShipControler(spaceShip, role, team) {
+        this._spaceShip = spaceShip;
+        this._role = role;
+        this._team = team;
+        SpaceShipControler.Instances.push(this);
+    }
+    Object.defineProperty(SpaceShipControler.prototype, "spaceShip", {
+        get: function () {
+            return this._spaceShip;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SpaceShipControler.prototype, "role", {
+        get: function () {
+            return this._role;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SpaceShipControler.prototype, "team", {
+        get: function () {
+            return this._team;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(SpaceShipControler.prototype, "position", {
+        get: function () {
+            return this.spaceShip.position;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return SpaceShipControler;
+}());
+SpaceShipControler.Instances = [];
 var ISquadRole;
 (function (ISquadRole) {
     ISquadRole[ISquadRole["Leader"] = 0] = "Leader";
@@ -895,42 +985,100 @@ var SpaceShipFactory = (function () {
     };
     return SpaceShipFactory;
 }());
-var SpaceShipCamera = (function (_super) {
-    __extends(SpaceShipCamera, _super);
-    function SpaceShipCamera(name, position, scene, spaceShip, smoothness, smoothnessRotation) {
-        var _this = _super.call(this, name, position, scene) || this;
-        _this._smoothness = 32;
-        _this._smoothnessRotation = 16;
-        _this._targetPosition = BABYLON.Vector3.Zero();
-        _this._targetRotation = BABYLON.Quaternion.Identity();
-        _this._offset = new BABYLON.Vector3(0, 4, -10);
-        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
-        _this.rotation.copyFromFloats(0, 0, 0);
-        _this.rotationQuaternion = BABYLON.Quaternion.Identity();
-        _this._spaceShip = spaceShip;
-        _this.maxZ = 1000;
-        if (!isNaN(smoothness)) {
-            _this._smoothness = smoothness;
-        }
-        if (!isNaN(smoothnessRotation)) {
-            _this._smoothnessRotation = smoothnessRotation;
-        }
+var IIABehaviour;
+(function (IIABehaviour) {
+    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
+    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
+    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
+    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
+})(IIABehaviour || (IIABehaviour = {}));
+var SpaceShipAI = (function (_super) {
+    __extends(SpaceShipAI, _super);
+    function SpaceShipAI(spaceShip, role, team, scene) {
+        var _this = _super.call(this, spaceShip, role, team) || this;
+        _this._forwardPow = 10;
+        _this._rollPow = 2.5;
+        _this._yawPow = 3;
+        _this._pitchPow = 3;
+        _this._scene = scene;
         return _this;
     }
-    SpaceShipCamera.prototype._checkInputs = function () {
-        if (!this._spaceShip.getWorldMatrix()) {
+    return SpaceShipAI;
+}(SpaceShipControler));
+var WingManAI = (function (_super) {
+    __extends(WingManAI, _super);
+    function WingManAI(spaceShip, groupPosition, role, team, scene) {
+        var _this = _super.call(this, spaceShip, role, team, scene) || this;
+        _this._targetPosition = BABYLON.Vector3.Zero();
+        _this._direction = new BABYLON.Vector3(0, 0, 1);
+        _this._distance = 1;
+        _this._groupPosition = groupPosition;
+        _this._mode = IIABehaviour.Follow;
+        return _this;
+    }
+    WingManAI.prototype.checkInputs = function (dt) {
+        this._checkMode(dt);
+        this._goTo(dt);
+    };
+    WingManAI.prototype.commandPosition = function (newPosition) {
+        this._targetPosition.copyFrom(newPosition);
+        this._mode = IIABehaviour.GoTo;
+        Comlink.Display(Dialogs.randomNeutralCommand(), 5000);
+    };
+    WingManAI.prototype._checkMode = function (dt) {
+        this._findLeader();
+        if (!this._leader) {
             return;
         }
-        BABYLON.Vector3.TransformNormalToRef(this._offset, this._spaceShip.getWorldMatrix(), this._targetPosition);
-        this._targetPosition.addInPlace(this._spaceShip.position);
-        var s = this._smoothness - 1;
-        this.position.copyFromFloats((this._targetPosition.x + this.position.x * s) / this._smoothness, (this._targetPosition.y + this.position.y * s) / this._smoothness, (this._targetPosition.z + this.position.z * s) / this._smoothness);
-        this._targetRotation.copyFrom(this._spaceShip.rotationQuaternion);
-        this._targetRotation.multiplyInPlace(this._offsetRotation);
-        BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, this._targetRotation, 1 / this._smoothnessRotation, this.rotationQuaternion);
+        if (this._mode === IIABehaviour.Follow) {
+            this._targetPosition.copyFrom(this._groupPosition);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._targetPosition.copyFromFloats(-this._groupPosition.x, this._groupPosition.y, this._groupPosition.z);
+                BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
+                this._mode = IIABehaviour.GoTo;
+            }
+        }
+        else if (this._mode === IIABehaviour.GoTo) {
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._mode = IIABehaviour.Follow;
+            }
+        }
+        $("#behaviour").text(IIABehaviour[this._mode]);
     };
-    return SpaceShipCamera;
-}(BABYLON.FreeCamera));
+    WingManAI.prototype._goTo = function (dt) {
+        if (this._distance > 2 * this._spaceShip.forward) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    WingManAI.prototype._findLeader = function () {
+        for (var i = 0; i < SpaceShipControler.Instances.length; i++) {
+            if (SpaceShipControler.Instances[i].team === this.team) {
+                if (SpaceShipControler.Instances[i].role === ISquadRole.Leader) {
+                    this._leader = SpaceShipControler.Instances[i];
+                }
+            }
+        }
+    };
+    return WingManAI;
+}(SpaceShipAI));
 var SpaceShipInputs = (function (_super) {
     __extends(SpaceShipInputs, _super);
     function SpaceShipInputs(spaceShip, scene) {
@@ -1123,87 +1271,3 @@ var SpaceShipInputs = (function (_super) {
     };
     return SpaceShipInputs;
 }(SpaceShipControler));
-var TrailMesh = (function (_super) {
-    __extends(TrailMesh, _super);
-    function TrailMesh(name, generator, scene, diameter, length) {
-        if (diameter === void 0) { diameter = 1; }
-        if (length === void 0) { length = 60; }
-        var _this = _super.call(this, name, scene) || this;
-        _this._sectionPolygonPointsCount = 4;
-        _this._generator = generator;
-        _this._diameter = diameter;
-        _this._length = length;
-        _this._sectionVectors = [];
-        _this._sectionNormalVectors = [];
-        for (var i = 0; i < _this._sectionPolygonPointsCount; i++) {
-            _this._sectionVectors[i] = BABYLON.Vector3.Zero();
-            _this._sectionNormalVectors[i] = BABYLON.Vector3.Zero();
-        }
-        _this._createMesh();
-        scene.registerBeforeRender(function () {
-            _this.update();
-        });
-        return _this;
-    }
-    TrailMesh.prototype._createMesh = function () {
-        var data = new BABYLON.VertexData();
-        var positions = [];
-        var normals = [];
-        var indices = [];
-        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
-        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
-            positions.push(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, -this._length);
-            normals.push(Math.cos(i * alpha), Math.sin(i * alpha), 0);
-        }
-        for (var i = 1; i <= this._length; i++) {
-            for (var j = 0; j < this._sectionPolygonPointsCount; j++) {
-                positions.push(Math.cos(j * alpha) * this._diameter, Math.sin(j * alpha) * this._diameter, -this._length + i);
-                normals.push(Math.cos(j * alpha), Math.sin(j * alpha), 0);
-            }
-            var l = positions.length / 3 - 2 * this._sectionPolygonPointsCount;
-            for (var j = 0; j < this._sectionPolygonPointsCount - 1; j++) {
-                indices.push(l + j, l + j + this._sectionPolygonPointsCount, l + j + this._sectionPolygonPointsCount + 1);
-                indices.push(l + j, l + j + this._sectionPolygonPointsCount + 1, l + j + 1);
-            }
-            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount - 1 + this._sectionPolygonPointsCount, l + this._sectionPolygonPointsCount);
-            indices.push(l + this._sectionPolygonPointsCount - 1, l + this._sectionPolygonPointsCount, l);
-        }
-        data.positions = positions;
-        data.normals = normals;
-        data.indices = indices;
-        data.applyToMesh(this, true);
-        var trailMaterial = new TrailMaterial(this.name, this.getScene());
-        trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
-        trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
-        this.material = trailMaterial;
-    };
-    TrailMesh.prototype.update = function () {
-        var positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-        var normals = this.getVerticesData(BABYLON.VertexBuffer.NormalKind);
-        for (var i = 3 * this._sectionPolygonPointsCount; i < positions.length; i++) {
-            positions[i - 3 * this._sectionPolygonPointsCount] = positions[i] - normals[i] / this._length * this._diameter;
-        }
-        for (var i = 3 * this._sectionPolygonPointsCount; i < normals.length; i++) {
-            normals[i - 3 * this._sectionPolygonPointsCount] = normals[i];
-        }
-        var l = positions.length - 3 * this._sectionPolygonPointsCount;
-        var alpha = 2 * Math.PI / this._sectionPolygonPointsCount;
-        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
-            this._sectionVectors[i].copyFromFloats(Math.cos(i * alpha) * this._diameter, Math.sin(i * alpha) * this._diameter, 0);
-            this._sectionNormalVectors[i].copyFromFloats(Math.cos(i * alpha), Math.sin(i * alpha), 0);
-            BABYLON.Vector3.TransformCoordinatesToRef(this._sectionVectors[i], this._generator.getWorldMatrix(), this._sectionVectors[i]);
-            BABYLON.Vector3.TransformNormalToRef(this._sectionNormalVectors[i], this._generator.getWorldMatrix(), this._sectionNormalVectors[i]);
-        }
-        for (var i = 0; i < this._sectionPolygonPointsCount; i++) {
-            positions[l + 3 * i] = this._sectionVectors[i].x;
-            positions[l + 3 * i + 1] = this._sectionVectors[i].y;
-            positions[l + 3 * i + 2] = this._sectionVectors[i].z;
-            normals[l + 3 * i] = this._sectionNormalVectors[i].x;
-            normals[l + 3 * i + 1] = this._sectionNormalVectors[i].y;
-            normals[l + 3 * i + 2] = this._sectionNormalVectors[i].z;
-        }
-        this.updateVerticesData(BABYLON.VertexBuffer.PositionKind, positions, true, false);
-        this.updateVerticesData(BABYLON.VertexBuffer.NormalKind, normals, true, false);
-    };
-    return TrailMesh;
-}(BABYLON.Mesh));

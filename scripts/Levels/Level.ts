@@ -1,4 +1,4 @@
 interface ILevel {
-  LoadLevel: () => void;
+  LoadLevel: (scene: BABYLON.Scene) => void;
   OnGameStart: () => void;
 }
