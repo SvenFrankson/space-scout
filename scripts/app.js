@@ -645,7 +645,8 @@ var ShieldMaterial = (function (_super) {
         }) || this;
         _this._flash1 = new Flash();
         _this._color = new BABYLON.Color3(1, 1, 1);
-        _this.setTexture("textureSampler", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
+        _this.setTexture("texture", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
+        _this.setFloat("length", 1);
         _this.getScene().registerBeforeRender(function () {
             _this._flash1.distance += _this._flash1.speed;
             _this.setVector3("source1", _this._flash1.source);
@@ -991,100 +992,6 @@ var SpaceShipFactory = (function () {
     };
     return SpaceShipFactory;
 }());
-var IIABehaviour;
-(function (IIABehaviour) {
-    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
-    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
-    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
-    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
-})(IIABehaviour || (IIABehaviour = {}));
-var SpaceShipAI = (function (_super) {
-    __extends(SpaceShipAI, _super);
-    function SpaceShipAI(spaceShip, role, team, scene) {
-        var _this = _super.call(this, spaceShip, role, team) || this;
-        _this._forwardPow = 10;
-        _this._rollPow = 2.5;
-        _this._yawPow = 3;
-        _this._pitchPow = 3;
-        _this._scene = scene;
-        return _this;
-    }
-    return SpaceShipAI;
-}(SpaceShipControler));
-var WingManAI = (function (_super) {
-    __extends(WingManAI, _super);
-    function WingManAI(spaceShip, groupPosition, role, team, scene) {
-        var _this = _super.call(this, spaceShip, role, team, scene) || this;
-        _this._targetPosition = BABYLON.Vector3.Zero();
-        _this._direction = new BABYLON.Vector3(0, 0, 1);
-        _this._distance = 1;
-        _this._groupPosition = groupPosition;
-        _this._mode = IIABehaviour.Follow;
-        return _this;
-    }
-    WingManAI.prototype.checkInputs = function (dt) {
-        this._checkMode(dt);
-        this._goTo(dt);
-    };
-    WingManAI.prototype.commandPosition = function (newPosition) {
-        this._targetPosition.copyFrom(newPosition);
-        this._mode = IIABehaviour.GoTo;
-        Comlink.Display(Dialogs.randomNeutralCommand(), 5000);
-    };
-    WingManAI.prototype._checkMode = function (dt) {
-        this._findLeader();
-        if (!this._leader) {
-            return;
-        }
-        if (this._mode === IIABehaviour.Follow) {
-            this._targetPosition.copyFrom(this._groupPosition);
-            BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
-            this._direction.copyFrom(this._targetPosition);
-            this._direction.subtractInPlace(this._spaceShip.position);
-            this._distance = this._direction.length();
-            this._direction.normalize();
-            if (this._distance < 10) {
-                this._targetPosition.copyFromFloats(-this._groupPosition.x, this._groupPosition.y, this._groupPosition.z);
-                BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
-                this._mode = IIABehaviour.GoTo;
-            }
-        }
-        else if (this._mode === IIABehaviour.GoTo) {
-            this._direction.copyFrom(this._targetPosition);
-            this._direction.subtractInPlace(this._spaceShip.position);
-            this._distance = this._direction.length();
-            this._direction.normalize();
-            if (this._distance < 10) {
-                this._mode = IIABehaviour.Follow;
-            }
-        }
-        $("#behaviour").text(IIABehaviour[this._mode]);
-    };
-    WingManAI.prototype._goTo = function (dt) {
-        if (this._distance > 2 * this._spaceShip.forward) {
-            this._spaceShip.forward += this._forwardPow * dt;
-        }
-        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
-        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
-        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
-        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
-        var angleAroundZ = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
-    };
-    WingManAI.prototype._findLeader = function () {
-        for (var i = 0; i < SpaceShipControler.Instances.length; i++) {
-            if (SpaceShipControler.Instances[i].team === this.team) {
-                if (SpaceShipControler.Instances[i].role === ISquadRole.Leader) {
-                    this._leader = SpaceShipControler.Instances[i];
-                }
-            }
-        }
-    };
-    return WingManAI;
-}(SpaceShipAI));
 var SpaceShipInputs = (function (_super) {
     __extends(SpaceShipInputs, _super);
     function SpaceShipInputs(spaceShip, scene) {
@@ -1277,3 +1184,97 @@ var SpaceShipInputs = (function (_super) {
     };
     return SpaceShipInputs;
 }(SpaceShipControler));
+var IIABehaviour;
+(function (IIABehaviour) {
+    IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
+    IIABehaviour[IIABehaviour["Escape"] = 1] = "Escape";
+    IIABehaviour[IIABehaviour["Follow"] = 2] = "Follow";
+    IIABehaviour[IIABehaviour["GoTo"] = 3] = "GoTo";
+})(IIABehaviour || (IIABehaviour = {}));
+var SpaceShipAI = (function (_super) {
+    __extends(SpaceShipAI, _super);
+    function SpaceShipAI(spaceShip, role, team, scene) {
+        var _this = _super.call(this, spaceShip, role, team) || this;
+        _this._forwardPow = 10;
+        _this._rollPow = 2.5;
+        _this._yawPow = 3;
+        _this._pitchPow = 3;
+        _this._scene = scene;
+        return _this;
+    }
+    return SpaceShipAI;
+}(SpaceShipControler));
+var WingManAI = (function (_super) {
+    __extends(WingManAI, _super);
+    function WingManAI(spaceShip, groupPosition, role, team, scene) {
+        var _this = _super.call(this, spaceShip, role, team, scene) || this;
+        _this._targetPosition = BABYLON.Vector3.Zero();
+        _this._direction = new BABYLON.Vector3(0, 0, 1);
+        _this._distance = 1;
+        _this._groupPosition = groupPosition;
+        _this._mode = IIABehaviour.Follow;
+        return _this;
+    }
+    WingManAI.prototype.checkInputs = function (dt) {
+        this._checkMode(dt);
+        this._goTo(dt);
+    };
+    WingManAI.prototype.commandPosition = function (newPosition) {
+        this._targetPosition.copyFrom(newPosition);
+        this._mode = IIABehaviour.GoTo;
+        Comlink.Display(Dialogs.randomNeutralCommand(), 5000);
+    };
+    WingManAI.prototype._checkMode = function (dt) {
+        this._findLeader();
+        if (!this._leader) {
+            return;
+        }
+        if (this._mode === IIABehaviour.Follow) {
+            this._targetPosition.copyFrom(this._groupPosition);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._targetPosition.copyFromFloats(-this._groupPosition.x, this._groupPosition.y, this._groupPosition.z);
+                BABYLON.Vector3.TransformCoordinatesToRef(this._targetPosition, this._leader.spaceShip.getWorldMatrix(), this._targetPosition);
+                this._mode = IIABehaviour.GoTo;
+            }
+        }
+        else if (this._mode === IIABehaviour.GoTo) {
+            this._direction.copyFrom(this._targetPosition);
+            this._direction.subtractInPlace(this._spaceShip.position);
+            this._distance = this._direction.length();
+            this._direction.normalize();
+            if (this._distance < 10) {
+                this._mode = IIABehaviour.Follow;
+            }
+        }
+        $("#behaviour").text(IIABehaviour[this._mode]);
+    };
+    WingManAI.prototype._goTo = function (dt) {
+        if (this._distance > 2 * this._spaceShip.forward) {
+            this._spaceShip.forward += this._forwardPow * dt;
+        }
+        var angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
+        var yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
+        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        var angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
+        var pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
+        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        var angleAroundZ = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
+        var rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
+        this._spaceShip.roll += this._rollPow * rollInput * dt;
+    };
+    WingManAI.prototype._findLeader = function () {
+        for (var i = 0; i < SpaceShipControler.Instances.length; i++) {
+            if (SpaceShipControler.Instances[i].team === this.team) {
+                if (SpaceShipControler.Instances[i].role === ISquadRole.Leader) {
+                    this._leader = SpaceShipControler.Instances[i];
+                }
+            }
+        }
+    };
+    return WingManAI;
+}(SpaceShipAI));
