@@ -397,7 +397,7 @@ var ShieldMaterial = (function (_super) {
         _this.getScene().registerBeforeRender(function () {
             _this._flash1.distance += _this._flash1.speed;
             _this.setVector3("source1", _this._flash1.source);
-            _this.setFloat("sqrSourceDist1", _this._flash1.distance * _this._flash1.distance);
+            _this.setFloat("sourceDist1", _this._flash1.distance);
         });
         return _this;
     }

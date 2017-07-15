@@ -31,7 +31,7 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
     this.getScene().registerBeforeRender(() => {
       this._flash1.distance += this._flash1.speed;
       this.setVector3("source1", this._flash1.source);
-      this.setFloat("sqrSourceDist1", this._flash1.distance * this._flash1.distance);
+      this.setFloat("sourceDist1", this._flash1.distance);
     });
   }
 
