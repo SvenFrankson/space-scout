@@ -1,7 +1,7 @@
 class Flash {
   public source: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-  public distance: number = 11;
-  public speed: number = 0.02;
+  public distance: number = 0;
+  public speed: number = 0.1;
   public resetLimit: number = 10;
 }
 
@@ -15,6 +15,22 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
     this._color = v;
     this.setColor3("color", this._color);
   }
+  private _length: number;
+  public get length(): number {
+    return this._length;
+  }
+  public set length(v: number) {
+    this._length = v;
+    this.setFloat("length", this._length);
+  }
+  private _tex: BABYLON.Texture;
+  public get tex(): BABYLON.Texture {
+    return this._tex;
+  }
+  public set tex(v: BABYLON.Texture) {
+    this.tex = v;
+    this.setTexture("tex", this._tex);
+  }
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(
@@ -27,8 +43,8 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
         needAlphaBlending: true
       }
     );
-    this.setTexture("texture", new BABYLON.Texture("./datas/twkromhl.png", this.getScene()));
-    this.setFloat("length", 0.2);
+    this.tex = new BABYLON.Texture("./datas/shield.png", this.getScene());
+    this.length = 1.5;
     this.getScene().registerBeforeRender(() => {
       this._flash1.distance += this._flash1.speed;
       this.setVector3("source1", this._flash1.source);

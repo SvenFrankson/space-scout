@@ -76,10 +76,12 @@
     color: rgba(255, 255, 255, 255);
     font-size: 20px;
     text-align: center;
+    pointer-events: none;
   }
 
   .com-link-line {
     background-color: rgba(0, 0, 0, 0.5);
+    pointer-events: none;
   }
 
   #play-frame {

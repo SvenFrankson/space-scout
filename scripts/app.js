@@ -629,8 +629,8 @@ var Level0 = (function () {
 var Flash = (function () {
     function Flash() {
         this.source = BABYLON.Vector3.Zero();
-        this.distance = 11;
-        this.speed = 0.02;
+        this.distance = 0;
+        this.speed = 0.1;
         this.resetLimit = 10;
     }
     return Flash;
@@ -645,8 +645,8 @@ var ShieldMaterial = (function (_super) {
         }) || this;
         _this._flash1 = new Flash();
         _this._color = new BABYLON.Color3(1, 1, 1);
-        _this.setTexture("texture", new BABYLON.Texture("./datas/twkromhl.png", _this.getScene()));
-        _this.setFloat("length", 0.2);
+        _this.tex = new BABYLON.Texture("./datas/shield.png", _this.getScene());
+        _this.length = 1.5;
         _this.getScene().registerBeforeRender(function () {
             _this._flash1.distance += _this._flash1.speed;
             _this.setVector3("source1", _this._flash1.source);
@@ -661,6 +661,28 @@ var ShieldMaterial = (function (_super) {
         set: function (v) {
             this._color = v;
             this.setColor3("color", this._color);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "length", {
+        get: function () {
+            return this._length;
+        },
+        set: function (v) {
+            this._length = v;
+            this.setFloat("length", this._length);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "tex", {
+        get: function () {
+            return this._tex;
+        },
+        set: function (v) {
+            this.tex = v;
+            this.setTexture("tex", this._tex);
         },
         enumerable: true,
         configurable: true
