@@ -14,8 +14,8 @@
 		num uvs            :  0
 		num uvs2           :  0
 		num colors         :  0
-		num indices        :  564
+		num indices        :  384
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0081 secs
+elapsed time:  0 min, 0.006 secs

@@ -599,6 +599,7 @@ var Level0 = (function () {
                         var spaceShip = SpaceShipControler.Instances[i_1];
                         if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                             if (emit.material instanceof ShieldMaterial) {
+                                Comlink.Display(["- Found !"]);
                                 emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
                             }
                         }
@@ -644,7 +645,7 @@ var ShieldMaterial = (function (_super) {
             needAlphaBlending: true
         }) || this;
         _this._flash1 = new Flash();
-        _this.color = new BABYLON.Color4(0, 0, 1, 0);
+        _this.color = new BABYLON.Color4(1, 1, 1, 1);
         _this.tex = new BABYLON.Texture("./datas/shield.png", _this.getScene());
         _this.length = 1.5;
         _this.getScene().registerBeforeRender(function () {

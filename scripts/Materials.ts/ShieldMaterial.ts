@@ -43,7 +43,7 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
         needAlphaBlending: true
       }
     );
-    this.color = new BABYLON.Color4(0, 0, 1, 0);
+    this.color = new BABYLON.Color4(1, 1, 1, 1);
     this.tex = new BABYLON.Texture("./datas/shield.png", this.getScene());
     this.length = 1.5;
     this.getScene().registerBeforeRender(() => {
