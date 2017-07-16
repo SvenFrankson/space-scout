@@ -438,7 +438,7 @@ var Shield = (function (_super) {
                 data.applyToMesh(_this);
                 shield.dispose();
                 var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
-                shieldMaterial.color = new BABYLON.Color3(0.5, 0.8, 1);
+                shieldMaterial.color = new BABYLON.Color4(0, 0.8, 0, 1);
                 _this.material = shieldMaterial;
             }
         });
@@ -629,7 +629,7 @@ var Level0 = (function () {
 var Flash = (function () {
     function Flash() {
         this.source = BABYLON.Vector3.Zero();
-        this.distance = 0;
+        this.distance = 100;
         this.speed = 0.1;
         this.resetLimit = 10;
     }
@@ -644,7 +644,7 @@ var ShieldMaterial = (function (_super) {
             needAlphaBlending: true
         }) || this;
         _this._flash1 = new Flash();
-        _this._color = new BABYLON.Color3(1, 1, 1);
+        _this.color = new BABYLON.Color4(0, 0, 1, 0);
         _this.tex = new BABYLON.Texture("./datas/shield.png", _this.getScene());
         _this.length = 1.5;
         _this.getScene().registerBeforeRender(function () {
@@ -660,7 +660,7 @@ var ShieldMaterial = (function (_super) {
         },
         set: function (v) {
             this._color = v;
-            this.setColor3("color", this._color);
+            this.setColor4("color", this._color);
         },
         enumerable: true,
         configurable: true
@@ -681,7 +681,7 @@ var ShieldMaterial = (function (_super) {
             return this._tex;
         },
         set: function (v) {
-            this.tex = v;
+            this._tex = v;
             this.setTexture("tex", this._tex);
         },
         enumerable: true,

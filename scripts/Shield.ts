@@ -22,7 +22,7 @@ class Shield extends BABYLON.Mesh {
           data.applyToMesh(this);
           shield.dispose();
           let shieldMaterial: ShieldMaterial = new ShieldMaterial(this.name, this.getScene());
-          shieldMaterial.color = new BABYLON.Color3(0.5, 0.8, 1);
+          shieldMaterial.color = new BABYLON.Color4(0, 0.8, 0, 1);
           this.material = shieldMaterial;
         }
       }
