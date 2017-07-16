@@ -27,8 +27,8 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
         needAlphaBlending: true
       }
     );
-    this.setTexture("texture", new BABYLON.Texture("./datas/shield-diffuse.png", this.getScene()));
-    this.setFloat("length", 1);
+    this.setTexture("texture", new BABYLON.Texture("./datas/twkromhl.png", this.getScene()));
+    this.setFloat("length", 0.2);
     this.getScene().registerBeforeRender(() => {
       this._flash1.distance += this._flash1.speed;
       this.setVector3("source1", this._flash1.source);

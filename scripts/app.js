@@ -645,8 +645,8 @@ var ShieldMaterial = (function (_super) {
         }) || this;
         _this._flash1 = new Flash();
         _this._color = new BABYLON.Color3(1, 1, 1);
-        _this.setTexture("texture", new BABYLON.Texture("./datas/shield-diffuse.png", _this.getScene()));
-        _this.setFloat("length", 1);
+        _this.setTexture("texture", new BABYLON.Texture("./datas/twkromhl.png", _this.getScene()));
+        _this.setFloat("length", 0.2);
         _this.getScene().registerBeforeRender(function () {
             _this._flash1.distance += _this._flash1.speed;
             _this.setVector3("source1", _this._flash1.source);
