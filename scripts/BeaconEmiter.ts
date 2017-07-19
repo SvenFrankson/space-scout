@@ -68,13 +68,24 @@ class BeaconEmiter extends BABYLON.Mesh {
     );
   }
 
-  public updateMapIcon(): void {
+  public updateMapIcon(spaceShip: SpaceShip): void {
     let w: number = Main.Canvas.width;
     let h: number = Main.Canvas.height;
     let size: number = Math.min(w, h);
 
-    $("#" + this.mapIconId).css("top", size / 2 * 0.1 + size / 2 * 0.4 * this.position.z / 300);
-    $("#" + this.mapIconId).css("left", size / 2 * 0.1 + size / 2 * 0.4 * this.position.x / 300);
+    let relPos: BABYLON.Vector3 = this.position.subtract(spaceShip.position);
+    let angularPos: number = SpaceMath.Angle(relPos, spaceShip.localZ) / Math.PI;
+    let rollPos: number = SpaceMath.AngleFromToAround(spaceShip.localY, relPos, spaceShip.localZ);
+    let iconPos: BABYLON.Vector2 = new BABYLON.Vector2(
+      - Math.sin(rollPos) * angularPos,
+      - Math.cos(rollPos) * angularPos
+    );
+
+    let center: number = size / 2 * 0.1 + size / 2 * 0.4;
+    $("#" + this.mapIconId).css("width", 64);
+    $("#" + this.mapIconId).css("height", 64);
+    $("#" + this.mapIconId).css("top", center + size / 2 * 0.4 * iconPos.y - 32);
+    $("#" + this.mapIconId).css("left", center + size / 2 * 0.4 * iconPos.x - 32);
     $("#" + this.mapIconId).show();
   }
 }

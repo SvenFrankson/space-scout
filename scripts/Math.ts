@@ -9,6 +9,13 @@ class SpaceMath {
     return p;
   }
 
+  public static Angle(from: BABYLON.Vector3, to: BABYLON.Vector3): number {
+    let pFrom: BABYLON.Vector3 = BABYLON.Vector3.Normalize(from);
+    let pTo: BABYLON.Vector3 = BABYLON.Vector3.Normalize(to);
+    let angle: number = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+    return angle;
+  }
+
   public static AngleFromToAround(from: BABYLON.Vector3, to: BABYLON.Vector3, around: BABYLON.Vector3): number {
     let pFrom: BABYLON.Vector3 = SpaceMath.ProjectPerpendicularAt(from, around).normalize();
     let pTo: BABYLON.Vector3 = SpaceMath.ProjectPerpendicularAt(to, around).normalize();

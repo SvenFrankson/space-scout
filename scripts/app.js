@@ -145,7 +145,7 @@ var Loader = (function () {
         }
     };
     Loader._loadSceneData = function (data, scene, callback) {
-        Loader.AddStaticsIntoScene(data.statics, scene, callback, 20);
+        Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
     };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
@@ -372,6 +372,12 @@ var SpaceMath = (function () {
         p.copyFrom(v);
         p.subtractInPlace(at.multiplyByFloats(k, k, k));
         return p;
+    };
+    SpaceMath.Angle = function (from, to) {
+        var pFrom = BABYLON.Vector3.Normalize(from);
+        var pTo = BABYLON.Vector3.Normalize(to);
+        var angle = Math.acos(BABYLON.Vector3.Dot(pFrom, pTo));
+        return angle;
     };
     SpaceMath.AngleFromToAround = function (from, to, around) {
         var pFrom = SpaceMath.ProjectPerpendicularAt(from, around).normalize();
@@ -606,7 +612,7 @@ var Level0 = (function () {
                 emit.position.copyFrom(b.position);
                 emit.rotation.copyFrom(b.rotation);
                 scene.registerBeforeRender(function () {
-                    emit.updateMapIcon();
+                    emit.updateMapIcon(SpaceShipInputs.SSIInstances[0].spaceShip);
                     if (!emit.activated) {
                         for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
                             var spaceShip = SpaceShipControler.Instances[i_1];
@@ -928,6 +934,7 @@ var SpaceShipInputs = (function (_super) {
         _this._yawPow = 1.5;
         _this._pitchPow = 1.5;
         _this.wingMen = [];
+        SpaceShipInputs.SSIInstances.push(_this);
         _this._spaceShip = spaceShip;
         _this._scene = scene;
         _this._loadPointer();
@@ -1109,6 +1116,7 @@ var SpaceShipInputs = (function (_super) {
     };
     return SpaceShipInputs;
 }(SpaceShipControler));
+SpaceShipInputs.SSIInstances = [];
 var IIABehaviour;
 (function (IIABehaviour) {
     IIABehaviour[IIABehaviour["Track"] = 0] = "Track";
@@ -1427,12 +1435,19 @@ var BeaconEmiter = (function (_super) {
             }
         }, 3000);
     };
-    BeaconEmiter.prototype.updateMapIcon = function () {
+    BeaconEmiter.prototype.updateMapIcon = function (spaceShip) {
         var w = Main.Canvas.width;
         var h = Main.Canvas.height;
         var size = Math.min(w, h);
-        $("#" + this.mapIconId).css("top", size / 2 * 0.1 + size / 2 * 0.4 * this.position.z / 300);
-        $("#" + this.mapIconId).css("left", size / 2 * 0.1 + size / 2 * 0.4 * this.position.x / 300);
+        var relPos = this.position.subtract(spaceShip.position);
+        var angularPos = SpaceMath.Angle(relPos, spaceShip.localZ) / Math.PI;
+        var rollPos = SpaceMath.AngleFromToAround(spaceShip.localY, relPos, spaceShip.localZ);
+        var iconPos = new BABYLON.Vector2(-Math.sin(rollPos) * angularPos, -Math.cos(rollPos) * angularPos);
+        var center = size / 2 * 0.1 + size / 2 * 0.4;
+        $("#" + this.mapIconId).css("width", 64);
+        $("#" + this.mapIconId).css("height", 64);
+        $("#" + this.mapIconId).css("top", center + size / 2 * 0.4 * iconPos.y - 32);
+        $("#" + this.mapIconId).css("left", center + size / 2 * 0.4 * iconPos.x - 32);
         $("#" + this.mapIconId).show();
     };
     return BeaconEmiter;

@@ -1,4 +1,6 @@
 class SpaceShipInputs extends SpaceShipControler {
+
+  public static SSIInstances: SpaceShipInputs[] = [];
   private _active: boolean = false;
   private _forwardPow: number = 10;
   private _forward: boolean;
@@ -18,6 +20,7 @@ class SpaceShipInputs extends SpaceShipControler {
 
   constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
     super(spaceShip, ISquadRole.Leader, 0);
+    SpaceShipInputs.SSIInstances.push(this);
     this._spaceShip = spaceShip;
     this._scene = scene;
     this._loadPointer();
