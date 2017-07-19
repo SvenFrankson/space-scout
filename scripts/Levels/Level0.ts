@@ -21,7 +21,12 @@ class Level0 implements ILevel {
               emit = meshes[0] as BABYLON.Mesh;
               emit.position.copyFrom(b.position);
               emit.rotation.copyFrom(b.rotation);
-              emit.material = new ShieldMaterial("Emiter" + i, scene);
+              let emitMat: ShieldMaterial = new ShieldMaterial("Emiter" + i, scene);
+              emitMat.length = 2;
+              emitMat.tex = new BABYLON.Texture("./datas/fading-white-stripes.png", scene);
+              emitMat.color.copyFromFloats(0.5, 0.5, 0.8, 1);
+              emitMat.fadingDistance = 10;
+              emit.material = emitMat;
             }
           }
         )

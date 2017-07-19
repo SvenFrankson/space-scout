@@ -438,7 +438,10 @@ var Shield = (function (_super) {
                 data.applyToMesh(_this);
                 shield.dispose();
                 var shieldMaterial = new ShieldMaterial(_this.name, _this.getScene());
-                shieldMaterial.color = new BABYLON.Color4(0, 0.8, 0, 1);
+                shieldMaterial.color = new BABYLON.Color4(0.13, 0.52, 0.80, 1);
+                shieldMaterial.tex = new BABYLON.Texture("./datas/white-front-gradient.png", Main.Scene);
+                shieldMaterial.noiseAmplitude = 0.25;
+                shieldMaterial.noiseFrequency = 16;
                 _this.material = shieldMaterial;
             }
         });
@@ -591,7 +594,12 @@ var Level0 = (function () {
                         emit = meshes[0];
                         emit.position.copyFrom(b.position);
                         emit.rotation.copyFrom(b.rotation);
-                        emit.material = new ShieldMaterial("Emiter" + i, scene);
+                        var emitMat = new ShieldMaterial("Emiter" + i, scene);
+                        emitMat.length = 2;
+                        emitMat.tex = new BABYLON.Texture("./datas/fading-white-stripes.png", scene);
+                        emitMat.color.copyFromFloats(0.5, 0.5, 0.8, 1);
+                        emitMat.fadingDistance = 10;
+                        emit.material = emitMat;
                     }
                 });
                 scene.registerBeforeRender(function () {
@@ -599,7 +607,6 @@ var Level0 = (function () {
                         var spaceShip = SpaceShipControler.Instances[i_1];
                         if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                             if (emit.material instanceof ShieldMaterial) {
-                                Comlink.Display(["- Found !"]);
                                 emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
                             }
                         }
@@ -627,116 +634,6 @@ var Level0 = (function () {
     };
     return Level0;
 }());
-var Flash = (function () {
-    function Flash() {
-        this.source = BABYLON.Vector3.Zero();
-        this.distance = 100;
-        this.speed = 0.1;
-        this.resetLimit = 10;
-    }
-    return Flash;
-}());
-var ShieldMaterial = (function (_super) {
-    __extends(ShieldMaterial, _super);
-    function ShieldMaterial(name, scene) {
-        var _this = _super.call(this, name, scene, "shield", {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        }) || this;
-        _this._flash1 = new Flash();
-        _this.color = new BABYLON.Color4(1, 1, 1, 1);
-        _this.tex = new BABYLON.Texture("./datas/shield.png", _this.getScene());
-        _this.length = 1.5;
-        _this.getScene().registerBeforeRender(function () {
-            _this._flash1.distance += _this._flash1.speed;
-            _this.setVector3("source1", _this._flash1.source);
-            _this.setFloat("sourceDist1", _this._flash1.distance);
-        });
-        return _this;
-    }
-    Object.defineProperty(ShieldMaterial.prototype, "color", {
-        get: function () {
-            return this._color;
-        },
-        set: function (v) {
-            this._color = v;
-            this.setColor4("color", this._color);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ShieldMaterial.prototype, "length", {
-        get: function () {
-            return this._length;
-        },
-        set: function (v) {
-            this._length = v;
-            this.setFloat("length", this._length);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(ShieldMaterial.prototype, "tex", {
-        get: function () {
-            return this._tex;
-        },
-        set: function (v) {
-            this._tex = v;
-            this.setTexture("tex", this._tex);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    ShieldMaterial.prototype.flashAt = function (position, speed) {
-        if (this._flash1.distance > this._flash1.resetLimit) {
-            this._flash1.distance = 0.01;
-            this._flash1.source.copyFrom(position);
-            this._flash1.speed = speed;
-        }
-    };
-    return ShieldMaterial;
-}(BABYLON.ShaderMaterial));
-var TrailMaterial = (function (_super) {
-    __extends(TrailMaterial, _super);
-    function TrailMaterial(name, scene) {
-        var _this = _super.call(this, name, scene, "trail", {
-            attributes: ["position", "normal", "uv"],
-            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
-            needAlphaBlending: true
-        }) || this;
-        _this._diffuseColor1 = new BABYLON.Color4(1, 1, 1, 1);
-        _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
-        _this.getScene().registerBeforeRender(function () {
-            _this.setFloat("alpha", _this.alpha);
-            _this.setVector3("cameraPosition", Main.MenuCamera.position);
-        });
-        return _this;
-    }
-    Object.defineProperty(TrailMaterial.prototype, "diffuseColor1", {
-        get: function () {
-            return this._diffuseColor1;
-        },
-        set: function (v) {
-            this._diffuseColor1 = v;
-            this.setColor4("diffuseColor1", this._diffuseColor1);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    Object.defineProperty(TrailMaterial.prototype, "diffuseColor2", {
-        get: function () {
-            return this._diffuseColor2;
-        },
-        set: function (v) {
-            this._diffuseColor2 = v;
-            this.setColor4("diffuseColor2", this._diffuseColor2);
-        },
-        enumerable: true,
-        configurable: true
-    });
-    return TrailMaterial;
-}(BABYLON.ShaderMaterial));
 var SpaceShip = (function (_super) {
     __extends(SpaceShip, _super);
     function SpaceShip(name, scene) {
@@ -1301,3 +1198,175 @@ var WingManAI = (function (_super) {
     };
     return WingManAI;
 }(SpaceShipAI));
+var Flash = (function () {
+    function Flash() {
+        this.source = BABYLON.Vector3.Zero();
+        this.distance = 100;
+        this.speed = 0.1;
+        this.resetLimit = 10;
+    }
+    return Flash;
+}());
+var ShieldMaterial = (function (_super) {
+    __extends(ShieldMaterial, _super);
+    function ShieldMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "shield", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this._flash1 = new Flash();
+        _this.backFaceCulling = false;
+        _this.color = new BABYLON.Color4(1, 1, 1, 1);
+        _this.tex = new BABYLON.Texture("./datas/shield.png", _this.getScene());
+        _this.length = 1.5;
+        _this.noiseFrequency = 1;
+        _this.noiseAmplitude = 0;
+        _this.fresnelBias = 2;
+        _this.fresnelPower = 64;
+        _this.fadingDistance = 0;
+        _this.getScene().registerBeforeRender(function () {
+            _this._flash1.distance += _this._flash1.speed;
+            _this.setVector3("source1", _this._flash1.source);
+            _this.setFloat("sourceDist1", _this._flash1.distance);
+            _this.setVector3("cameraPosition", scene.activeCamera.position);
+        });
+        return _this;
+    }
+    Object.defineProperty(ShieldMaterial.prototype, "color", {
+        get: function () {
+            return this._color;
+        },
+        set: function (v) {
+            this._color = v;
+            this.setColor4("color", this._color);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "length", {
+        get: function () {
+            return this._length;
+        },
+        set: function (v) {
+            this._length = v;
+            this.setFloat("length", this._length);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "tex", {
+        get: function () {
+            return this._tex;
+        },
+        set: function (v) {
+            this._tex = v;
+            this.setTexture("tex", this._tex);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "noiseAmplitude", {
+        get: function () {
+            return this._noiseAmplitude;
+        },
+        set: function (v) {
+            this._noiseAmplitude = v;
+            this.setFloat("noiseAmplitude", this._noiseAmplitude);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "noiseFrequency", {
+        get: function () {
+            return this._noiseFrequency;
+        },
+        set: function (v) {
+            this._noiseFrequency = v;
+            this.setFloat("noiseFrequency", this._noiseFrequency);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "fresnelBias", {
+        get: function () {
+            return this._fresnelBias;
+        },
+        set: function (v) {
+            this._fresnelBias = v;
+            this.setFloat("fresnelBias", this._fresnelBias);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "fresnelPower", {
+        get: function () {
+            return this._fresnelPower;
+        },
+        set: function (v) {
+            this._fresnelPower = v;
+            this.setFloat("fresnelPower", this._fresnelPower);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(ShieldMaterial.prototype, "fadingDistance", {
+        get: function () {
+            return this._fadingDistance;
+        },
+        set: function (v) {
+            this._fadingDistance = v;
+            this.setFloat("fadingDistance", this._fadingDistance);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    ShieldMaterial.prototype.flashAt = function (position, speed) {
+        if (this._flash1.distance > this._flash1.resetLimit) {
+            this._flash1.distance = 0.01;
+            this._flash1.source.copyFrom(position);
+            this._flash1.speed = speed;
+        }
+    };
+    return ShieldMaterial;
+}(BABYLON.ShaderMaterial));
+var TrailMaterial = (function (_super) {
+    __extends(TrailMaterial, _super);
+    function TrailMaterial(name, scene) {
+        var _this = _super.call(this, name, scene, "trail", {
+            attributes: ["position", "normal", "uv"],
+            uniforms: ["projection", "view", "world", "worldView", "worldViewProjection"],
+            needAlphaBlending: true
+        }) || this;
+        _this._diffuseColor1 = new BABYLON.Color4(1, 1, 1, 1);
+        _this._diffuseColor2 = new BABYLON.Color4(1, 1, 1, 1);
+        _this.getScene().registerBeforeRender(function () {
+            _this.setFloat("alpha", _this.alpha);
+            _this.setVector3("cameraPosition", Main.MenuCamera.position);
+        });
+        return _this;
+    }
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor1", {
+        get: function () {
+            return this._diffuseColor1;
+        },
+        set: function (v) {
+            this._diffuseColor1 = v;
+            this.setColor4("diffuseColor1", this._diffuseColor1);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(TrailMaterial.prototype, "diffuseColor2", {
+        get: function () {
+            return this._diffuseColor2;
+        },
+        set: function (v) {
+            this._diffuseColor2 = v;
+            this.setColor4("diffuseColor2", this._diffuseColor2);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return TrailMaterial;
+}(BABYLON.ShaderMaterial));
