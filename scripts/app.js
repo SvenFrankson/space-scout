@@ -581,33 +581,32 @@ var TrailMesh = (function (_super) {
 }(BABYLON.Mesh));
 var Level0 = (function () {
     function Level0() {
+        this.dialogs = [
+            [""],
+            ["- One beacon transmiting."],
+            ["- Second beacon transmision well received."],
+            ["- Third beacon activated, loading datas."],
+            ["- Fourth and last beacon all setup.", "- Well done captain !"]
+        ];
     }
     Level0.prototype.LoadLevel = function (scene) {
+        var _this = this;
         var beaconMaster = Loader.LoadedStatics["beacon"][0];
         if (beaconMaster) {
             var instances = beaconMaster.instances;
             var _loop_2 = function (i) {
                 var b = instances[i];
-                var emit;
-                BABYLON.SceneLoader.ImportMesh("", "./datas/beacon-emit.babylon", "", scene, function (meshes, particleSystems, skeletons) {
-                    if (meshes[0] instanceof BABYLON.Mesh) {
-                        emit = meshes[0];
-                        emit.position.copyFrom(b.position);
-                        emit.rotation.copyFrom(b.rotation);
-                        var emitMat = new ShieldMaterial("Emiter" + i, scene);
-                        emitMat.length = 2;
-                        emitMat.tex = new BABYLON.Texture("./datas/fading-white-stripes.png", scene);
-                        emitMat.color.copyFromFloats(0.5, 0.5, 0.8, 1);
-                        emitMat.fadingDistance = 10;
-                        emit.material = emitMat;
-                    }
-                });
+                var emit = new BeaconEmiter("Emiter-" + i, scene);
+                emit.initialize();
+                emit.position.copyFrom(b.position);
+                emit.rotation.copyFrom(b.rotation);
                 scene.registerBeforeRender(function () {
-                    for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
-                        var spaceShip = SpaceShipControler.Instances[i_1];
-                        if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
-                            if (emit.material instanceof ShieldMaterial) {
-                                emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
+                    if (!emit.activated) {
+                        for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
+                            var spaceShip = SpaceShipControler.Instances[i_1];
+                            if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                                emit.activate();
+                                Comlink.Display(_this.dialogs[BeaconEmiter.activatedCount]);
                             }
                         }
                     }
@@ -1370,3 +1369,52 @@ var TrailMaterial = (function (_super) {
     });
     return TrailMaterial;
 }(BABYLON.ShaderMaterial));
+var BeaconEmiter = (function (_super) {
+    __extends(BeaconEmiter, _super);
+    function BeaconEmiter(name, scene) {
+        var _this = _super.call(this, name, scene) || this;
+        _this.activated = false;
+        return _this;
+    }
+    Object.defineProperty(BeaconEmiter.prototype, "shieldMaterial", {
+        get: function () {
+            if (this.material instanceof ShieldMaterial) {
+                return this.material;
+            }
+            return undefined;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    BeaconEmiter.prototype.initialize = function () {
+        var _this = this;
+        BABYLON.SceneLoader.ImportMesh("", "./datas/beacon-emit.babylon", "", this.getScene(), function (meshes, particleSystems, skeletons) {
+            if (meshes[0] instanceof BABYLON.Mesh) {
+                var data = BABYLON.VertexData.ExtractFromMesh(meshes[0]);
+                data.applyToMesh(_this);
+                meshes[0].dispose();
+                var emitMat = new ShieldMaterial(_this.name + ("-mat"), _this.getScene());
+                emitMat.length = 2;
+                emitMat.tex = new BABYLON.Texture("./datas/fading-white-stripes.png", _this.getScene());
+                emitMat.color.copyFromFloats(0.5, 0.5, 0.8, 1);
+                emitMat.fadingDistance = 10;
+                _this.material = emitMat;
+            }
+        });
+    };
+    BeaconEmiter.prototype.activate = function () {
+        var _this = this;
+        if (this.activated) {
+            return;
+        }
+        this.activated = true;
+        BeaconEmiter.activatedCount++;
+        setInterval(function () {
+            if (_this.shieldMaterial) {
+                _this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
+            }
+        }, 5000);
+    };
+    return BeaconEmiter;
+}(BABYLON.Mesh));
+BeaconEmiter.activatedCount = 0;

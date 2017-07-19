@@ -1,42 +1,31 @@
 class Level0 implements ILevel {
 
+  public dialogs: string[][] = [
+    [""],
+    ["- One beacon transmiting."],
+    ["- Second beacon transmision well received."],
+    ["- Third beacon activated, loading datas."],
+    ["- Fourth and last beacon all setup.", "- Well done captain !"]
+  ];
+
   public LoadLevel(scene: BABYLON.Scene): void {
     let beaconMaster: BABYLON.Mesh = Loader.LoadedStatics["beacon"][0];
     if (beaconMaster) {
       let instances: BABYLON.InstancedMesh[] = beaconMaster.instances;
       for (let i: number = 0; i < instances.length; i++) {
         let b: BABYLON.InstancedMesh = instances[i];
-        let emit: BABYLON.Mesh;
-        BABYLON.SceneLoader.ImportMesh(
-          "",
-          "./datas/beacon-emit.babylon",
-          "",
-          scene,
-          (
-            meshes: BABYLON.AbstractMesh[],
-            particleSystems: BABYLON.ParticleSystem[],
-            skeletons: BABYLON.Skeleton[]
-          ) => {
-            if (meshes[0] instanceof BABYLON.Mesh) {
-              emit = meshes[0] as BABYLON.Mesh;
-              emit.position.copyFrom(b.position);
-              emit.rotation.copyFrom(b.rotation);
-              let emitMat: ShieldMaterial = new ShieldMaterial("Emiter" + i, scene);
-              emitMat.length = 2;
-              emitMat.tex = new BABYLON.Texture("./datas/fading-white-stripes.png", scene);
-              emitMat.color.copyFromFloats(0.5, 0.5, 0.8, 1);
-              emitMat.fadingDistance = 10;
-              emit.material = emitMat;
-            }
-          }
-        )
+        let emit: BeaconEmiter = new BeaconEmiter("Emiter-" + i, scene);
+        emit.initialize();
+        emit.position.copyFrom(b.position);
+        emit.rotation.copyFrom(b.rotation);
         scene.registerBeforeRender(
           () => {
-            for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
-              let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
-              if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
-                if (emit.material instanceof ShieldMaterial) {
-                  emit.material.flashAt(BABYLON.Vector3.Zero(), 0.1);
+            if (!emit.activated) {
+              for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
+                let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
+                if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                  emit.activate();
+                  Comlink.Display(this.dialogs[BeaconEmiter.activatedCount]);
                 }
               }
             }
