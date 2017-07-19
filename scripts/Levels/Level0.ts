@@ -20,6 +20,7 @@ class Level0 implements ILevel {
         emit.rotation.copyFrom(b.rotation);
         scene.registerBeforeRender(
           () => {
+            emit.updateMapIcon();
             if (!emit.activated) {
               for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
                 let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];

@@ -318,6 +318,10 @@ var Main = (function () {
         $("#speed-display").css("height", size / 2 + "px");
         $("#speed-display").css("top", Main.Canvas.height - size / 2);
         $("#speed-display").css("left", Main.Canvas.width - size / 2);
+        $("#objective-radar").css("width", size / 2 * 0.8 + "px");
+        $("#objective-radar").css("height", size / 2 * 0.8 + "px");
+        $("#objective-radar").css("top", size / 2 * 0.1);
+        $("#objective-radar").css("left", size / 2 * 0.1);
     };
     Main.OnClick = function () {
         if (Main.State === State.Ready) {
@@ -331,6 +335,7 @@ var Main = (function () {
         $("#target3").show();
         $("#panel-right").show();
         $("#speed-display").show();
+        $("#objective-radar").show();
         $("#play-frame").hide();
         Main.Scene.activeCamera = Main.GameCamera;
         Main.Level.OnGameStart();
@@ -601,6 +606,7 @@ var Level0 = (function () {
                 emit.position.copyFrom(b.position);
                 emit.rotation.copyFrom(b.rotation);
                 scene.registerBeforeRender(function () {
+                    emit.updateMapIcon();
                     if (!emit.activated) {
                         for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
                             var spaceShip = SpaceShipControler.Instances[i_1];
@@ -1374,6 +1380,9 @@ var BeaconEmiter = (function (_super) {
     function BeaconEmiter(name, scene) {
         var _this = _super.call(this, name, scene) || this;
         _this.activated = false;
+        BeaconEmiter.Instances.push(_this);
+        _this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
+        $("#canvas-zone").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/target3.png'></img>");
         return _this;
     }
     Object.defineProperty(BeaconEmiter.prototype, "shieldMaterial", {
@@ -1409,12 +1418,24 @@ var BeaconEmiter = (function (_super) {
         }
         this.activated = true;
         BeaconEmiter.activatedCount++;
+        if (this.shieldMaterial) {
+            this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
+        }
         setInterval(function () {
             if (_this.shieldMaterial) {
                 _this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
             }
-        }, 5000);
+        }, 3000);
+    };
+    BeaconEmiter.prototype.updateMapIcon = function () {
+        var w = Main.Canvas.width;
+        var h = Main.Canvas.height;
+        var size = Math.min(w, h);
+        $("#" + this.mapIconId).css("top", size / 2 * 0.1 + size / 2 * 0.4 * this.position.z / 300);
+        $("#" + this.mapIconId).css("left", size / 2 * 0.1 + size / 2 * 0.4 * this.position.x / 300);
+        $("#" + this.mapIconId).show();
     };
     return BeaconEmiter;
 }(BABYLON.Mesh));
+BeaconEmiter.Instances = [];
 BeaconEmiter.activatedCount = 0;

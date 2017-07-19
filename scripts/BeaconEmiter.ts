@@ -1,5 +1,6 @@
 class BeaconEmiter extends BABYLON.Mesh {
 
+  public static Instances: BeaconEmiter[] = [];
   public static activatedCount: number = 0;
 
   public get shieldMaterial(): ShieldMaterial {
@@ -10,9 +11,16 @@ class BeaconEmiter extends BABYLON.Mesh {
   }
 
   public activated: boolean = false;
+  private mapIcon: JQuery;
+  private mapIconId: string;
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(name, scene);
+    BeaconEmiter.Instances.push(this);
+    this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
+    $("#canvas-zone").append(
+      "<img id='" + this.mapIconId + "' class='map-icon' src='./datas/target3.png'></img>"
+    );
   }
 
   public initialize() {
@@ -47,13 +55,26 @@ class BeaconEmiter extends BABYLON.Mesh {
     }
     this.activated = true;
     BeaconEmiter.activatedCount++;
+    if (this.shieldMaterial) {
+      this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
+    }
     setInterval(
       () => {
         if (this.shieldMaterial) {
           this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
         }
       },
-      5000
+      3000
     );
+  }
+
+  public updateMapIcon(): void {
+    let w: number = Main.Canvas.width;
+    let h: number = Main.Canvas.height;
+    let size: number = Math.min(w, h);
+
+    $("#" + this.mapIconId).css("top", size / 2 * 0.1 + size / 2 * 0.4 * this.position.z / 300);
+    $("#" + this.mapIconId).css("left", size / 2 * 0.1 + size / 2 * 0.4 * this.position.x / 300);
+    $("#" + this.mapIconId).show();
   }
 }

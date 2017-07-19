@@ -97,6 +97,11 @@ class Main {
     $("#speed-display").css("height", size / 2 + "px");
     $("#speed-display").css("top", Main.Canvas.height - size / 2);
     $("#speed-display").css("left", Main.Canvas.width - size / 2);
+
+    $("#objective-radar").css("width", size / 2 * 0.8 + "px");
+    $("#objective-radar").css("height", size / 2 * 0.8 + "px");
+    $("#objective-radar").css("top", size / 2 * 0.1);
+    $("#objective-radar").css("left", size / 2 * 0.1);
   }
 
   public static OnClick(): void {
@@ -112,6 +117,7 @@ class Main {
     $("#target3").show();
     $("#panel-right").show();
     $("#speed-display").show();
+    $("#objective-radar").show();
     $("#play-frame").hide();
     Main.Scene.activeCamera = Main.GameCamera;
     Main.Level.OnGameStart();

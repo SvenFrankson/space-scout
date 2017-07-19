@@ -134,4 +134,15 @@
     pointer-events: none;
     clip: rect(100px, 290px, 290px, 0px);
   }
+
+  #objective-radar {
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .map-icon {
+    position: absolute;
+    pointer-events: none;
+    z-index: 2;
+  }
 </style>
