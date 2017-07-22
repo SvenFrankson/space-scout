@@ -26,7 +26,10 @@ class Level0 implements ILevel {
                 let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
                 if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                   emit.activate();
-                  Comlink.Display(this.dialogs[BeaconEmiter.activatedCount]);
+                  Comlink.Display(
+                    this.dialogs[BeaconEmiter.activatedCount],
+                    "0000ff"
+                  );
                 }
               }
             }
@@ -39,25 +42,25 @@ class Level0 implements ILevel {
   public OnGameStart(): void {
     setTimeout(
       () => {
-        Comlink.Display(Dialogs.tipsCommands[0], 10000);
+        Comlink.Display(Dialogs.tipsCommands[0]);
       },
       3000
     );
     setTimeout(
       () => {
-        Comlink.Display(Dialogs.tipsCommands[1], 10000);
+        Comlink.Display(Dialogs.tipsCommands[1]);
       },
       16000
     );
     setTimeout(
       () => {
-        Comlink.Display(Dialogs.tipsCommands[2], 10000);
+        Comlink.Display(Dialogs.tipsCommands[2]);
       },
       29000
     );
     setTimeout(
       () => {
-        Comlink.Display(Dialogs.tipsCommands[3], 10000);
+        Comlink.Display(Dialogs.tipsCommands[3]);
       },
       42000
     );
