@@ -5,6 +5,7 @@ enum ISquadRole {
 
 interface ISpaceShip {
   name: string;
+  url: string;
   x: number;
   y: number;
   z: number;
@@ -20,7 +21,7 @@ class SpaceShipFactory {
   ): void {
     let spaceShip: SpaceShip = new SpaceShip(data.name, Main.Scene);
     spaceShip.initialize(
-      "./datas/spaceship.babylon",
+      data.url,
       () => {
         let spaceshipAI: WingManAI;
         if (data.role === ISquadRole.WingMan) {

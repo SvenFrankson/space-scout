@@ -133,7 +133,7 @@ window.addEventListener("DOMContentLoaded", () => {
   Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
   Main.GameCamera.setEnabled(false);
   player.initialize(
-    "./datas/spaceship.babylon",
+    "spaceship",
     () => {
       let playerControl: SpaceShipInputs = new SpaceShipInputs(player, Main.Scene);
       player.attachControler(playerControl);
@@ -144,6 +144,7 @@ window.addEventListener("DOMContentLoaded", () => {
   SpaceShipFactory.AddSpaceShipToScene(
     {
       name: "Johnson",
+      url: "spaceship",
       x: 0, y: 0, z: 30,
       team: 0,
       role: ISquadRole.WingMan

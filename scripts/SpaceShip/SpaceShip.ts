@@ -96,7 +96,7 @@ class SpaceShip extends BABYLON.Mesh {
   ): void {
     BABYLON.SceneLoader.ImportMesh(
       "",
-      url,
+      "./datas/" + url + ".babylon",
       "",
       Main.Scene,
       (
@@ -112,9 +112,9 @@ class SpaceShip extends BABYLON.Mesh {
           this.wingTipLeft.parent = this._mesh;
           this.wingTipRight.parent = this._mesh;
           let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
-          spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/diffuse.png", Main.Scene);
-          spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/normals.png", Main.Scene);
-          spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/ao.png", Main.Scene);
+          spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/" + url + "-diffuse.png", Main.Scene);
+          spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
+          spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
           spaceshipMaterial.ambientTexture.level = 2;
           spaceship.material = spaceshipMaterial;
           if (callback) {
