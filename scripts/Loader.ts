@@ -28,7 +28,7 @@ interface ICinematicFrame {
 
 class Loader {
 
-  private static _overrideDelay: number = 10;
+  private static _overrideDelay: number;
   public static LoadedStatics: Array<Array<BABYLON.Mesh>> = [];
 
   public static LoadScene(name: string, scene: BABYLON.Scene, callback?: () => void): void {

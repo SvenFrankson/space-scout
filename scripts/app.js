@@ -362,7 +362,6 @@ var Loader = (function () {
     };
     return Loader;
 }());
-Loader._overrideDelay = 10;
 Loader.LoadedStatics = [];
 var State;
 (function (State) {
