@@ -9,6 +9,12 @@ class Intro {
     "galactic hubs are populated by several coexisting species.",
     "Unwearied, earthlings keep spreading through the galaxy, a few dozens light-years away from home."
   ];
+  private static pictures: string[] = [
+    "./img/conference.png",
+    "./img/sun.png",
+    "./img/galaxy.png",
+    "./img/spaceships.png"
+  ];
 
   public static RunIntro(): void {
     Intro.index = -1;
@@ -16,6 +22,7 @@ class Intro {
     $("#cinematic-frame-location").parent().hide();
     $("#cinematic-frame-date").parent().hide();
     $("#cinematic-frame-text").show();
+    $("#cinematic-frame-image").show();
     $("#skip-button").show();
     $("#skip-button").on(
       "click",
@@ -35,6 +42,7 @@ class Intro {
     }
     console.log(".");
     $("#cinematic-frame-text").text(Intro.texts[Intro.index]);
+    $("#cinematic-frame-picture").attr("src", Intro.pictures[Intro.index]);
     Intro._timeoutHandle = setTimeout(
       () => {
         Intro.UpdateIntro();
@@ -48,6 +56,7 @@ class Intro {
     $("#cinematic-frame-location").parent().hide();
     $("#cinematic-frame-date").parent().hide();
     $("#cinematic-frame-text").hide();
+    $("#cinematic-frame-picture").hide();
     $("#skip-button").hide();
     $("#skip-button").off();
     Menu.RunLevel1();

@@ -21,12 +21,20 @@
     text-align: center;
   }
 
+  #cinematic-frame-picture {
+    width: auto;
+    height: auto;
+    max-width: 50%;
+    max-height: 30%;
+  }
+
   .cinematic-title {
     font-family: "Oneday";
   }
 
   .cinematic-text {
     margin-top: 20%;
+    margin-bottom: 10%;
     font-size: 20px;
   }
 

@@ -184,6 +184,7 @@ var Intro = (function () {
         $("#cinematic-frame-location").parent().hide();
         $("#cinematic-frame-date").parent().hide();
         $("#cinematic-frame-text").show();
+        $("#cinematic-frame-image").show();
         $("#skip-button").show();
         $("#skip-button").on("click", function () {
             Intro.UpdateIntro();
@@ -198,6 +199,7 @@ var Intro = (function () {
         }
         console.log(".");
         $("#cinematic-frame-text").text(Intro.texts[Intro.index]);
+        $("#cinematic-frame-picture").attr("src", Intro.pictures[Intro.index]);
         Intro._timeoutHandle = setTimeout(function () {
             Intro.UpdateIntro();
         }, 6000);
@@ -207,6 +209,7 @@ var Intro = (function () {
         $("#cinematic-frame-location").parent().hide();
         $("#cinematic-frame-date").parent().hide();
         $("#cinematic-frame-text").hide();
+        $("#cinematic-frame-picture").hide();
         $("#skip-button").hide();
         $("#skip-button").off();
         Menu.RunLevel1();
@@ -222,6 +225,12 @@ Intro.texts = [
     "Encounters with evolved life forms occurred along the whole millennium, and most " +
         "galactic hubs are populated by several coexisting species.",
     "Unwearied, earthlings keep spreading through the galaxy, a few dozens light-years away from home."
+];
+Intro.pictures = [
+    "./img/conference.png",
+    "./img/sun.png",
+    "./img/galaxy.png",
+    "./img/spaceships.png"
 ];
 Intro._timeoutHandle = 0;
 var Level0 = (function () {
