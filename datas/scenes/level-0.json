@@ -9,15 +9,15 @@
     [
       {
         "text": "Settlers convoy Selenium-XII left Tau Ceti e on January  14th  3051, boarding 120 civilians on a journey to 94 Ceti b and the founding of a new colony.",
-        "delay": "6000"
+        "delay": "10000"
       },
       {
         "text": "Jack Chems, pathfinder squad captain, is in charge of leading the way of the convoy through the galaxy.",
         "delay": "6000"
       },
       {
-        "text": "A few million kilometers ahead of its MotherShip, Jack Chems and its squad are sent gathering datas concerning an asteroid field from which unknown signals have been spotted.",
-        "delay": "6000"
+        "text": "A few million kilometers ahead of its MotherShip, Jack Chems and his squad are sent gathering datas concerning an asteroid field from which unknown signals have been spotted.",
+        "delay": "10000"
       }
     ]
   },
