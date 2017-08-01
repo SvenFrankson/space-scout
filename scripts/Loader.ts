@@ -15,6 +15,8 @@ interface IStatic {
 }
 
 interface ICinematic {
+  location: string;
+  date: string;
   xCam: number;
   yCam: number;
   zCam: number;
@@ -22,13 +24,12 @@ interface ICinematic {
 }
 
 interface ICinematicFrame {
-  htmlId: string;
+  text: string;
   delay: number;
 }
 
 class Loader {
 
-  private static _overrideDelay: number;
   public static LoadedStatics: Array<Array<BABYLON.Mesh>> = [];
 
   public static LoadScene(name: string, scene: BABYLON.Scene, callback?: () => void): void {
@@ -55,24 +56,50 @@ class Loader {
     );
   }
 
-  public static RunCinematic(data: ICinematic, frameIndex: number = 0): void {
-    if (data.frames[frameIndex - 1]) {
-      let lastId: string = data.frames[frameIndex - 1].htmlId;
-      $("#" + lastId).hide();
+  private static index: number = 0;
+  public static RunCinematic(data: ICinematic): void {
+    Loader.index = -1;
+    $("#cinematic-frame").show();
+    $("#cinematic-frame-location").parent().show();
+    $("#cinematic-frame-location").text(data.location);
+    $("#cinematic-frame-date").parent().show();
+    $("#cinematic-frame-date").text(data.date);
+    $("#cinematic-frame-text").show();
+    $("#skip-button").show();
+    $("#skip-button").on(
+      "click",
+      () => {
+        Loader.UpdateCinematic(data);
+      }
+    );
+    Loader.UpdateCinematic(data);
+  }
+
+  private static _timeoutHandle: number = 0;
+  private static UpdateCinematic(data: ICinematic): void {
+    clearTimeout(Loader._timeoutHandle);
+    Loader.index = Loader.index + 1;
+    if (!data.frames[Loader.index]) {
+      return Loader.CloseCinematic();
     }
-    if (data.frames[frameIndex]) {
-      let currentId: string = data.frames[frameIndex].htmlId;
-      $("#" + currentId).show();
-      setTimeout(
-        () => {
-          Loader.RunCinematic(data, frameIndex + 1);
-        },
-        Loader._overrideDelay?Loader._overrideDelay:data.frames[frameIndex].delay
-      );
-    } else {
-      $("#play-frame").show();
-      Main.State = State.Ready;
-    }
+    $("#cinematic-frame-text").text(data.frames[Loader.index].text);
+    Loader._timeoutHandle = setTimeout(
+      () => {
+        Loader.UpdateCinematic(data);
+      },
+      data.frames[Loader.index].delay
+    );
+  }
+
+  private static CloseCinematic(): void {
+    $("#cinematic-frame").hide();
+    $("#cinematic-frame-location").parent().hide();
+    $("#cinematic-frame-date").parent().hide();
+    $("#cinematic-frame-text").hide();
+    $("#skip-button").hide();
+    $("#skip-button").off();
+    $("#play-frame").show();
+    Main.State = State.Ready;
   }
 
   public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {
@@ -157,7 +184,6 @@ class Loader {
         instance.rotation.copyFromFloats(rX, rY, rZ);
         instance.computeWorldMatrix();
         instance.freezeWorldMatrix();
-        // Obstacle.SphereInstances.push(instance.getBoundingInfo().boundingSphere);
       }
     }
     if (callback) {

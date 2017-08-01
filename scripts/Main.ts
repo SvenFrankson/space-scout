@@ -59,8 +59,6 @@ class Main {
     skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
     skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
     skybox.material = skyboxMaterial;
-
-    Loader.LoadScene("level-0", Main.Scene);
   }
 
   public animate(): void {
@@ -78,10 +76,10 @@ class Main {
     let w: number = Main.Canvas.width;
     let h: number = Main.Canvas.height;
     let size: number = Math.min(w, h);
-    $(".cinematic-frame").css("width", size * 0.8);
-    $(".cinematic-frame").css("height", size * 0.8);
-    $(".cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
-    $(".cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+    $("#cinematic-frame").css("width", size * 0.8);
+    $("#cinematic-frame").css("height", size * 0.8);
+    $("#cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
+    $("#cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
 
     $("#target1").css("width", size * 0.9 + "px");
     $("#target1").css("height", size * 0.9 + "px");
@@ -128,6 +126,8 @@ window.addEventListener("DOMContentLoaded", () => {
   let game : Main = new Main("render-canvas");
   game.createScene();
   game.animate();
+
+  Intro.RunIntro();
 
   let player: SpaceShip = new SpaceShip("Player", Main.Scene);
   Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);

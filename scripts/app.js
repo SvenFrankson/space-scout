@@ -175,6 +175,55 @@ var Intersection = (function () {
     return Intersection;
 }());
 Intersection._v = BABYLON.Vector3.Zero();
+var Intro = (function () {
+    function Intro() {
+    }
+    Intro.RunIntro = function () {
+        Intro.index = -1;
+        $("#cinematic-frame").show();
+        $("#cinematic-frame-location").parent().hide();
+        $("#cinematic-frame-date").parent().hide();
+        $("#cinematic-frame-text").show();
+        $("#skip-button").show();
+        $("#skip-button").on("click", function () {
+            Intro.UpdateIntro();
+        });
+        Intro.UpdateIntro();
+    };
+    Intro.UpdateIntro = function () {
+        clearTimeout(Intro._timeoutHandle);
+        Intro.index = Intro.index + 1;
+        if (!Intro.texts[Intro.index]) {
+            return Intro.CloseIntro();
+        }
+        console.log(".");
+        $("#cinematic-frame-text").text(Intro.texts[Intro.index]);
+        Intro._timeoutHandle = setTimeout(function () {
+            Intro.UpdateIntro();
+        }, 6000);
+    };
+    Intro.CloseIntro = function () {
+        $("#cinematic-frame").hide();
+        $("#cinematic-frame-location").parent().hide();
+        $("#cinematic-frame-date").parent().hide();
+        $("#cinematic-frame-text").hide();
+        $("#skip-button").hide();
+        $("#skip-button").off();
+        Menu.RunLevel1();
+    };
+    return Intro;
+}());
+Intro.index = 0;
+Intro.texts = [
+    "It's been more than a thousand year since the Buenos Aires Conference of May " +
+        "4th 2028, when all nations of earth united their space programs in a common quest for the stars.",
+    "Mankind boundaries has since been pushed away to extends no one had expected. " +
+        "Less than a century after the first Titan's civilian settlement, an inhabited spacecraft revolved around Proxima Centauri in 2242.",
+    "Encounters with evolved life forms occurred along the whole millennium, and most " +
+        "galactic hubs are populated by several coexisting species.",
+    "Unwearied, earthlings keep spreading through the galaxy, a few dozens light-years away from home."
+];
+Intro._timeoutHandle = 0;
 var Level0 = (function () {
     function Level0() {
         this.dialogs = [
@@ -230,6 +279,18 @@ var Level0 = (function () {
     };
     return Level0;
 }());
+var Menu = (function () {
+    function Menu() {
+    }
+    Menu.RunLevel1 = function () {
+        Loader.LoadScene("level-0", Main.Scene);
+    };
+    Menu.ShowMenu = function () {
+    };
+    Menu.HideMenu = function () {
+    };
+    return Menu;
+}());
 var Loader = (function () {
     function Loader() {
     }
@@ -250,23 +311,40 @@ var Loader = (function () {
             }
         });
     };
-    Loader.RunCinematic = function (data, frameIndex) {
-        if (frameIndex === void 0) { frameIndex = 0; }
-        if (data.frames[frameIndex - 1]) {
-            var lastId = data.frames[frameIndex - 1].htmlId;
-            $("#" + lastId).hide();
+    Loader.RunCinematic = function (data) {
+        Loader.index = -1;
+        $("#cinematic-frame").show();
+        $("#cinematic-frame-location").parent().show();
+        $("#cinematic-frame-location").text(data.location);
+        $("#cinematic-frame-date").parent().show();
+        $("#cinematic-frame-date").text(data.date);
+        $("#cinematic-frame-text").show();
+        $("#skip-button").show();
+        $("#skip-button").on("click", function () {
+            Loader.UpdateCinematic(data);
+        });
+        Loader.UpdateCinematic(data);
+    };
+    Loader.UpdateCinematic = function (data) {
+        clearTimeout(Loader._timeoutHandle);
+        Loader.index = Loader.index + 1;
+        if (!data.frames[Loader.index]) {
+            return Loader.CloseCinematic();
         }
-        if (data.frames[frameIndex]) {
-            var currentId = data.frames[frameIndex].htmlId;
-            $("#" + currentId).show();
-            setTimeout(function () {
-                Loader.RunCinematic(data, frameIndex + 1);
-            }, Loader._overrideDelay ? Loader._overrideDelay : data.frames[frameIndex].delay);
-        }
-        else {
-            $("#play-frame").show();
-            Main.State = State.Ready;
-        }
+        $("#cinematic-frame-text").text(data.frames[Loader.index].text);
+        Loader._timeoutHandle = setTimeout(function () {
+            Loader.UpdateCinematic(data);
+        }, data.frames[Loader.index].delay);
+    };
+    Loader.CloseCinematic = function () {
+        $("#cinematic-frame").hide();
+        $("#cinematic-frame-location").parent().hide();
+        $("#cinematic-frame-date").parent().hide();
+        $("#cinematic-frame-text").hide();
+        $("#skip-button").hide();
+        $("#skip-button").off();
+        $("#play-frame").show();
+        Main.State = State.Ready;
     };
     Loader._loadSceneData = function (data, scene, callback) {
         Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
@@ -363,6 +441,8 @@ var Loader = (function () {
     return Loader;
 }());
 Loader.LoadedStatics = [];
+Loader.index = 0;
+Loader._timeoutHandle = 0;
 var State;
 (function (State) {
     State[State["Menu"] = 0] = "Menu";
@@ -409,7 +489,6 @@ var Main = (function () {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
-        Loader.LoadScene("level-0", Main.Scene);
     };
     Main.prototype.animate = function () {
         var _this = this;
@@ -425,10 +504,10 @@ var Main = (function () {
         var w = Main.Canvas.width;
         var h = Main.Canvas.height;
         var size = Math.min(w, h);
-        $(".cinematic-frame").css("width", size * 0.8);
-        $(".cinematic-frame").css("height", size * 0.8);
-        $(".cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
-        $(".cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+        $("#cinematic-frame").css("width", size * 0.8);
+        $("#cinematic-frame").css("height", size * 0.8);
+        $("#cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
+        $("#cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
         $("#target1").css("width", size * 0.9 + "px");
         $("#target1").css("height", size * 0.9 + "px");
         $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
@@ -470,6 +549,7 @@ window.addEventListener("DOMContentLoaded", function () {
     var game = new Main("render-canvas");
     game.createScene();
     game.animate();
+    Intro.RunIntro();
     var player = new SpaceShip("Player", Main.Scene);
     Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
     Main.GameCamera.setEnabled(false);
