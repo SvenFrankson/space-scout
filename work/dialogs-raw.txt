@@ -11,3 +11,21 @@ Unwearied, earthlings keep spreading through the galaxy, a few dozens light-year
 
 #  Level 0
 ## Intro
+
+Settlers convoy Selenium-XII left Tau Ceti e on January  14th  3051, boarding 120 civilians on a journey to 94 Ceti b and the founding of a new colony.
+
+Jack Chems, pathfinder squad captain, is in charge of leading the way of the convoy through the galaxy.
+
+A few million kilometers ahead of its MotherShip, Jack Chems and its squad are sent gathering datas concerning an asteroid field from which unknown signals have been spotted.
+
+## Mission Dialogs
+
+[MotherShip] Jack, your squad should now be reaching the zone.
+[MotherShip] Our drones dropped four beacons here. Find and activate the beacons, so we can analyze their data.
+[MotherShip] The beacons should appear on your radar. Good luck, stay safe !
+
+[MotherShip] First beacon activated. Analysis completed. Non-relevant. Three left. Keep on.
+[MotherShip] Second beacon activated. Analysis completed. All clear. Two left. Keep on.
+[MotherShip] Third beacon activated. Analysis completed. Corrupted data. One left. Keep on.
+[MotherShip] Fourth beacon activated. Analysis completed. Got it ! That's all we needed. Mission accomplished !
+[MotherShip] Well done Jack ! Get back to base. Over.
