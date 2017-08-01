@@ -46,6 +46,7 @@ class Main {
 
     Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
     Main.Scene.activeCamera = Main.MenuCamera;
+    Main.MenuCamera.setPosition(new BABYLON.Vector3(160, 80, -160));
 
     let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, Main.Scene);
     skybox.infiniteDistance = true;

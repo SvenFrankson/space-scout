@@ -25,7 +25,7 @@ class SpaceShipFactory {
       () => {
         let spaceshipAI: WingManAI;
         if (data.role === ISquadRole.WingMan) {
-          spaceshipAI = new WingManAI(spaceShip, new BABYLON.Vector3(30, -15, -10), data.role, data.team, Main.Scene);
+          spaceshipAI = new WingManAI(spaceShip, new BABYLON.Vector3(30, -10, 15), data.role, data.team, Main.Scene);
         }
         spaceShip.attachControler(spaceshipAI);
         if (callback) {
