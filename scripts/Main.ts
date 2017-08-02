@@ -116,6 +116,7 @@ class Main {
     $("#target2").show();
     $("#target3").show();
     $("#panel-right").show();
+    $("#team-panel").show();
     $("#speed-display").show();
     $("#objective-radar").show();
     $("#play-frame").hide();
@@ -146,7 +147,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   SpaceShipFactory.AddSpaceShipToScene(
     {
-      name: "Johnson",
+      name: "Voyoslov",
       url: "spaceship",
       x: 0, y: 0, z: 30,
       team: 0,

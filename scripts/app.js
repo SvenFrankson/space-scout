@@ -10,7 +10,7 @@ var BeaconEmiter = (function (_super) {
         _this.activated = false;
         BeaconEmiter.Instances.push(_this);
         _this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
-        $("#canvas-zone").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png'></img>");
+        $("body").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png'></img>");
         return _this;
     }
     Object.defineProperty(BeaconEmiter.prototype, "shieldMaterial", {
@@ -78,21 +78,19 @@ BeaconEmiter.activatedCount = 0;
 var Comlink = (function () {
     function Comlink() {
     }
-    Comlink.Display = function (lines, hexColor, delay) {
+    Comlink.Display = function (sender, line, hexColor, delay) {
         if (hexColor === void 0) { hexColor = "ffffff"; }
-        if (delay === void 0) { delay = 5000; }
-        var _loop_1 = function (i) {
-            var id = "com-link-line-" + Comlink._lineCount;
-            Comlink._lineCount++;
-            $("#com-link").append("<div id='" + id + "' class='no-click'>" + lines[i] + "</div>");
-            $("#" + id).css("color", "#" + hexColor);
-            setTimeout(function () {
-                $("#" + id).remove();
-            }, delay);
-        };
-        for (var i = 0; i < lines.length; i++) {
-            _loop_1(i);
-        }
+        if (delay === void 0) { delay = 10000; }
+        var id = "com-link-line-" + Comlink._lineCount;
+        Comlink._lineCount++;
+        $("#com-link").append("<div id='" + id + "' class='row'>" +
+            "<div class='col-xs-2 no-click'>[" + sender + "]</div>" +
+            "<div class='col-xs-10 no-click'>" + line + "</div>" +
+            "</div>");
+        $("#" + id).css("color", "#" + hexColor);
+        setTimeout(function () {
+            $("#" + id).remove();
+        }, delay);
         while ($("#com-link").children().length > 4) {
             $("#com-link").children().get(0).remove();
         }
@@ -109,18 +107,12 @@ var Dialogs = (function () {
     };
     return Dialogs;
 }());
-Dialogs.tipsCommands = [
-    ["- Sir, you may pilot using your mouse.", "- Move cursor around, the ship should follow, Sir."],
-    ["- Sir, you may accelerate using W.", "- And brake by pressing S, Sir."],
-    ["- Sir, assign tasks to your squad using E or R.", "- Check top-left Team-panel for supervision, Sir."],
-    ["- Sir, use A and D to roll.", "- Do a barrel-roll, Sir."]
-];
 Dialogs.neutralCommands = [
-    ["- Copy that."],
-    ["- Loud and clear, I'm on it."],
-    ["- I'll check it for you captain."],
-    ["- Affirmative."],
-    ["- Roger. Wilco."]
+    "- Copy that.",
+    "- Loud and clear, I'm on it.",
+    "- I'll check it for you captain.",
+    "- Affirmative.",
+    "- Roger. Wilco."
 ];
 var Intersection = (function () {
     function Intersection() {
@@ -230,20 +222,36 @@ Intro.pictures = [
 Intro._timeoutHandle = 0;
 var Level0 = (function () {
     function Level0() {
+        this.introDialogs = [
+            "- Jack, your squad should now be reaching the zone.",
+            "- Our drones dropped four beacons here.",
+            "- Find and activate the beacons, so we can analyze their data.",
+            "- The beacons should appear on your radar. Good luck, stay safe !"
+        ];
+        this.tipDialogs = [
+            "- Ok captain. Driving a SpaceShip for dummies.",
+            "- Lesson 1 - Use your mouse to rotate the ship.",
+            "- Lesson 2 - Press W to accelerate.",
+            "- Lesson 3 - Press A or D key to do a barrel-roll.",
+            "- Lesson 4 - Press Q or E to assign task to your squad.",
+            "- Lesson 5 - Upgrade to Premium Account to unlock blasters.",
+            "- And... That's it. Let's find the beacons."
+        ];
         this.dialogs = [
-            [""],
-            ["- One beacon transmiting."],
-            ["- Second beacon transmision well received."],
-            ["- Third beacon activated, loading datas."],
-            ["- Fourth and last beacon all setup.", "- Well done captain !"]
+            "- First beacon activated. Analysis completed. Non-relevant. Three left. Keep on.",
+            "- Second beacon activated. Analysis completed. All clear. Two left. Keep on.",
+            "- Third beacon activated. Analysis completed. Corrupted data. One left. Keep on.",
+            "- Fourth beacon activated. Analysis completed. Got it ! That's all we needed. Mission accomplished !",
+            "- Well done Jack ! Get back to base. Over."
         ];
     }
     Level0.prototype.LoadLevel = function (scene) {
         var _this = this;
-        var beaconMaster = Loader.LoadedStatics["beacon"][0];
+        var beaconMasterName = "beacon";
+        var beaconMaster = Loader.LoadedStatics[beaconMasterName][0];
         if (beaconMaster) {
             var instances = beaconMaster.instances;
-            var _loop_2 = function (i) {
+            var _loop_1 = function (i) {
                 var b = instances[i];
                 var emit = new BeaconEmiter("Emiter-" + i, scene);
                 emit.initialize();
@@ -256,30 +264,38 @@ var Level0 = (function () {
                             var spaceShip = SpaceShipControler.Instances[i_1];
                             if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                                 emit.activate();
-                                Comlink.Display(_this.dialogs[BeaconEmiter.activatedCount], "0000ff");
+                                Comlink.Display("MotherShip", _this.dialogs[BeaconEmiter.activatedCount - 1], "aff9ff");
                             }
                         }
                     }
                 });
             };
             for (var i = 0; i < instances.length; i++) {
-                _loop_2(i);
+                _loop_1(i);
             }
         }
     };
     Level0.prototype.OnGameStart = function () {
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[0]);
-        }, 3000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[1]);
-        }, 16000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[2]);
-        }, 29000);
-        setTimeout(function () {
-            Comlink.Display(Dialogs.tipsCommands[3]);
-        }, 42000);
+        var _this = this;
+        var delay = 1000;
+        var _loop_2 = function (i) {
+            setTimeout(function () {
+                Comlink.Display("MotherShip", _this.introDialogs[i], "aff9ff");
+            }, delay);
+            delay += 6000;
+        };
+        for (var i = 0; i < this.introDialogs.length; i++) {
+            _loop_2(i);
+        }
+        var _loop_3 = function (i) {
+            setTimeout(function () {
+                Comlink.Display("Voyoslov", _this.tipDialogs[i], "ffffff");
+            }, delay);
+            delay += 3000;
+        };
+        for (var i = 0; i < this.tipDialogs.length; i++) {
+            _loop_3(i);
+        }
     };
     return Level0;
 }());
@@ -541,6 +557,7 @@ var Main = (function () {
         $("#target2").show();
         $("#target3").show();
         $("#panel-right").show();
+        $("#team-panel").show();
         $("#speed-display").show();
         $("#objective-radar").show();
         $("#play-frame").hide();
@@ -565,7 +582,7 @@ window.addEventListener("DOMContentLoaded", function () {
         playerControl.attachControl(Main.Canvas);
     });
     SpaceShipFactory.AddSpaceShipToScene({
-        name: "Johnson",
+        name: "Voyoslov",
         url: "spaceship",
         x: 0, y: 0, z: 30,
         team: 0,
@@ -928,7 +945,7 @@ var WingManAI = (function (_super) {
     WingManAI.prototype.commandPosition = function (newPosition) {
         this._targetPosition.copyFrom(newPosition);
         this._mode = IIABehaviour.GoTo;
-        Comlink.Display(Dialogs.randomNeutralCommand());
+        Comlink.Display(this.spaceShip.name, Dialogs.randomNeutralCommand());
     };
     WingManAI.prototype._checkMode = function (dt) {
         this._findLeader();
@@ -1438,12 +1455,12 @@ var SpaceShipCamera = (function (_super) {
     __extends(SpaceShipCamera, _super);
     function SpaceShipCamera(position, scene, spaceShip, smoothness, smoothnessRotation) {
         var _this = _super.call(this, "SpaceShipCamera", position, scene) || this;
-        _this._smoothness = 32;
-        _this._smoothnessRotation = 16;
+        _this._smoothness = 16;
+        _this._smoothnessRotation = 8;
         _this._focalLength = 100;
         _this._targetPosition = BABYLON.Vector3.Zero();
         _this._targetRotation = BABYLON.Quaternion.Identity();
-        _this._offset = new BABYLON.Vector3(0, 4, -10);
+        _this._offset = new BABYLON.Vector3(0, 4, -15);
         _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / _this._focalLength);
         _this.rotation.copyFromFloats(0, 0, 0);
         _this.rotationQuaternion = BABYLON.Quaternion.Identity();

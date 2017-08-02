@@ -1,15 +1,33 @@
 class Level0 implements ILevel {
 
-  public dialogs: string[][] = [
-    [""],
-    ["- One beacon transmiting."],
-    ["- Second beacon transmision well received."],
-    ["- Third beacon activated, loading datas."],
-    ["- Fourth and last beacon all setup.", "- Well done captain !"]
+  public introDialogs: string[] = [
+    "- Jack, your squad should now be reaching the zone.",
+    "- Our drones dropped four beacons here.",
+    "- Find and activate the beacons, so we can analyze their data.",
+    "- The beacons should appear on your radar. Good luck, stay safe !"
+  ];
+
+  public tipDialogs: string[] = [
+    "- Ok captain. Driving a SpaceShip for dummies.",
+    "- Lesson 1 - Use your mouse to rotate the ship.",
+    "- Lesson 2 - Press W to accelerate.",
+    "- Lesson 3 - Press A or D key to do a barrel-roll.",
+    "- Lesson 4 - Press Q or E to assign task to your squad.",
+    "- Lesson 5 - Upgrade to Premium Account to unlock blasters.",
+    "- And... That's it. Let's find the beacons."
+  ];
+
+  public dialogs: string[] = [
+    "- First beacon activated. Analysis completed. Non-relevant. Three left. Keep on.",
+    "- Second beacon activated. Analysis completed. All clear. Two left. Keep on.",
+    "- Third beacon activated. Analysis completed. Corrupted data. One left. Keep on.",
+    "- Fourth beacon activated. Analysis completed. Got it ! That's all we needed. Mission accomplished !",
+    "- Well done Jack ! Get back to base. Over."
   ];
 
   public LoadLevel(scene: BABYLON.Scene): void {
-    let beaconMaster: BABYLON.Mesh = Loader.LoadedStatics["beacon"][0];
+    let beaconMasterName: string = "beacon";
+    let beaconMaster: BABYLON.Mesh = Loader.LoadedStatics[beaconMasterName][0];
     if (beaconMaster) {
       let instances: BABYLON.InstancedMesh[] = beaconMaster.instances;
       for (let i: number = 0; i < instances.length; i++) {
@@ -27,8 +45,9 @@ class Level0 implements ILevel {
                 if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                   emit.activate();
                   Comlink.Display(
-                    this.dialogs[BeaconEmiter.activatedCount],
-                    "0000ff"
+                    "MotherShip",
+                    this.dialogs[BeaconEmiter.activatedCount - 1],
+                    "aff9ff"
                   );
                 }
               }
@@ -40,30 +59,24 @@ class Level0 implements ILevel {
   }
 
   public OnGameStart(): void {
-    setTimeout(
-      () => {
-        Comlink.Display(Dialogs.tipsCommands[0]);
-      },
-      3000
-    );
-    setTimeout(
-      () => {
-        Comlink.Display(Dialogs.tipsCommands[1]);
-      },
-      16000
-    );
-    setTimeout(
-      () => {
-        Comlink.Display(Dialogs.tipsCommands[2]);
-      },
-      29000
-    );
-    setTimeout(
-      () => {
-        Comlink.Display(Dialogs.tipsCommands[3]);
-      },
-      42000
-    );
-
+    let delay: number = 1000;
+    for (let i: number = 0; i < this.introDialogs.length; i++) {
+      setTimeout(
+        () => {
+          Comlink.Display("MotherShip", this.introDialogs[i], "aff9ff");
+        },
+        delay
+      );
+      delay += 6000;
+    }
+    for (let i: number = 0; i < this.tipDialogs.length; i++) {
+      setTimeout(
+        () => {
+          Comlink.Display("Voyoslov", this.tipDialogs[i], "ffffff");
+        },
+        delay
+      );
+      delay += 3000;
+    }
   }
 }

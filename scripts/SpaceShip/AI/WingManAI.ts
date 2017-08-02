@@ -19,7 +19,7 @@ class WingManAI extends SpaceShipAI {
   public commandPosition(newPosition: BABYLON.Vector3): void {
     this._targetPosition.copyFrom(newPosition);
     this._mode = IIABehaviour.GoTo;
-    Comlink.Display(Dialogs.randomNeutralCommand());
+    Comlink.Display(this.spaceShip.name, Dialogs.randomNeutralCommand());
   }
 
   private _checkMode(dt: number): void {
