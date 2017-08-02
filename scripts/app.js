@@ -84,7 +84,7 @@ var Comlink = (function () {
         var _loop_1 = function (i) {
             var id = "com-link-line-" + Comlink._lineCount;
             Comlink._lineCount++;
-            $("#com-link").append("<div id='" + id + "'>" + lines[i] + "</div>");
+            $("#com-link").append("<div id='" + id + "' class='no-click'>" + lines[i] + "</div>");
             $("#" + id).css("color", "#" + hexColor);
             setTimeout(function () {
                 $("#" + id).remove();
@@ -181,10 +181,8 @@ var Intro = (function () {
     Intro.RunIntro = function () {
         Intro.index = -1;
         $("#cinematic-frame").show();
-        $("#cinematic-frame-location").parent().hide();
-        $("#cinematic-frame-date").parent().hide();
-        $("#cinematic-frame-text").show();
-        $("#cinematic-frame-image").show();
+        $("#cinematic-frame-title").show();
+        $("#cinematic-frame-location-date").hide();
         $("#skip-button").show();
         $("#skip-button").on("click", function () {
             Intro.UpdateIntro();
@@ -197,19 +195,16 @@ var Intro = (function () {
         if (!Intro.texts[Intro.index]) {
             return Intro.CloseIntro();
         }
-        console.log(".");
         $("#cinematic-frame-text").text(Intro.texts[Intro.index]);
-        $("#cinematic-frame-picture").attr("src", Intro.pictures[Intro.index]);
+        $("#cinematic-frame-picture-img").attr("src", Intro.pictures[Intro.index]);
         Intro._timeoutHandle = setTimeout(function () {
             Intro.UpdateIntro();
         }, 6000);
     };
     Intro.CloseIntro = function () {
         $("#cinematic-frame").hide();
-        $("#cinematic-frame-location").parent().hide();
-        $("#cinematic-frame-date").parent().hide();
-        $("#cinematic-frame-text").hide();
-        $("#cinematic-frame-picture").hide();
+        $("#cinematic-frame-title").hide();
+        $("#cinematic-frame-location-date").hide();
         $("#skip-button").hide();
         $("#skip-button").off();
         Menu.RunLevel1();
@@ -323,9 +318,9 @@ var Loader = (function () {
     Loader.RunCinematic = function (data) {
         Loader.index = -1;
         $("#cinematic-frame").show();
-        $("#cinematic-frame-location").parent().show();
+        $("#cinematic-frame-title").hide();
+        $("#cinematic-frame-location-date").show();
         $("#cinematic-frame-location").text(data.location);
-        $("#cinematic-frame-date").parent().show();
         $("#cinematic-frame-date").text(data.date);
         $("#cinematic-frame-text").show();
         $("#skip-button").show();
@@ -347,9 +342,8 @@ var Loader = (function () {
     };
     Loader.CloseCinematic = function () {
         $("#cinematic-frame").hide();
-        $("#cinematic-frame-location").parent().hide();
-        $("#cinematic-frame-date").parent().hide();
-        $("#cinematic-frame-text").hide();
+        $("#cinematic-frame-title").hide();
+        $("#cinematic-frame-location-date").hide();
         $("#skip-button").hide();
         $("#skip-button").off();
         $("#play-frame").show();

@@ -60,9 +60,9 @@ class Loader {
   public static RunCinematic(data: ICinematic): void {
     Loader.index = -1;
     $("#cinematic-frame").show();
-    $("#cinematic-frame-location").parent().show();
+    $("#cinematic-frame-title").hide();
+    $("#cinematic-frame-location-date").show();
     $("#cinematic-frame-location").text(data.location);
-    $("#cinematic-frame-date").parent().show();
     $("#cinematic-frame-date").text(data.date);
     $("#cinematic-frame-text").show();
     $("#skip-button").show();
@@ -93,9 +93,8 @@ class Loader {
 
   private static CloseCinematic(): void {
     $("#cinematic-frame").hide();
-    $("#cinematic-frame-location").parent().hide();
-    $("#cinematic-frame-date").parent().hide();
-    $("#cinematic-frame-text").hide();
+    $("#cinematic-frame-title").hide();
+    $("#cinematic-frame-location-date").hide();
     $("#skip-button").hide();
     $("#skip-button").off();
     $("#play-frame").show();

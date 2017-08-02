@@ -19,10 +19,8 @@ class Intro {
   public static RunIntro(): void {
     Intro.index = -1;
     $("#cinematic-frame").show();
-    $("#cinematic-frame-location").parent().hide();
-    $("#cinematic-frame-date").parent().hide();
-    $("#cinematic-frame-text").show();
-    $("#cinematic-frame-image").show();
+    $("#cinematic-frame-title").show();
+    $("#cinematic-frame-location-date").hide();
     $("#skip-button").show();
     $("#skip-button").on(
       "click",
@@ -40,9 +38,8 @@ class Intro {
     if (!Intro.texts[Intro.index]) {
       return Intro.CloseIntro();
     }
-    console.log(".");
     $("#cinematic-frame-text").text(Intro.texts[Intro.index]);
-    $("#cinematic-frame-picture").attr("src", Intro.pictures[Intro.index]);
+    $("#cinematic-frame-picture-img").attr("src", Intro.pictures[Intro.index]);
     Intro._timeoutHandle = setTimeout(
       () => {
         Intro.UpdateIntro();
@@ -53,10 +50,8 @@ class Intro {
 
   private static CloseIntro(): void {
     $("#cinematic-frame").hide();
-    $("#cinematic-frame-location").parent().hide();
-    $("#cinematic-frame-date").parent().hide();
-    $("#cinematic-frame-text").hide();
-    $("#cinematic-frame-picture").hide();
+    $("#cinematic-frame-title").hide();
+    $("#cinematic-frame-location-date").hide();
     $("#skip-button").hide();
     $("#skip-button").off();
     Menu.RunLevel1();

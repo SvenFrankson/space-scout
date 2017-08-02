@@ -11,49 +11,49 @@
     <link rel="stylesheet" type="text/css" href="./styles/bootstrap.css">
 </head>
 <body>
-  <div class="page-header text-center">
-    <h1 style="font-family: 'oneday'">BabylonJS - SpaceScout</h1>
-    requires modern webGL compatible web-browser with javascript enabled. Not mobile responsive (yet...)
-  </div>
-  <div class="row">
-    <div class="col-xs-1">
+  <canvas id="render-canvas"></canvas>
+  <div id="focal-length" hidden></div>
+  <img id="target1" src="./datas/target1.png" hidden></img>
+  <img id="target2" src="./datas/target2.png" hidden></img>
+  <img id="target3" src="./datas/target3.png" hidden></img>
+  <img id="panel-right" src="./datas/panel-right.png" hidden></img>
+  <img id="speed-display" src="./datas/speed-display.png" hidden></img>
+  <img id="objective-radar" src="./datas/objective.png" hidden></img>
+  <div id="com-link"></div>
+  <div id="team-panel">
+    <div id="team-panel-internal">
+      <h3 class="team-panel-title">Squad</h3>
+      <table>
+        <tr>
+          <td class="space-line-head">Name</td>
+          <td class="space-line-head">Behaviour</td>
+        </tr>
+        <tr>
+          <td id="name" class="space-line">Johnson</td>
+          <td id="behaviour" class="space-line"></td>
+        </tr>
+      </table>
     </div>
-    <div class="col-xs-10" id="canvas-zone">
-      <canvas id="render-canvas"></canvas>
-      <div id="focal-length" hidden></div>
-      <img id="target1" src="./datas/target1.png" hidden></img>
-      <img id="target2" src="./datas/target2.png" hidden></img>
-      <img id="target3" src="./datas/target3.png" hidden></img>
-      <img id="panel-right" src="./datas/panel-right.png" hidden></img>
-      <img id="speed-display" src="./datas/speed-display.png" hidden></img>
-      <img id="objective-radar" src="./datas/objective.png" hidden></img>
-      <div id="com-link"></div>
-      <div id="team-panel">
-        <div id="team-panel-internal">
-          <h3 class="team-panel-title">Squad</h3>
-          <table>
-            <tr>
-              <td class="space-line-head">Name</td>
-              <td class="space-line-head">Behaviour</td>
-            </tr>
-            <tr>
-              <td id="name" class="space-line">Johnson</td>
-              <td id="behaviour" class="space-line"></td>
-            </tr>
-          </table>
+  </div>
+  <div id="play-frame" hidden>Play</div>
+  <div id="cinematic-frame" class="no-click" hidden>
+    <div id="cinematic-frame-header">
+      <h1 id="cinematic-frame-title" class="cinematic-title">Space Scout</h1>
+      <div id="cinematic-frame-location-date" class="row">
+        <div class="col-xs-6">
+          <h3 class="cinematic-title">Location </h3><span id="cinematic-frame-location"></span>
+        </div>
+        <div class="col-xs-6">
+          <h3 class="cinematic-title">Date </h3><span id="cinematic-frame-date"></span>
         </div>
       </div>
-      <div id="play-frame" hidden>Play</div>
-      <div id="cinematic-frame" hidden>
-        <div><h3 class="cinematic-title">Location </h3><span id="cinematic-frame-location"></span></div>
-        <div><h3 class="cinematic-title">Date </h3><span id="cinematic-frame-date"></span></div>
-        <div id="cinematic-frame-text" class="cinematic-text"></div>
-        <div><img id="cinematic-frame-picture" src=""></img></div>
-      </div>
-      <div id="skip-button" hidden>Skip</div>
     </div>
-    <div class="col-xs-1">
+    <div id="cinematic-frame-text">
+    </div>
+    <div id="cinematic-frame-picture">
+      <img id="cinematic-frame-picture-img" src=""></img>
     </div>
   </div>
+  <div id="skip-button" hidden>Skip</div>
 </body>
 </html>

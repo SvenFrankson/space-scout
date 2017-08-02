@@ -18,24 +18,33 @@
     color: rgba(255, 255, 255, 255);
     padding: 30px 30px 30px 30px;
     font-size: 16px;
+  }
+
+  #cinematic-frame-header {
+    height: 25%;
+  }
+
+  #cinematic-frame-text {
+    font-size: 20px;
+    height: 30%;
     text-align: center;
   }
 
   #cinematic-frame-picture {
+    height: 45%;
+  }
+
+  #cinematic-frame-picture-img {
+    display: block;
+    margin: 0 auto;
     width: auto;
     height: auto;
-    max-width: 50%;
-    max-height: 30%;
+    max-width: 90%;
+    max-height: 90%;
   }
 
   .cinematic-title {
     font-family: "Oneday";
-  }
-
-  .cinematic-text {
-    margin-top: 20%;
-    margin-bottom: 10%;
-    font-size: 20px;
   }
 
   .team-panel-title {
@@ -120,11 +129,8 @@
     background-color: rgba(0, 0, 0, 0.5);
   }
 
-  #canvas-zone {
-    padding: 0px;
-  }
-
   #render-canvas {
+    display: block;
     width: 100%;
     height: 100%;
     margin: 0px;
@@ -158,7 +164,6 @@
 
   #panel-right {
     position: absolute;
-    pointer-events: none;
   }
 
   #speed-display {
@@ -176,5 +181,9 @@
     position: absolute;
     pointer-events: none;
     z-index: 2;
+  }
+
+  .no-click {
+    pointer-events: none;
   }
 </style>

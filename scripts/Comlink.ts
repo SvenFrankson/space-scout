@@ -10,7 +10,7 @@ class Comlink {
     for (let i: number = 0; i < lines.length; i++) {
       let id: string = "com-link-line-" + Comlink._lineCount;
       Comlink._lineCount++;
-      $("#com-link").append("<div id='" + id + "'>" + lines[i] + "</div>");
+      $("#com-link").append("<div id='" + id + "' class='no-click'>" + lines[i] + "</div>");
       $("#" + id).css("color", "#" + hexColor);
       setTimeout(
         () => {
