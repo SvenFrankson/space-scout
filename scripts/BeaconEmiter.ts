@@ -17,7 +17,7 @@ class BeaconEmiter extends BABYLON.Mesh {
     super(name, scene);
     BeaconEmiter.Instances.push(this);
     this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
-    $("#canvas-zone").append(
+    $("body").append(
       "<img id='" + this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png'></img>"
     );
   }
