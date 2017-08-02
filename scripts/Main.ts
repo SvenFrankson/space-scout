@@ -132,7 +132,7 @@ window.addEventListener("DOMContentLoaded", () => {
   Intro.RunIntro();
 
   let player: SpaceShip = new SpaceShip("Player", Main.Scene);
-  Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+  Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, player);
   Main.GameCamera.attachSpaceShipControl(Main.Canvas);
   Main.GameCamera.setEnabled(false);
   player.initialize(

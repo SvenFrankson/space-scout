@@ -556,7 +556,7 @@ window.addEventListener("DOMContentLoaded", function () {
     game.animate();
     Intro.RunIntro();
     var player = new SpaceShip("Player", Main.Scene);
-    Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+    Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, player);
     Main.GameCamera.attachSpaceShipControl(Main.Canvas);
     Main.GameCamera.setEnabled(false);
     player.initialize("spaceship", function () {
@@ -1241,6 +1241,16 @@ var SpaceShipInputs = (function (_super) {
         _this._loadPointer();
         return _this;
     }
+    Object.defineProperty(SpaceShipInputs.prototype, "spaceShipCamera", {
+        get: function () {
+            if (!this._spaceShipCamera) {
+                this._spaceShipCamera = this._scene.getCameraByName("SpaceShipCamera");
+            }
+            return this._spaceShipCamera;
+        },
+        enumerable: true,
+        configurable: true
+    });
     SpaceShipInputs.prototype._loadPointer = function () {
         var _this = this;
         BABYLON.SceneLoader.ImportMesh("", "./datas/target.babylon", "", Main.Scene, function (meshes, particleSystems, skeletons) {
@@ -1332,14 +1342,20 @@ var SpaceShipInputs = (function (_super) {
         });
     };
     SpaceShipInputs.prototype.commandWingManGoTo = function () {
+        var _this = this;
         this._findWingMen();
         if (this.wingMen[0]) {
-            var targetPosition = BABYLON.Vector3.TransformCoordinates(new BABYLON.Vector3(0, 0, 100), this._spaceShip.getWorldMatrix());
-            this.wingMen[0].commandPosition(targetPosition);
+            var pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY, function (m) {
+                return m === _this._spaceShip.focalPlane;
+            });
+            if (!pick.hit) {
+                return;
+            }
+            this.wingMen[0].commandPosition(pick.pickedPoint);
             this._pointerDisc.isVisible = true;
             this._pointerCursor.isVisible = true;
-            this._pointerDisc.position.copyFrom(targetPosition);
-            this._pointerCursor.position.copyFrom(targetPosition);
+            this._pointerDisc.position.copyFrom(pick.pickedPoint);
+            this._pointerCursor.position.copyFrom(pick.pickedPoint);
             this._pointerDisc.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
             this._pointerCursor.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
             this._scene.beginAnimation(this._pointerDisc, 0, 60);
@@ -1420,8 +1436,8 @@ var SpaceShipInputs = (function (_super) {
 SpaceShipInputs.SSIInstances = [];
 var SpaceShipCamera = (function (_super) {
     __extends(SpaceShipCamera, _super);
-    function SpaceShipCamera(name, position, scene, spaceShip, smoothness, smoothnessRotation) {
-        var _this = _super.call(this, name, position, scene) || this;
+    function SpaceShipCamera(position, scene, spaceShip, smoothness, smoothnessRotation) {
+        var _this = _super.call(this, "SpaceShipCamera", position, scene) || this;
         _this._smoothness = 32;
         _this._smoothnessRotation = 16;
         _this._focalLength = 100;
@@ -1432,8 +1448,11 @@ var SpaceShipCamera = (function (_super) {
         _this.rotation.copyFromFloats(0, 0, 0);
         _this.rotationQuaternion = BABYLON.Quaternion.Identity();
         _this._spaceShip = spaceShip;
-        _this.focalLength = 100;
         _this.maxZ = 1000;
+        _this._spaceShip.focalPlane = BABYLON.MeshBuilder.CreatePlane("FocalPlane", { width: 1000, height: 1000 }, scene);
+        _this._spaceShip.focalPlane.parent = _this._spaceShip;
+        _this._spaceShip.focalPlane.isVisible = false;
+        _this.focalLength = 100;
         if (!isNaN(smoothness)) {
             _this._smoothness = smoothness;
         }
@@ -1448,6 +1467,9 @@ var SpaceShipCamera = (function (_super) {
         },
         set: function (v) {
             this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+            if (this._spaceShip.focalPlane) {
+                this._spaceShip.focalPlane.position.z = this._focalLength;
+            }
             this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / (Math.round(this._focalLength / 5) * 5));
             $("#focal-length").text((Math.round(this._focalLength / 5) * 5).toFixed(0) + " m");
         },

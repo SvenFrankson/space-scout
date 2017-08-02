@@ -17,6 +17,13 @@ class SpaceShipInputs extends SpaceShipControler {
   public wingMen: WingManAI[] = [];
   private _pointerCursor: BABYLON.Mesh;
   private _pointerDisc: BABYLON.Mesh;
+  private _spaceShipCamera: SpaceShipCamera;
+  private get spaceShipCamera(): SpaceShipCamera {
+    if (!this._spaceShipCamera) {
+      this._spaceShipCamera = this._scene.getCameraByName("SpaceShipCamera") as SpaceShipCamera;
+    }
+    return this._spaceShipCamera;
+  }
 
   constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
     super(spaceShip, ISquadRole.Leader, 0);
@@ -165,17 +172,23 @@ class SpaceShipInputs extends SpaceShipControler {
   public commandWingManGoTo(): void {
     this._findWingMen();
     if (this.wingMen[0]) {
-      let targetPosition: BABYLON.Vector3 = BABYLON.Vector3.TransformCoordinates(
-        new BABYLON.Vector3(0, 0, 100),
-        this._spaceShip.getWorldMatrix()
+      let pick: BABYLON.PickingInfo = this._scene.pick(
+        this._scene.pointerX,
+        this._scene.pointerY,
+        (m: BABYLON.Mesh) => {
+          return m === this._spaceShip.focalPlane;
+        }
       );
+      if (!pick.hit) {
+        return;
+      }
       this.wingMen[0].commandPosition(
-        targetPosition
+        pick.pickedPoint
       );
       this._pointerDisc.isVisible = true;
       this._pointerCursor.isVisible = true;
-      this._pointerDisc.position.copyFrom(targetPosition);
-      this._pointerCursor.position.copyFrom(targetPosition);
+      this._pointerDisc.position.copyFrom(pick.pickedPoint);
+      this._pointerCursor.position.copyFrom(pick.pickedPoint);
       this._pointerDisc.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
       this._pointerCursor.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
       this._scene.beginAnimation(this._pointerDisc, 0, 60);

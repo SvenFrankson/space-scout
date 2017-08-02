@@ -61,6 +61,7 @@ class SpaceShip extends BABYLON.Mesh {
   private _shield: Shield;
   public wingTipRight: BABYLON.Mesh;
   public wingTipLeft: BABYLON.Mesh;
+  public focalPlane: BABYLON.Mesh;
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(name, scene);

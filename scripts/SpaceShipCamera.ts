@@ -12,19 +12,21 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
   }
   public set focalLength(v: number) {
     this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+    if (this._spaceShip.focalPlane) {
+      this._spaceShip.focalPlane.position.z = this._focalLength;
+    }
     this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / (Math.round(this._focalLength / 5) * 5));
     $("#focal-length").text((Math.round(this._focalLength / 5) * 5).toFixed(0) + " m");
   }
 
   constructor(
-    name: string,
     position: BABYLON.Vector3,
     scene: BABYLON.Scene,
     spaceShip: SpaceShip,
     smoothness?: number,
     smoothnessRotation?: number
   ) {
-    super(name, position, scene);
+    super("SpaceShipCamera", position, scene);
     this._targetPosition = BABYLON.Vector3.Zero();
     this._targetRotation = BABYLON.Quaternion.Identity();
     this._offset = new BABYLON.Vector3(0, 4, -10);
@@ -32,8 +34,11 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();
     this._spaceShip = spaceShip;
-    this.focalLength = 100;
     this.maxZ = 1000;
+    this._spaceShip.focalPlane = BABYLON.MeshBuilder.CreatePlane("FocalPlane", {width: 1000, height: 1000}, scene);
+    this._spaceShip.focalPlane.parent = this._spaceShip;
+    this._spaceShip.focalPlane.isVisible = false;
+    this.focalLength = 100;
     if (!isNaN(smoothness)) {
       this._smoothness = smoothness;
     }
