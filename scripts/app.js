@@ -10,7 +10,7 @@ var BeaconEmiter = (function (_super) {
         _this.activated = false;
         BeaconEmiter.Instances.push(_this);
         _this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
-        $("body").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png'></img>");
+        $("body").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png' hidden></img>");
         return _this;
     }
     Object.defineProperty(BeaconEmiter.prototype, "shieldMaterial", {
@@ -69,7 +69,6 @@ var BeaconEmiter = (function (_super) {
         $("#" + this.mapIconId).css("height", 32);
         $("#" + this.mapIconId).css("top", center + size / 2 * 0.4 * iconPos.y - 16);
         $("#" + this.mapIconId).css("left", center + size / 2 * 0.4 * iconPos.x - 16);
-        $("#" + this.mapIconId).show();
     };
     return BeaconEmiter;
 }(BABYLON.Mesh));
@@ -274,6 +273,7 @@ var Level0 = (function () {
                 _loop_1(i);
             }
         }
+        Main.State = State.Ready;
     };
     Level0.prototype.OnGameStart = function () {
         var _this = this;
@@ -363,7 +363,6 @@ var Loader = (function () {
         $("#skip-button").hide();
         $("#skip-button").off();
         $("#play-frame").show();
-        Main.State = State.Ready;
     };
     Loader._loadSceneData = function (data, scene, callback) {
         Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
@@ -560,6 +559,7 @@ var Main = (function () {
         $("#team-panel").show();
         $("#speed-display").show();
         $("#objective-radar").show();
+        $(".map-icon").show();
         $("#play-frame").hide();
         Main.Scene.activeCamera = Main.GameCamera;
         Main.Level.OnGameStart();

@@ -98,7 +98,6 @@ class Loader {
     $("#skip-button").hide();
     $("#skip-button").off();
     $("#play-frame").show();
-    Main.State = State.Ready;
   }
 
   public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {

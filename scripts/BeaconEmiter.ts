@@ -18,7 +18,7 @@ class BeaconEmiter extends BABYLON.Mesh {
     BeaconEmiter.Instances.push(this);
     this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
     $("body").append(
-      "<img id='" + this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png'></img>"
+      "<img id='" + this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png' hidden></img>"
     );
   }
 
@@ -86,6 +86,5 @@ class BeaconEmiter extends BABYLON.Mesh {
     $("#" + this.mapIconId).css("height", 32);
     $("#" + this.mapIconId).css("top", center + size / 2 * 0.4 * iconPos.y - 16);
     $("#" + this.mapIconId).css("left", center + size / 2 * 0.4 * iconPos.x - 16);
-    $("#" + this.mapIconId).show();
   }
 }

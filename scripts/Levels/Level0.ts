@@ -1,5 +1,4 @@
 class Level0 implements ILevel {
-
   public introDialogs: string[] = [
     "- Jack, your squad should now be reaching the zone.",
     "- Our drones dropped four beacons here.",
@@ -56,6 +55,7 @@ class Level0 implements ILevel {
         );
       }
     }
+    Main.State = State.Ready;
   }
 
   public OnGameStart(): void {

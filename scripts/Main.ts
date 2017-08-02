@@ -119,6 +119,7 @@ class Main {
     $("#team-panel").show();
     $("#speed-display").show();
     $("#objective-radar").show();
+    $(".map-icon").show();
     $("#play-frame").hide();
     Main.Scene.activeCamera = Main.GameCamera;
     Main.Level.OnGameStart();
