@@ -542,6 +542,7 @@ var Main = (function () {
     };
     Main.Play = function () {
         Main.State = State.Game;
+        $("#focal-length").show();
         $("#target1").show();
         $("#target2").show();
         $("#target3").show();
@@ -562,6 +563,7 @@ window.addEventListener("DOMContentLoaded", function () {
     Intro.RunIntro();
     var player = new SpaceShip("Player", Main.Scene);
     Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+    Main.GameCamera.attachSpaceShipControl(Main.Canvas);
     Main.GameCamera.setEnabled(false);
     player.initialize("spaceship", function () {
         var playerControl = new SpaceShipInputs(player, Main.Scene);
@@ -1428,13 +1430,15 @@ var SpaceShipCamera = (function (_super) {
         var _this = _super.call(this, name, position, scene) || this;
         _this._smoothness = 32;
         _this._smoothnessRotation = 16;
+        _this._focalLength = 100;
         _this._targetPosition = BABYLON.Vector3.Zero();
         _this._targetRotation = BABYLON.Quaternion.Identity();
         _this._offset = new BABYLON.Vector3(0, 4, -10);
-        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
+        _this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / _this._focalLength);
         _this.rotation.copyFromFloats(0, 0, 0);
         _this.rotationQuaternion = BABYLON.Quaternion.Identity();
         _this._spaceShip = spaceShip;
+        _this.focalLength = 100;
         _this.maxZ = 1000;
         if (!isNaN(smoothness)) {
             _this._smoothness = smoothness;
@@ -1444,6 +1448,18 @@ var SpaceShipCamera = (function (_super) {
         }
         return _this;
     }
+    Object.defineProperty(SpaceShipCamera.prototype, "focalLength", {
+        get: function () {
+            return this._focalLength;
+        },
+        set: function (v) {
+            this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+            this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / (Math.round(this._focalLength / 5) * 5));
+            $("#focal-length").text((Math.round(this._focalLength / 5) * 5).toFixed(0) + " m");
+        },
+        enumerable: true,
+        configurable: true
+    });
     SpaceShipCamera.prototype._checkInputs = function () {
         if (!this._spaceShip.getWorldMatrix()) {
             return;
@@ -1455,6 +1471,12 @@ var SpaceShipCamera = (function (_super) {
         this._targetRotation.copyFrom(this._spaceShip.rotationQuaternion);
         this._targetRotation.multiplyInPlace(this._offsetRotation);
         BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, this._targetRotation, 1 / this._smoothnessRotation, this.rotationQuaternion);
+    };
+    SpaceShipCamera.prototype.attachSpaceShipControl = function (canvas) {
+        var _this = this;
+        canvas.addEventListener("wheel", function (event) {
+            _this.focalLength *= 1 + BABYLON.MathTools.Sign(event.wheelDeltaY) * 0.05;
+        });
     };
     return SpaceShipCamera;
 }(BABYLON.FreeCamera));

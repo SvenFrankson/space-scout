@@ -6,6 +6,15 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
   private _offsetRotation: BABYLON.Quaternion;
   private _smoothness: number = 32;
   private _smoothnessRotation: number = 16;
+  private _focalLength: number = 100;
+  public get focalLength(): number {
+    return this._focalLength;
+  }
+  public set focalLength(v: number) {
+    this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+    this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / (Math.round(this._focalLength / 5) * 5));
+    $("#focal-length").text((Math.round(this._focalLength / 5) * 5).toFixed(0) + " m");
+  }
 
   constructor(
     name: string,
@@ -19,10 +28,11 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     this._targetPosition = BABYLON.Vector3.Zero();
     this._targetRotation = BABYLON.Quaternion.Identity();
     this._offset = new BABYLON.Vector3(0, 4, -10);
-    this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 6 / 60);
+    this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / this._focalLength);
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();
     this._spaceShip = spaceShip;
+    this.focalLength = 100;
     this.maxZ = 1000;
     if (!isNaN(smoothness)) {
       this._smoothness = smoothness;
@@ -57,5 +67,11 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
       1 / this._smoothnessRotation,
       this.rotationQuaternion
     );
+  }
+
+  public attachSpaceShipControl(canvas: HTMLCanvasElement): void {
+    canvas.addEventListener("wheel", (event: MouseWheelEvent) => {
+      this.focalLength *= 1 + BABYLON.MathTools.Sign(event.wheelDeltaY) * 0.05;
+    });
   }
 }

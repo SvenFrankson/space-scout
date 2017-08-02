@@ -111,6 +111,7 @@ class Main {
 
   public static Play(): void {
     Main.State = State.Game;
+    $("#focal-length").show();
     $("#target1").show();
     $("#target2").show();
     $("#target3").show();
@@ -132,6 +133,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
   let player: SpaceShip = new SpaceShip("Player", Main.Scene);
   Main.GameCamera = new SpaceShipCamera("Camera", BABYLON.Vector3.Zero(), Main.Scene, player);
+  Main.GameCamera.attachSpaceShipControl(Main.Canvas);
   Main.GameCamera.setEnabled(false);
   player.initialize(
     "spaceship",

@@ -131,6 +131,16 @@
     touch-action: none;
   }
 
+  #focal-length {
+    position: absolute;
+    top: 15%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    font-size: 20px;
+    color: rgba(255, 255, 255, 127);
+    pointer-events: none;
+  }
+
   #target1 {
     position: absolute;
     pointer-events: none;
