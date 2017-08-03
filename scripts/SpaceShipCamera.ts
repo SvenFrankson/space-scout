@@ -34,7 +34,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();
     this._spaceShip = spaceShip;
-    this.maxZ = 1000;
+    this.maxZ = 2000;
     this._spaceShip.focalPlane = BABYLON.MeshBuilder.CreatePlane("FocalPlane", {width: 1000, height: 1000}, scene);
     this._spaceShip.focalPlane.parent = this._spaceShip;
     this._spaceShip.focalPlane.isVisible = false;

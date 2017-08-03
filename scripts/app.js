@@ -299,18 +299,6 @@ var Level0 = (function () {
     };
     return Level0;
 }());
-var Menu = (function () {
-    function Menu() {
-    }
-    Menu.RunLevel1 = function () {
-        Loader.LoadScene("level-0", Main.Scene);
-    };
-    Menu.ShowMenu = function () {
-    };
-    Menu.HideMenu = function () {
-    };
-    return Menu;
-}());
 var Loader = (function () {
     function Loader() {
     }
@@ -365,7 +353,7 @@ var Loader = (function () {
         $("#play-frame").show();
     };
     Loader._loadSceneData = function (data, scene, callback) {
-        Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
+        Loader.AddStaticsIntoScene(data.statics, scene, callback, 5);
     };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
@@ -461,6 +449,70 @@ var Loader = (function () {
 Loader.LoadedStatics = [];
 Loader.index = 0;
 Loader._timeoutHandle = 0;
+var Menu = (function () {
+    function Menu() {
+    }
+    Menu.RunLevel1 = function () {
+        Loader.LoadScene("level-0", Main.Scene);
+    };
+    Menu.ShowMenu = function () {
+    };
+    Menu.HideMenu = function () {
+    };
+    return Menu;
+}());
+var RandomGenerator = (function () {
+    function RandomGenerator() {
+    }
+    RandomGenerator.Level1 = function () {
+        console.log(".");
+        var data = [];
+        var arcR = 1000;
+        var d = 100;
+        var r = 300;
+        var count = 1000;
+        var l = arcR + d + r;
+        var cX = -arcR / Math.sqrt(2);
+        var cZ = cX;
+        var minSqrRadius = (d + arcR) * (d + arcR);
+        var maxSqrRadius = l * l;
+        var position = BABYLON.Vector3.Zero();
+        while (data.length < 4) {
+            position.copyFromFloats(Math.random() * l, Math.random() * r - r / 2, Math.random() * l);
+            var sqrRadius = (position.x) * (position.x) + (position.z) * (position.z);
+            if ((sqrRadius > minSqrRadius) && (sqrRadius < maxSqrRadius)) {
+                data.push({
+                    name: "beacon",
+                    x: parseFloat((position.x + cX).toFixed(2)),
+                    y: parseFloat((position.y).toFixed(2)),
+                    z: parseFloat((position.z + cZ).toFixed(2)),
+                    s: 1,
+                    rX: parseFloat((Math.random() * Math.PI * 2).toFixed(2)),
+                    rY: parseFloat((Math.random() * Math.PI * 2).toFixed(2)),
+                    rZ: parseFloat((Math.random() * Math.PI * 2).toFixed(2))
+                });
+            }
+        }
+        while (data.length < count) {
+            position.copyFromFloats(Math.random() * l, Math.random() * r - r / 2, Math.random() * l);
+            var sqrRadius = (position.x) * (position.x) + (position.z) * (position.z);
+            if ((sqrRadius > minSqrRadius) && (sqrRadius < maxSqrRadius)) {
+                data.push({
+                    name: "asteroid-2",
+                    x: parseFloat((position.x + cX).toFixed(2)),
+                    y: parseFloat((position.y).toFixed(2)),
+                    z: parseFloat((position.z + cZ).toFixed(2)),
+                    s: parseFloat((Math.random() * 7 + 0.5).toFixed(2)),
+                    rX: parseFloat((Math.random() * Math.PI * 2).toFixed(2)),
+                    rY: parseFloat((Math.random() * Math.PI * 2).toFixed(2)),
+                    rZ: parseFloat((Math.random() * Math.PI * 2).toFixed(2))
+                });
+            }
+        }
+        console.log(JSON.stringify(data));
+    };
+    return RandomGenerator;
+}());
 var State;
 (function (State) {
     State[State["Menu"] = 0] = "Menu";
@@ -490,16 +542,17 @@ var Main = (function () {
     Main.prototype.createScene = function () {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
-        var sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.93, 0.06, 0.36), Main.Scene);
+        var sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
         sun.intensity = 0.8;
-        var cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(-0.75, 0.66, 0.07), Main.Scene);
+        var cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
         cloud.intensity = 0.3;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
         Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Scene.activeCamera = Main.MenuCamera;
-        Main.MenuCamera.setPosition(new BABYLON.Vector3(160, 80, -160));
-        var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, Main.Scene);
+        Main.MenuCamera.setPosition(new BABYLON.Vector3(-160, 80, -160));
+        var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+        skybox.rotation.y = Math.PI / 2;
         skybox.infiniteDistance = true;
         var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
@@ -1465,7 +1518,7 @@ var SpaceShipCamera = (function (_super) {
         _this.rotation.copyFromFloats(0, 0, 0);
         _this.rotationQuaternion = BABYLON.Quaternion.Identity();
         _this._spaceShip = spaceShip;
-        _this.maxZ = 1000;
+        _this.maxZ = 2000;
         _this._spaceShip.focalPlane = BABYLON.MeshBuilder.CreatePlane("FocalPlane", { width: 1000, height: 1000 }, scene);
         _this._spaceShip.focalPlane.parent = _this._spaceShip;
         _this._spaceShip.focalPlane.isVisible = false;
