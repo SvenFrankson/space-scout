@@ -4,7 +4,8 @@
 enum State {
   Menu,
   Ready,
-  Game
+  Game,
+  GameOver
 };
 
 class Main {
@@ -78,10 +79,10 @@ class Main {
     let w: number = Main.Canvas.width;
     let h: number = Main.Canvas.height;
     let size: number = Math.min(w, h);
-    $("#cinematic-frame").css("width", size * 0.8);
-    $("#cinematic-frame").css("height", size * 0.8);
-    $("#cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
-    $("#cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+    $(".frame").css("width", size * 0.8);
+    $(".frame").css("height", size * 0.8);
+    $(".frame").css("bottom", h / 2 - size * 0.8 / 2);
+    $(".frame").css("left", w / 2 - size * 0.8 / 2);
 
     $("#target1").css("width", size * 0.9 + "px");
     $("#target1").css("height", size * 0.9 + "px");
@@ -110,6 +111,7 @@ class Main {
     }
   }
 
+  public static playStart: number = 0;
   public static Play(): void {
     Main.State = State.Game;
     $("#focal-length").show();
@@ -124,6 +126,22 @@ class Main {
     $("#play-frame").hide();
     Main.Scene.activeCamera = Main.GameCamera;
     Main.Level.OnGameStart();
+    Main.playStart = (new Date()).getTime();
+  }
+
+  public static GameOver(): void {
+    Main.State = State.GameOver;
+    $("#focal-length").hide();
+    $("#target1").hide();
+    $("#target2").hide();
+    $("#target3").hide();
+    $("#panel-right").hide();
+    $("#team-panel").hide();
+    $("#speed-display").hide();
+    $("#objective-radar").hide();
+    $(".map-icon").hide();
+    $("#play-frame").hide();
+    $("#game-over-frame").show();
   }
 }
 

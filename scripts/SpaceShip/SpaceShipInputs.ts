@@ -121,7 +121,7 @@ class SpaceShipInputs extends SpaceShipControler {
     canvas.addEventListener(
       "keydown",
       (e: KeyboardEvent) => {
-        if (e.keyCode === 90) {
+        if (e.keyCode === 87) {
           this._forward = true;
         }
         if (e.keyCode === 83) {
@@ -130,7 +130,7 @@ class SpaceShipInputs extends SpaceShipControler {
         if (e.keyCode === 68) {
           this._right = true;
         }
-        if (e.keyCode === 81) {
+        if (e.keyCode === 65) {
           this._left = true;
         }
       }
@@ -138,7 +138,7 @@ class SpaceShipInputs extends SpaceShipControler {
     canvas.addEventListener(
       "keyup",
       (e: KeyboardEvent) => {
-        if (e.keyCode === 90) {
+        if (e.keyCode === 87) {
           this._forward = false;
         }
         if (e.keyCode === 83) {
@@ -147,7 +147,7 @@ class SpaceShipInputs extends SpaceShipControler {
         if (e.keyCode === 68) {
           this._right = false;
         }
-        if (e.keyCode === 81) {
+        if (e.keyCode === 65) {
           this._left = false;
         }
         if (e.keyCode === 69) {

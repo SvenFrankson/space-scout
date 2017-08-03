@@ -48,6 +48,9 @@ class Level0 implements ILevel {
                     this.dialogs[BeaconEmiter.activatedCount - 1],
                     "aff9ff"
                   );
+                  if (BeaconEmiter.activatedCount === 4) {
+                    this.Win();
+                  }
                 }
               }
             }
@@ -78,5 +81,26 @@ class Level0 implements ILevel {
       );
       delay += 3000;
     }
+  }
+
+  public Win(): void {
+    let time: number = (new Date()).getTime() - Main.playStart;
+    setTimeout(
+      () => {
+        Comlink.Display(
+          "MotherShip",
+          this.dialogs[4],
+          "aff9ff"
+        );
+        setTimeout(
+          () => {
+            $("#game-over-time-value").text((time / 1000).toFixed(0) + " sec");
+            Main.GameOver();
+          },
+          5000
+        );
+      },
+      5000
+    );
   }
 }

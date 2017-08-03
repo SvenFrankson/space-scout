@@ -101,7 +101,7 @@ class Loader {
   }
 
   public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {
-    Loader.AddStaticsIntoScene(data.statics, scene, callback, 5);
+    Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
   }
 
   private static _loadStatic(

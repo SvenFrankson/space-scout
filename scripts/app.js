@@ -264,6 +264,9 @@ var Level0 = (function () {
                             if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
                                 emit.activate();
                                 Comlink.Display("MotherShip", _this.dialogs[BeaconEmiter.activatedCount - 1], "aff9ff");
+                                if (BeaconEmiter.activatedCount === 4) {
+                                    _this.Win();
+                                }
                             }
                         }
                     }
@@ -296,6 +299,17 @@ var Level0 = (function () {
         for (var i = 0; i < this.tipDialogs.length; i++) {
             _loop_3(i);
         }
+    };
+    Level0.prototype.Win = function () {
+        var _this = this;
+        var time = (new Date()).getTime() - Main.playStart;
+        setTimeout(function () {
+            Comlink.Display("MotherShip", _this.dialogs[4], "aff9ff");
+            setTimeout(function () {
+                $("#game-over-time-value").text((time / 1000).toFixed(0) + " sec");
+                Main.GameOver();
+            }, 5000);
+        }, 5000);
     };
     return Level0;
 }());
@@ -353,7 +367,7 @@ var Loader = (function () {
         $("#play-frame").show();
     };
     Loader._loadSceneData = function (data, scene, callback) {
-        Loader.AddStaticsIntoScene(data.statics, scene, callback, 5);
+        Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
     };
     Loader._loadStatic = function (name, scene, callback) {
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
@@ -518,6 +532,7 @@ var State;
     State[State["Menu"] = 0] = "Menu";
     State[State["Ready"] = 1] = "Ready";
     State[State["Game"] = 2] = "Game";
+    State[State["GameOver"] = 3] = "GameOver";
 })(State || (State = {}));
 ;
 var Main = (function () {
@@ -576,10 +591,10 @@ var Main = (function () {
         var w = Main.Canvas.width;
         var h = Main.Canvas.height;
         var size = Math.min(w, h);
-        $("#cinematic-frame").css("width", size * 0.8);
-        $("#cinematic-frame").css("height", size * 0.8);
-        $("#cinematic-frame").css("bottom", h / 2 - size * 0.8 / 2);
-        $("#cinematic-frame").css("left", w / 2 - size * 0.8 / 2);
+        $(".frame").css("width", size * 0.8);
+        $(".frame").css("height", size * 0.8);
+        $(".frame").css("bottom", h / 2 - size * 0.8 / 2);
+        $(".frame").css("left", w / 2 - size * 0.8 / 2);
         $("#target1").css("width", size * 0.9 + "px");
         $("#target1").css("height", size * 0.9 + "px");
         $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
@@ -616,10 +631,26 @@ var Main = (function () {
         $("#play-frame").hide();
         Main.Scene.activeCamera = Main.GameCamera;
         Main.Level.OnGameStart();
+        Main.playStart = (new Date()).getTime();
+    };
+    Main.GameOver = function () {
+        Main.State = State.GameOver;
+        $("#focal-length").hide();
+        $("#target1").hide();
+        $("#target2").hide();
+        $("#target3").hide();
+        $("#panel-right").hide();
+        $("#team-panel").hide();
+        $("#speed-display").hide();
+        $("#objective-radar").hide();
+        $(".map-icon").hide();
+        $("#play-frame").hide();
+        $("#game-over-frame").show();
     };
     return Main;
 }());
 Main._state = State.Menu;
+Main.playStart = 0;
 window.addEventListener("DOMContentLoaded", function () {
     var game = new Main("render-canvas");
     game.createScene();
@@ -1374,7 +1405,7 @@ var SpaceShipInputs = (function (_super) {
         var _this = this;
         this._canvas = canvas;
         canvas.addEventListener("keydown", function (e) {
-            if (e.keyCode === 90) {
+            if (e.keyCode === 87) {
                 _this._forward = true;
             }
             if (e.keyCode === 83) {
@@ -1383,12 +1414,12 @@ var SpaceShipInputs = (function (_super) {
             if (e.keyCode === 68) {
                 _this._right = true;
             }
-            if (e.keyCode === 81) {
+            if (e.keyCode === 65) {
                 _this._left = true;
             }
         });
         canvas.addEventListener("keyup", function (e) {
-            if (e.keyCode === 90) {
+            if (e.keyCode === 87) {
                 _this._forward = false;
             }
             if (e.keyCode === 83) {
@@ -1397,7 +1428,7 @@ var SpaceShipInputs = (function (_super) {
             if (e.keyCode === 68) {
                 _this._right = false;
             }
-            if (e.keyCode === 81) {
+            if (e.keyCode === 65) {
                 _this._left = false;
             }
             if (e.keyCode === 69) {
