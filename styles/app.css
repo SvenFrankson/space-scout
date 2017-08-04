@@ -167,17 +167,7 @@
     pointer-events: none;
   }
 
-  #target1 {
-    position: absolute;
-    pointer-events: none;
-  }
-
-  #target2 {
-    position: absolute;
-    pointer-events: none;
-  }
-
-  #target3 {
+  .target {
     position: absolute;
     pointer-events: none;
   }

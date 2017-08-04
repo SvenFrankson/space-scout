@@ -166,6 +166,193 @@ var Intersection = (function () {
     return Intersection;
 }());
 Intersection._v = BABYLON.Vector3.Zero();
+var Layout = (function () {
+    function Layout() {
+    }
+    Object.defineProperty(Layout, "focalLength", {
+        get: function () {
+            if (!Layout._focalLength) {
+                Layout._focalLength = $("#focal-length");
+            }
+            return Layout._focalLength;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "targets", {
+        get: function () {
+            if (!Layout._targets) {
+                Layout._targets = $(".target");
+            }
+            return Layout._targets;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "target1", {
+        get: function () {
+            if (!Layout._target1) {
+                Layout._target1 = $("#target1");
+            }
+            return Layout._target1;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "mapIcons", {
+        get: function () {
+            if (!Layout._mapIcons) {
+                Layout._mapIcons = $(".map-icon");
+            }
+            return Layout._mapIcons;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "panelRight", {
+        get: function () {
+            if (!Layout._panelRight) {
+                Layout._panelRight = $("#panel-right");
+            }
+            return Layout._panelRight;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "speedDisplay", {
+        get: function () {
+            if (!Layout._speedDisplay) {
+                Layout._speedDisplay = $("speed-display");
+            }
+            return Layout._speedDisplay;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "objectiveRadar", {
+        get: function () {
+            if (!Layout._objectiveRadar) {
+                Layout._objectiveRadar = $("#objective-radar");
+            }
+            return Layout._objectiveRadar;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "comLink", {
+        get: function () {
+            if (!Layout._comLink) {
+                Layout._comLink = $("#com-link");
+            }
+            return Layout._comLink;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "teamPanel", {
+        get: function () {
+            if (!Layout._teamPanel) {
+                Layout._teamPanel = $("#team-panel");
+            }
+            return Layout._teamPanel;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "frames", {
+        get: function () {
+            if (!Layout._frames) {
+                Layout._frames = $(".frame");
+            }
+            return Layout._frames;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "playFrame", {
+        get: function () {
+            if (!Layout._playFrame) {
+                Layout._playFrame = $("#play-frame");
+            }
+            return Layout._playFrame;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "gameOverFrame", {
+        get: function () {
+            if (!Layout._gameOverFrame) {
+                Layout._gameOverFrame = $("#game-over-frame");
+            }
+            return Layout._gameOverFrame;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "playButton", {
+        get: function () {
+            if (!Layout._playButton) {
+                Layout._playButton = $("#play-frame");
+            }
+            return Layout._playButton;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Layout.HideAll = function () {
+        Layout.focalLength.hide();
+        Layout.targets.hide();
+        Layout.mapIcons.hide();
+        Layout.panelRight.hide();
+        Layout.speedDisplay.hide();
+        Layout.objectiveRadar.hide();
+        Layout.comLink.hide();
+        Layout.teamPanel.hide();
+        Layout.frames.hide();
+        Layout.playButton.hide();
+    };
+    Layout.Resize = function () {
+        var w = Main.Canvas.width;
+        var h = Main.Canvas.height;
+        var size = Math.min(w, h);
+        Layout.frames.css("width", size * 0.8);
+        Layout.frames.css("height", size * 0.8);
+        Layout.frames.css("bottom", h / 2 - size * 0.8 / 2);
+        Layout.frames.css("left", w / 2 - size * 0.8 / 2);
+        Layout.target1.css("width", size * 0.9 + "px");
+        Layout.target1.css("height", size * 0.9 + "px");
+        Layout.target1.css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
+        Layout.target1.css("left", Main.Canvas.width / 2 - size * 0.9 / 2);
+        Layout.panelRight.css("width", size / 3 + "px");
+        Layout.panelRight.css("height", size / 3 + "px");
+        Layout.panelRight.css("top", Main.Canvas.height - size / 3);
+        Layout.panelRight.css("left", Main.Canvas.width - size / 3);
+        Layout.speedDisplay.css("width", size / 3 + "px");
+        Layout.speedDisplay.css("height", size / 3 + "px");
+        Layout.speedDisplay.css("top", Main.Canvas.height - size / 3);
+        Layout.speedDisplay.css("left", Main.Canvas.width - size / 3);
+        Layout.objectiveRadar.css("width", size / 2 * 0.8 + "px");
+        Layout.objectiveRadar.css("height", size / 2 * 0.8 + "px");
+        Layout.objectiveRadar.css("top", size / 2 * 0.1);
+        Layout.objectiveRadar.css("left", size / 2 * 0.1);
+    };
+    Layout.GameOverLayout = function () {
+        Layout.HideAll();
+        Layout.gameOverFrame.show();
+    };
+    Layout.GameLayout = function () {
+        Layout.HideAll();
+        Layout.focalLength.show();
+        Layout.targets.show();
+        Layout.mapIcons.show();
+        Layout.panelRight.show();
+        Layout.speedDisplay.show();
+        Layout.objectiveRadar.show();
+        Layout.comLink.show();
+        Layout.teamPanel.show();
+    };
+    return Layout;
+}());
 var Intro = (function () {
     function Intro() {
     }
@@ -527,6 +714,156 @@ var RandomGenerator = (function () {
     };
     return RandomGenerator;
 }());
+var Loader = (function () {
+    function Loader() {
+    }
+    Loader.LoadScene = function (name, scene, callback) {
+        Main.Level = new Level0();
+        $.ajax({
+            url: "./datas/scenes/" + name + ".json",
+            success: function (data) {
+                Main.Scene.activeCamera = Main.MenuCamera;
+                Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
+                Loader.RunCinematic(data.cinematic);
+                Loader._loadSceneData(data, scene, function () {
+                    Main.Level.LoadLevel(scene);
+                    if (callback) {
+                        callback();
+                    }
+                });
+            }
+        });
+    };
+    Loader.RunCinematic = function (data) {
+        Loader.index = -1;
+        $("#cinematic-frame").show();
+        $("#cinematic-frame-title").hide();
+        $("#cinematic-frame-location-date").show();
+        $("#cinematic-frame-location").text(data.location);
+        $("#cinematic-frame-date").text(data.date);
+        $("#cinematic-frame-text").show();
+        $("#skip-button").show();
+        $("#skip-button").on("click", function () {
+            Loader.UpdateCinematic(data);
+        });
+        Loader.UpdateCinematic(data);
+    };
+    Loader.UpdateCinematic = function (data) {
+        clearTimeout(Loader._timeoutHandle);
+        Loader.index = Loader.index + 1;
+        if (!data.frames[Loader.index]) {
+            return Loader.CloseCinematic();
+        }
+        $("#cinematic-frame-text").text(data.frames[Loader.index].text);
+        Loader._timeoutHandle = setTimeout(function () {
+            Loader.UpdateCinematic(data);
+        }, data.frames[Loader.index].delay);
+    };
+    Loader.CloseCinematic = function () {
+        $("#cinematic-frame").hide();
+        $("#cinematic-frame-title").hide();
+        $("#cinematic-frame-location-date").hide();
+        $("#skip-button").hide();
+        $("#skip-button").off();
+        $("#play-frame").show();
+    };
+    Loader._loadSceneData = function (data, scene, callback) {
+        Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
+    };
+    Loader._loadStatic = function (name, scene, callback) {
+        BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
+            Loader.LoadedStatics[name] = [];
+            for (var i = 0; i < meshes.length; i++) {
+                if (meshes[i] instanceof BABYLON.Mesh) {
+                    var mesh = meshes[i];
+                    Loader.LoadedStatics[name].push(mesh);
+                    Loader._loadMaterial(mesh.material, name, scene);
+                    for (var j = 0; j < mesh.instances.length; j++) {
+                        Loader.LoadedStatics[name].push(mesh.instances[j]);
+                        mesh.instances[j].isVisible = false;
+                        mesh.instances[j].isPickable = false;
+                    }
+                    mesh.isVisible = false;
+                    mesh.isPickable = false;
+                }
+            }
+            if (callback) {
+                callback(Loader.LoadedStatics[name]);
+            }
+        });
+    };
+    Loader._loadMaterial = function (material, name, scene) {
+        if (material instanceof BABYLON.StandardMaterial) {
+            material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
+            material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
+        }
+    };
+    Loader._cloneStaticIntoScene = function (sources, x, y, z, s, rX, rY, rZ, callback) {
+        if (s === void 0) { s = 1; }
+        if (rX === void 0) { rX = 0; }
+        if (rY === void 0) { rY = 0; }
+        if (rZ === void 0) { rZ = 0; }
+        var instance;
+        for (var i = 0; i < sources.length; i++) {
+            if (sources[i] instanceof BABYLON.Mesh) {
+                var source = sources[i];
+                instance = source.createInstance(source.name);
+                instance.position.copyFromFloats(x, y, z);
+                instance.rotation.copyFromFloats(rX, rY, rZ);
+                instance.scaling.copyFromFloats(s, s, s);
+                instance.computeWorldMatrix();
+                instance.freezeWorldMatrix();
+                if (source.name[0] === "S") {
+                    var radius = source.name.substring(2);
+                    instance.getBoundingInfo().boundingSphere.radius = parseFloat(radius);
+                    instance.getBoundingInfo().boundingSphere.radiusWorld = parseFloat(radius) * s;
+                }
+                Obstacle.PushSphere(instance.getBoundingInfo().boundingSphere);
+            }
+            else if (sources[i] instanceof BABYLON.InstancedMesh) {
+                var source = sources[i];
+                instance = source.sourceMesh.createInstance(source.name);
+                instance.position.copyFromFloats(x, y, z);
+                instance.rotation.copyFromFloats(rX, rY, rZ);
+                instance.computeWorldMatrix();
+                instance.freezeWorldMatrix();
+            }
+        }
+        if (callback) {
+            callback();
+        }
+    };
+    Loader.AddStaticsIntoScene = function (datas, scene, callback, delay, index) {
+        if (delay === void 0) { delay = 0; }
+        if (index === void 0) { index = 0; }
+        if (datas[index]) {
+            Loader.AddStaticIntoScene(datas[index], scene, function () {
+                setTimeout(function () {
+                    Loader.AddStaticsIntoScene(datas, scene, callback, delay, index + 1);
+                }, delay);
+            });
+        }
+        else {
+            if (callback) {
+                callback();
+            }
+        }
+    };
+    Loader.AddStaticIntoScene = function (data, scene, callback) {
+        if (Loader.LoadedStatics[data.name]) {
+            Loader._cloneStaticIntoScene(Loader.LoadedStatics[data.name], data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
+        }
+        else {
+            Loader._loadStatic(data.name, scene, function (loadedMeshes) {
+                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
+            });
+        }
+    };
+    return Loader;
+}());
+Loader.LoadedStatics = [];
+Loader.index = 0;
+Loader._timeoutHandle = 0;
 var State;
 (function (State) {
     State[State["Menu"] = 0] = "Menu";
@@ -588,29 +925,7 @@ var Main = (function () {
     };
     Main.prototype.resize = function () {
         Main.Engine.resize();
-        var w = Main.Canvas.width;
-        var h = Main.Canvas.height;
-        var size = Math.min(w, h);
-        $(".frame").css("width", size * 0.8);
-        $(".frame").css("height", size * 0.8);
-        $(".frame").css("bottom", h / 2 - size * 0.8 / 2);
-        $(".frame").css("left", w / 2 - size * 0.8 / 2);
-        $("#target1").css("width", size * 0.9 + "px");
-        $("#target1").css("height", size * 0.9 + "px");
-        $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
-        $("#target1").css("left", Main.Canvas.width / 2 - size * 0.9 / 2);
-        $("#panel-right").css("width", size / 3 + "px");
-        $("#panel-right").css("height", size / 3 + "px");
-        $("#panel-right").css("top", Main.Canvas.height - size / 3);
-        $("#panel-right").css("left", Main.Canvas.width - size / 3);
-        $("#speed-display").css("width", size / 3 + "px");
-        $("#speed-display").css("height", size / 3 + "px");
-        $("#speed-display").css("top", Main.Canvas.height - size / 3);
-        $("#speed-display").css("left", Main.Canvas.width - size / 3);
-        $("#objective-radar").css("width", size / 2 * 0.8 + "px");
-        $("#objective-radar").css("height", size / 2 * 0.8 + "px");
-        $("#objective-radar").css("top", size / 2 * 0.1);
-        $("#objective-radar").css("left", size / 2 * 0.1);
+        Layout.Resize();
     };
     Main.OnClick = function () {
         if (Main.State === State.Ready) {
@@ -619,33 +934,14 @@ var Main = (function () {
     };
     Main.Play = function () {
         Main.State = State.Game;
-        $("#focal-length").show();
-        $("#target1").show();
-        $("#target2").show();
-        $("#target3").show();
-        $("#panel-right").show();
-        $("#team-panel").show();
-        $("#speed-display").show();
-        $("#objective-radar").show();
-        $(".map-icon").show();
-        $("#play-frame").hide();
+        Layout.GameLayout();
         Main.Scene.activeCamera = Main.GameCamera;
         Main.Level.OnGameStart();
         Main.playStart = (new Date()).getTime();
     };
     Main.GameOver = function () {
         Main.State = State.GameOver;
-        $("#focal-length").hide();
-        $("#target1").hide();
-        $("#target2").hide();
-        $("#target3").hide();
-        $("#panel-right").hide();
-        $("#team-panel").hide();
-        $("#speed-display").hide();
-        $("#objective-radar").hide();
-        $(".map-icon").hide();
-        $("#play-frame").hide();
-        $("#game-over-frame").show();
+        Layout.GameOverLayout();
     };
     return Main;
 }());

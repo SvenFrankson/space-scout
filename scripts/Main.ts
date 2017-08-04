@@ -76,33 +76,7 @@ class Main {
 
   public resize(): void {
     Main.Engine.resize();
-    let w: number = Main.Canvas.width;
-    let h: number = Main.Canvas.height;
-    let size: number = Math.min(w, h);
-    $(".frame").css("width", size * 0.8);
-    $(".frame").css("height", size * 0.8);
-    $(".frame").css("bottom", h / 2 - size * 0.8 / 2);
-    $(".frame").css("left", w / 2 - size * 0.8 / 2);
-
-    $("#target1").css("width", size * 0.9 + "px");
-    $("#target1").css("height", size * 0.9 + "px");
-    $("#target1").css("top", Main.Canvas.height / 2 - size * 0.9 / 2);
-    $("#target1").css("left", Main.Canvas.width / 2 - size * 0.9 / 2);
-
-    $("#panel-right").css("width", size / 3 + "px");
-    $("#panel-right").css("height", size / 3 + "px");
-    $("#panel-right").css("top", Main.Canvas.height - size / 3);
-    $("#panel-right").css("left", Main.Canvas.width - size / 3);
-
-    $("#speed-display").css("width", size / 3 + "px");
-    $("#speed-display").css("height", size / 3 + "px");
-    $("#speed-display").css("top", Main.Canvas.height - size / 3);
-    $("#speed-display").css("left", Main.Canvas.width - size / 3);
-
-    $("#objective-radar").css("width", size / 2 * 0.8 + "px");
-    $("#objective-radar").css("height", size / 2 * 0.8 + "px");
-    $("#objective-radar").css("top", size / 2 * 0.1);
-    $("#objective-radar").css("left", size / 2 * 0.1);
+    Layout.Resize();
   }
 
   public static OnClick(): void {
@@ -114,16 +88,7 @@ class Main {
   public static playStart: number = 0;
   public static Play(): void {
     Main.State = State.Game;
-    $("#focal-length").show();
-    $("#target1").show();
-    $("#target2").show();
-    $("#target3").show();
-    $("#panel-right").show();
-    $("#team-panel").show();
-    $("#speed-display").show();
-    $("#objective-radar").show();
-    $(".map-icon").show();
-    $("#play-frame").hide();
+    Layout.GameLayout();
     Main.Scene.activeCamera = Main.GameCamera;
     Main.Level.OnGameStart();
     Main.playStart = (new Date()).getTime();
@@ -131,17 +96,7 @@ class Main {
 
   public static GameOver(): void {
     Main.State = State.GameOver;
-    $("#focal-length").hide();
-    $("#target1").hide();
-    $("#target2").hide();
-    $("#target3").hide();
-    $("#panel-right").hide();
-    $("#team-panel").hide();
-    $("#speed-display").hide();
-    $("#objective-radar").hide();
-    $(".map-icon").hide();
-    $("#play-frame").hide();
-    $("#game-over-frame").show();
+    Layout.GameOverLayout();
   }
 }
 
