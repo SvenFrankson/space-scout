@@ -2,7 +2,7 @@ class SpaceShipInputs extends SpaceShipControler {
 
   public static SSIInstances: SpaceShipInputs[] = [];
   private _active: boolean = false;
-  private _forwardPow: number = 10;
+  private _forwardPow: number = Config.tmpPlayerSpeed;
   private _forward: boolean;
   private _backwardPow: number = 10;
   private _backward: boolean;

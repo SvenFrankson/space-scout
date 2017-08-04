@@ -30,7 +30,7 @@ interface ICinematicFrame {
 
 class Loader {
 
-  public static LoadedStatics: Array<Array<BABYLON.Mesh>> = [];
+  public static LoadedStatics: Map<string, BABYLON.AbstractMesh[]> = new Map<string, BABYLON.AbstractMesh[]>();
 
   public static LoadScene(name: string, scene: BABYLON.Scene, callback?: () => void): void {
     Main.Level = new Level0();
@@ -93,7 +93,7 @@ class Loader {
   }
 
   public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {
-    Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
+    Loader.AddStaticsIntoScene(data.statics, scene, callback, Config.sceneLoaderDelay);
   }
 
   private static _loadStatic(
@@ -111,14 +111,14 @@ class Loader {
         particleSystems: Array<BABYLON.ParticleSystem>,
         skeletons: Array<BABYLON.Skeleton>
       ) => {
-        Loader.LoadedStatics[name] = [];
+        Loader.LoadedStatics.set(name, []);
         for (let i: number = 0; i < meshes.length; i++) {
           if (meshes[i] instanceof BABYLON.Mesh) {
             let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
-            Loader.LoadedStatics[name].push(mesh);
+            Loader.LoadedStatics.get(name).push(mesh);
             Loader._loadMaterial(mesh.material, name, scene);
             for (let j: number = 0; j < mesh.instances.length; j++) {
-              Loader.LoadedStatics[name].push(mesh.instances[j]);
+              Loader.LoadedStatics.get(name).push(mesh.instances[j]);
               mesh.instances[j].isVisible = false;
               mesh.instances[j].isPickable = false;
             }
@@ -127,7 +127,7 @@ class Loader {
           }
         }
         if (callback) {
-          callback(Loader.LoadedStatics[name]);
+          callback(Loader.LoadedStatics.get(name));
         }
       }
     );
@@ -213,9 +213,9 @@ class Loader {
     scene: BABYLON.Scene,
     callback?: () => void
   ): void {
-    if (Loader.LoadedStatics[data.name]) {
+    if (Loader.LoadedStatics.get(data.name)) {
       Loader._cloneStaticIntoScene(
-        Loader.LoadedStatics[data.name],
+        Loader.LoadedStatics.get(data.name),
         data.x, data.y, data.z,
         data.s,
         data.rX, data.rY, data.rZ,
@@ -239,15 +239,19 @@ class Loader {
   }
 
   public static UnloadScene(): void {
-    for (let i: number = 0; i < Loader.LoadedStatics.length; i++) {
-      for (let j: number = 0; j < Loader.LoadedStatics.length; j++) {
-        let m: BABYLON.Mesh = Loader.LoadedStatics[i][j];
-        for (let k: number = 0; k < m.instances.length; i++) {
-          m.instances[i].dispose();
+    Loader.LoadedStatics.forEach(
+      (
+        v: Array<BABYLON.AbstractMesh>,
+        index: string
+      ) => {
+        for (let i: number = 0; i < v.length; i++) {
+          let m: BABYLON.AbstractMesh = v[i];
+          if (m) {
+            m.dispose();
+          }
         }
-        m.dispose();
       }
-    }
-    Loader.LoadedStatics = [];
+    );
+    Loader.LoadedStatics = new Map<string, BABYLON.AbstractMesh[]>();
   }
 }

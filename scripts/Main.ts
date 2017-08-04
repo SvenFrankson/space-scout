@@ -88,6 +88,14 @@ class Main {
 
   public static Menu(): void {
     Main.State = State.Menu;
+    Loader.UnloadScene();
+    if (Main.Level) {
+      Main.Level.UnLoadLevel();
+    }
+    Main.TMPResetPlayer();
+    Main.TMPResetWingMan();
+    Main.Scene.activeCamera = Main.MenuCamera;
+    Main.GameCamera.ResetPosition();
     Layout.MenuLayout();
   }
 
@@ -104,6 +112,47 @@ class Main {
     Main.State = State.GameOver;
     Layout.GameOverLayout();
   }
+
+  private static _tmpPlayer: SpaceShip;
+  public static TMPCreatePlayer(): void {
+    Main._tmpPlayer = new SpaceShip("Player", Main.Scene);
+    Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
+    Main.GameCamera.attachSpaceShipControl(Main.Canvas);
+    Main.GameCamera.setEnabled(false);
+    Main._tmpPlayer.initialize(
+      "spaceship",
+      () => {
+        let playerControl: SpaceShipInputs = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
+        Main._tmpPlayer.attachControler(playerControl);
+        playerControl.attachControl(Main.Canvas);
+      }
+    );
+  }
+  public static TMPResetPlayer(): void {
+    Main._tmpPlayer.position.copyFromFloats(0, 0, 0);
+    Main._tmpPlayer.rotationQuaternion = BABYLON.Quaternion.Identity();
+  }
+
+  private static _tmpWingMan: SpaceShip;
+  public static TMPCreateWingMan(): void {
+    SpaceShipFactory.AddSpaceShipToScene(
+      {
+        name: "Voyoslov",
+        url: "spaceship",
+        x: 0, y: 0, z: 30,
+        team: 0,
+        role: ISquadRole.WingMan
+      },
+      Main.Scene,
+      (spaceShip: SpaceShip) => {
+        Main._tmpWingMan = spaceShip;
+      }
+    );
+  }
+  public static TMPResetWingMan(): void {
+    Main._tmpWingMan.position.copyFromFloats(0, 0, 30);
+    Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
+  }
 }
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -112,30 +161,7 @@ window.addEventListener("DOMContentLoaded", () => {
   game.animate();
 
   Menu.RegisterToUI();
-
   Intro.RunIntro();
-
-  let player: SpaceShip = new SpaceShip("Player", Main.Scene);
-  Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, player);
-  Main.GameCamera.attachSpaceShipControl(Main.Canvas);
-  Main.GameCamera.setEnabled(false);
-  player.initialize(
-    "spaceship",
-    () => {
-      let playerControl: SpaceShipInputs = new SpaceShipInputs(player, Main.Scene);
-      player.attachControler(playerControl);
-      playerControl.attachControl(Main.Canvas);
-    }
-  );
-
-  SpaceShipFactory.AddSpaceShipToScene(
-    {
-      name: "Voyoslov",
-      url: "spaceship",
-      x: 0, y: 0, z: 30,
-      team: 0,
-      role: ISquadRole.WingMan
-    },
-    Main.Scene
-  );
+  Main.TMPCreatePlayer();
+  Main.TMPCreateWingMan();
 });

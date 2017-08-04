@@ -17,7 +17,7 @@ class SpaceShipFactory {
   public static AddSpaceShipToScene(
     data: ISpaceShip,
     scene: BABYLON.Scene,
-    callback?: () => {}
+    callback?: (spaceShip: SpaceShip) => void
   ): void {
     let spaceShip: SpaceShip = new SpaceShip(data.name, Main.Scene);
     spaceShip.initialize(
@@ -29,7 +29,7 @@ class SpaceShipFactory {
         }
         spaceShip.attachControler(spaceshipAI);
         if (callback) {
-          callback();
+          callback(spaceShip);
         }
       }
     );

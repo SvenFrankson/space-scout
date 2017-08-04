@@ -35,6 +35,7 @@ class BeaconEmiter extends BABYLON.Mesh {
       b.Dispose();
     }
     BeaconEmiter.Instances = [];
+    BeaconEmiter.activatedCount = 0;
   }
 
   public initialize(): void {

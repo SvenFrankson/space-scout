@@ -47,6 +47,11 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     }
   }
 
+  public ResetPosition(): void {
+    this.position.copyFromFloats(0, 0, 0);
+    this.rotationQuaternion = BABYLON.Quaternion.Identity();
+  }
+
   public _checkInputs(): void {
     if (!this._spaceShip.getWorldMatrix()) {
       return;

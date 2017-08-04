@@ -26,8 +26,8 @@ class Level0 implements ILevel {
 
   public LoadLevel(scene: BABYLON.Scene): void {
     let beaconMasterName: string = "beacon";
-    let beaconMaster: BABYLON.Mesh = Loader.LoadedStatics[beaconMasterName][0];
-    if (beaconMaster) {
+    let beaconMaster: BABYLON.AbstractMesh = Loader.LoadedStatics.get(beaconMasterName)[0];
+    if (beaconMaster instanceof BABYLON.Mesh) {
       let instances: BABYLON.InstancedMesh[] = beaconMaster.instances;
       for (let i: number = 0; i < instances.length; i++) {
         let b: BABYLON.InstancedMesh = instances[i];
@@ -39,7 +39,7 @@ class Level0 implements ILevel {
           if (!emit.activated) {
             for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
               let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
-              if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 100000) {
+              if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < Config.activationSqrRange) {
                 emit.activate();
                 scene.unregisterBeforeRender(beaconCheck);
                 Comlink.Display(
