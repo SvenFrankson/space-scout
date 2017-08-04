@@ -237,4 +237,17 @@ class Loader {
       );
     }
   }
+
+  public static UnloadScene(): void {
+    for (let i: number = 0; i < Loader.LoadedStatics.length; i++) {
+      for (let j: number = 0; j < Loader.LoadedStatics.length; j++) {
+        let m: BABYLON.Mesh = Loader.LoadedStatics[i][j];
+        for (let k: number = 0; k < m.instances.length; i++) {
+          m.instances[i].dispose();
+        }
+        m.dispose();
+      }
+    }
+    Loader.LoadedStatics = [];
+  }
 }

@@ -35,26 +35,27 @@ class Level0 implements ILevel {
         emit.initialize();
         emit.position.copyFrom(b.position);
         emit.rotation.copyFrom(b.rotation);
-        scene.registerBeforeRender(
-          () => {
-            emit.updateMapIcon(SpaceShipInputs.SSIInstances[0].spaceShip);
-            if (!emit.activated) {
-              for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
-                let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
-                if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
-                  emit.activate();
-                  Comlink.Display(
-                    "MotherShip",
-                    this.dialogs[BeaconEmiter.activatedCount - 1],
-                    "aff9ff"
-                  );
-                  if (BeaconEmiter.activatedCount === 4) {
-                    this.Win();
-                  }
+        let beaconCheck: () => void = () => {
+          if (!emit.activated) {
+            for (let i: number = 0; i < SpaceShipControler.Instances.length; i++) {
+              let spaceShip: SpaceShipControler = SpaceShipControler.Instances[i];
+              if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 100000) {
+                emit.activate();
+                scene.unregisterBeforeRender(beaconCheck);
+                Comlink.Display(
+                  "MotherShip",
+                  this.dialogs[BeaconEmiter.activatedCount - 1],
+                  "aff9ff"
+                );
+                if (BeaconEmiter.activatedCount === 4) {
+                  this.Win();
                 }
               }
             }
           }
+        };
+        scene.registerBeforeRender(
+          beaconCheck
         );
       }
     }
@@ -102,5 +103,9 @@ class Level0 implements ILevel {
       },
       5000
     );
+  }
+
+  public UnLoadLevel(): void {
+    BeaconEmiter.DisposeAll();
   }
 }

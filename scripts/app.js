@@ -11,6 +11,7 @@ var BeaconEmiter = (function (_super) {
         BeaconEmiter.Instances.push(_this);
         _this.mapIconId = "map-icon-" + BeaconEmiter.Instances.length;
         $("body").append("<img id='" + _this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png' hidden></img>");
+        _this.mapIcon = $("#" + _this.mapIconId);
         return _this;
     }
     Object.defineProperty(BeaconEmiter.prototype, "shieldMaterial", {
@@ -23,6 +24,17 @@ var BeaconEmiter = (function (_super) {
         enumerable: true,
         configurable: true
     });
+    BeaconEmiter.prototype.Dispose = function () {
+        this.mapIcon.remove();
+        this.dispose();
+    };
+    BeaconEmiter.DisposeAll = function () {
+        for (var i = 0; i < BeaconEmiter.Instances.length; i++) {
+            var b = BeaconEmiter.Instances[i];
+            b.Dispose();
+        }
+        BeaconEmiter.Instances = [];
+    };
     BeaconEmiter.prototype.initialize = function () {
         var _this = this;
         BABYLON.SceneLoader.ImportMesh("", "./datas/beacon-emit.babylon", "", this.getScene(), function (meshes, particleSystems, skeletons) {
@@ -55,6 +67,11 @@ var BeaconEmiter = (function (_super) {
                 _this.shieldMaterial.flashAt(BABYLON.Vector3.Zero(), 0.1);
             }
         }, 3000);
+    };
+    BeaconEmiter.UpdateAllMapIcons = function () {
+        BeaconEmiter.Instances.forEach(function (v) {
+            v.updateMapIcon(SpaceShipInputs.SSIInstances[0].spaceShip);
+        });
     };
     BeaconEmiter.prototype.updateMapIcon = function (spaceShip) {
         var w = Main.Canvas.width;
@@ -201,9 +218,7 @@ var Layout = (function () {
     });
     Object.defineProperty(Layout, "mapIcons", {
         get: function () {
-            if (!Layout._mapIcons) {
-                Layout._mapIcons = $(".map-icon");
-            }
+            Layout._mapIcons = $(".map-icon");
             return Layout._mapIcons;
         },
         enumerable: true,
@@ -385,6 +400,10 @@ var Layout = (function () {
         Layout.cinematicFrameLocationDate.hide();
         Layout.cinematicFrameTitle.show();
     };
+    Layout.MenuLayout = function () {
+        Layout.HideAll();
+        Layout.mainMenu.show();
+    };
     Layout.CinematicLayout = function () {
         Layout.HideAll();
         Layout.cinematicFrame.show();
@@ -438,7 +457,7 @@ var Intro = (function () {
     };
     Intro.CloseIntro = function () {
         $("#skip-button").off();
-        Menu.RunLevel1();
+        Main.Menu();
     };
     return Intro;
 }());
@@ -496,13 +515,13 @@ var Level0 = (function () {
                 emit.initialize();
                 emit.position.copyFrom(b.position);
                 emit.rotation.copyFrom(b.rotation);
-                scene.registerBeforeRender(function () {
-                    emit.updateMapIcon(SpaceShipInputs.SSIInstances[0].spaceShip);
+                var beaconCheck = function () {
                     if (!emit.activated) {
                         for (var i_1 = 0; i_1 < SpaceShipControler.Instances.length; i_1++) {
                             var spaceShip = SpaceShipControler.Instances[i_1];
-                            if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 400) {
+                            if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < 100000) {
                                 emit.activate();
+                                scene.unregisterBeforeRender(beaconCheck);
                                 Comlink.Display("MotherShip", _this.dialogs[BeaconEmiter.activatedCount - 1], "aff9ff");
                                 if (BeaconEmiter.activatedCount === 4) {
                                     _this.Win();
@@ -510,7 +529,8 @@ var Level0 = (function () {
                             }
                         }
                     }
-                });
+                };
+                scene.registerBeforeRender(beaconCheck);
             };
             for (var i = 0; i < instances.length; i++) {
                 _loop_1(i);
@@ -550,6 +570,9 @@ var Level0 = (function () {
                 Main.GameOver();
             }, 5000);
         }, 5000);
+    };
+    Level0.prototype.UnLoadLevel = function () {
+        BeaconEmiter.DisposeAll();
     };
     return Level0;
 }());
@@ -689,6 +712,18 @@ var Loader = (function () {
             });
         }
     };
+    Loader.UnloadScene = function () {
+        for (var i = 0; i < Loader.LoadedStatics.length; i++) {
+            for (var j = 0; j < Loader.LoadedStatics.length; j++) {
+                var m = Loader.LoadedStatics[i][j];
+                for (var k = 0; k < m.instances.length; i++) {
+                    m.instances[i].dispose();
+                }
+                m.dispose();
+            }
+        }
+        Loader.LoadedStatics = [];
+    };
     return Loader;
 }());
 Loader.LoadedStatics = [];
@@ -703,6 +738,14 @@ var Menu = (function () {
     Menu.ShowMenu = function () {
     };
     Menu.HideMenu = function () {
+    };
+    Menu.RegisterToUI = function () {
+        $("#game-over-continue").on("click", function (e) {
+            Main.Menu();
+        });
+        $("#level-0").on("click", function (e) {
+            Loader.LoadScene("level-0", Main.Scene);
+        });
     };
     return Menu;
 }());
@@ -811,6 +854,7 @@ var Main = (function () {
     Main.prototype.animate = function () {
         var _this = this;
         Main.Engine.runRenderLoop(function () {
+            BeaconEmiter.UpdateAllMapIcons();
             Main.Scene.render();
         });
         window.addEventListener("resize", function () {
@@ -825,6 +869,10 @@ var Main = (function () {
         if (Main.State === State.Ready) {
             Main.Play();
         }
+    };
+    Main.Menu = function () {
+        Main.State = State.Menu;
+        Layout.MenuLayout();
     };
     Main.Play = function () {
         Main.State = State.Game;
@@ -845,6 +893,7 @@ window.addEventListener("DOMContentLoaded", function () {
     var game = new Main("render-canvas");
     game.createScene();
     game.animate();
+    Menu.RegisterToUI();
     Intro.RunIntro();
     var player = new SpaceShip("Player", Main.Scene);
     Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, player);

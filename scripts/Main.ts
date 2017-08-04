@@ -66,6 +66,7 @@ class Main {
 
   public animate(): void {
     Main.Engine.runRenderLoop(() => {
+      BeaconEmiter.UpdateAllMapIcons();
       Main.Scene.render();
     });
 
@@ -83,6 +84,11 @@ class Main {
     if (Main.State === State.Ready) {
       Main.Play();
     }
+  }
+
+  public static Menu(): void {
+    Main.State = State.Menu;
+    Layout.MenuLayout();
   }
 
   public static playStart: number = 0;
@@ -104,6 +110,8 @@ window.addEventListener("DOMContentLoaded", () => {
   let game : Main = new Main("render-canvas");
   game.createScene();
   game.animate();
+
+  Menu.RegisterToUI();
 
   Intro.RunIntro();
 

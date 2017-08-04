@@ -47,6 +47,6 @@ class Intro {
 
   private static CloseIntro(): void {
     $("#skip-button").off();
-    Menu.RunLevel1();
+    Main.Menu();
   }
 }

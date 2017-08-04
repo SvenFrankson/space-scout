@@ -12,6 +12,7 @@ class BeaconEmiter extends BABYLON.Mesh {
 
   public activated: boolean = false;
   private mapIconId: string;
+  private mapIcon: JQuery;
 
   constructor(name: string, scene: BABYLON.Scene) {
     super(name, scene);
@@ -20,6 +21,20 @@ class BeaconEmiter extends BABYLON.Mesh {
     $("body").append(
       "<img id='" + this.mapIconId + "' class='map-icon' src='./datas/objective-blue.png' hidden></img>"
     );
+    this.mapIcon = $("#" + this.mapIconId);
+  }
+
+  public Dispose(): void {
+    this.mapIcon.remove();
+    this.dispose();
+  }
+
+  public static DisposeAll(): void {
+    for (let i: number = 0; i < BeaconEmiter.Instances.length; i++) {
+      let b: BeaconEmiter = BeaconEmiter.Instances[i];
+      b.Dispose();
+    }
+    BeaconEmiter.Instances = [];
   }
 
   public initialize(): void {
@@ -65,6 +80,14 @@ class BeaconEmiter extends BABYLON.Mesh {
         }
       },
       3000
+    );
+  }
+
+  public static UpdateAllMapIcons(): void {
+    BeaconEmiter.Instances.forEach(
+      (v: BeaconEmiter) => {
+        v.updateMapIcon(SpaceShipInputs.SSIInstances[0].spaceShip);
+      }
     );
   }
 

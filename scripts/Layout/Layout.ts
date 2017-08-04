@@ -25,9 +25,7 @@ class Layout {
 
   private static _mapIcons: JQuery;
   public static get mapIcons(): JQuery {
-    if (!Layout._mapIcons) {
-      Layout._mapIcons = $(".map-icon");
-    }
+    Layout._mapIcons = $(".map-icon");
     return Layout._mapIcons;
   }
 
@@ -186,6 +184,11 @@ class Layout {
     Layout.skipButton.show();
     Layout.cinematicFrameLocationDate.hide();
     Layout.cinematicFrameTitle.show();
+  }
+
+  public static MenuLayout(): void {
+    Layout.HideAll();
+    Layout.mainMenu.show();
   }
 
   public static CinematicLayout(): void {
