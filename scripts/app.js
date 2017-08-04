@@ -269,12 +269,32 @@ var Layout = (function () {
         enumerable: true,
         configurable: true
     });
-    Object.defineProperty(Layout, "playFrame", {
+    Object.defineProperty(Layout, "cinematicFrame", {
         get: function () {
-            if (!Layout._playFrame) {
-                Layout._playFrame = $("#play-frame");
+            if (!Layout._cinematicFrame) {
+                Layout._cinematicFrame = $("#cinematic-frame");
             }
-            return Layout._playFrame;
+            return Layout._cinematicFrame;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "cinematicFrameTitle", {
+        get: function () {
+            if (!Layout._cinematicFrameTitle) {
+                Layout._cinematicFrameTitle = $("#cinematic-frame-title");
+            }
+            return Layout._cinematicFrameTitle;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "cinematicFrameLocationDate", {
+        get: function () {
+            if (!Layout._cinematicFrameLocationDate) {
+                Layout._cinematicFrameLocationDate = $("#cinematic-frame-location-date");
+            }
+            return Layout._cinematicFrameLocationDate;
         },
         enumerable: true,
         configurable: true
@@ -289,12 +309,32 @@ var Layout = (function () {
         enumerable: true,
         configurable: true
     });
+    Object.defineProperty(Layout, "mainMenu", {
+        get: function () {
+            if (!Layout._mainMenu) {
+                Layout._mainMenu = $("#main-menu");
+            }
+            return Layout._mainMenu;
+        },
+        enumerable: true,
+        configurable: true
+    });
     Object.defineProperty(Layout, "playButton", {
         get: function () {
             if (!Layout._playButton) {
-                Layout._playButton = $("#play-frame");
+                Layout._playButton = $("#play-button");
             }
             return Layout._playButton;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Layout, "skipButton", {
+        get: function () {
+            if (!Layout._skipButton) {
+                Layout._skipButton = $("#skip-button");
+            }
+            return Layout._skipButton;
         },
         enumerable: true,
         configurable: true
@@ -309,7 +349,9 @@ var Layout = (function () {
         Layout.comLink.hide();
         Layout.teamPanel.hide();
         Layout.frames.hide();
+        Layout.mainMenu.hide();
         Layout.playButton.hide();
+        Layout.skipButton.hide();
     };
     Layout.Resize = function () {
         var w = Main.Canvas.width;
@@ -336,6 +378,24 @@ var Layout = (function () {
         Layout.objectiveRadar.css("top", size / 2 * 0.1);
         Layout.objectiveRadar.css("left", size / 2 * 0.1);
     };
+    Layout.IntroLayout = function () {
+        Layout.HideAll();
+        Layout.cinematicFrame.show();
+        Layout.skipButton.show();
+        Layout.cinematicFrameLocationDate.hide();
+        Layout.cinematicFrameTitle.show();
+    };
+    Layout.CinematicLayout = function () {
+        Layout.HideAll();
+        Layout.cinematicFrame.show();
+        Layout.skipButton.show();
+        Layout.cinematicFrameLocationDate.show();
+        Layout.cinematicFrameTitle.hide();
+    };
+    Layout.ReadyLayout = function () {
+        Layout.HideAll();
+        Layout.playButton.show();
+    };
     Layout.GameOverLayout = function () {
         Layout.HideAll();
         Layout.gameOverFrame.show();
@@ -358,10 +418,7 @@ var Intro = (function () {
     }
     Intro.RunIntro = function () {
         Intro.index = -1;
-        $("#cinematic-frame").show();
-        $("#cinematic-frame-title").show();
-        $("#cinematic-frame-location-date").hide();
-        $("#skip-button").show();
+        Layout.IntroLayout();
         $("#skip-button").on("click", function () {
             Intro.UpdateIntro();
         });
@@ -380,10 +437,6 @@ var Intro = (function () {
         }, 6000);
     };
     Intro.CloseIntro = function () {
-        $("#cinematic-frame").hide();
-        $("#cinematic-frame-title").hide();
-        $("#cinematic-frame-location-date").hide();
-        $("#skip-button").hide();
         $("#skip-button").off();
         Menu.RunLevel1();
     };
@@ -522,13 +575,9 @@ var Loader = (function () {
     };
     Loader.RunCinematic = function (data) {
         Loader.index = -1;
-        $("#cinematic-frame").show();
-        $("#cinematic-frame-title").hide();
-        $("#cinematic-frame-location-date").show();
+        Layout.CinematicLayout();
         $("#cinematic-frame-location").text(data.location);
         $("#cinematic-frame-date").text(data.date);
-        $("#cinematic-frame-text").show();
-        $("#skip-button").show();
         $("#skip-button").on("click", function () {
             Loader.UpdateCinematic(data);
         });
@@ -546,12 +595,7 @@ var Loader = (function () {
         }, data.frames[Loader.index].delay);
     };
     Loader.CloseCinematic = function () {
-        $("#cinematic-frame").hide();
-        $("#cinematic-frame-title").hide();
-        $("#cinematic-frame-location-date").hide();
-        $("#skip-button").hide();
-        $("#skip-button").off();
-        $("#play-frame").show();
+        Layout.ReadyLayout();
     };
     Loader._loadSceneData = function (data, scene, callback) {
         Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
@@ -714,156 +758,6 @@ var RandomGenerator = (function () {
     };
     return RandomGenerator;
 }());
-var Loader = (function () {
-    function Loader() {
-    }
-    Loader.LoadScene = function (name, scene, callback) {
-        Main.Level = new Level0();
-        $.ajax({
-            url: "./datas/scenes/" + name + ".json",
-            success: function (data) {
-                Main.Scene.activeCamera = Main.MenuCamera;
-                Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
-                Loader.RunCinematic(data.cinematic);
-                Loader._loadSceneData(data, scene, function () {
-                    Main.Level.LoadLevel(scene);
-                    if (callback) {
-                        callback();
-                    }
-                });
-            }
-        });
-    };
-    Loader.RunCinematic = function (data) {
-        Loader.index = -1;
-        $("#cinematic-frame").show();
-        $("#cinematic-frame-title").hide();
-        $("#cinematic-frame-location-date").show();
-        $("#cinematic-frame-location").text(data.location);
-        $("#cinematic-frame-date").text(data.date);
-        $("#cinematic-frame-text").show();
-        $("#skip-button").show();
-        $("#skip-button").on("click", function () {
-            Loader.UpdateCinematic(data);
-        });
-        Loader.UpdateCinematic(data);
-    };
-    Loader.UpdateCinematic = function (data) {
-        clearTimeout(Loader._timeoutHandle);
-        Loader.index = Loader.index + 1;
-        if (!data.frames[Loader.index]) {
-            return Loader.CloseCinematic();
-        }
-        $("#cinematic-frame-text").text(data.frames[Loader.index].text);
-        Loader._timeoutHandle = setTimeout(function () {
-            Loader.UpdateCinematic(data);
-        }, data.frames[Loader.index].delay);
-    };
-    Loader.CloseCinematic = function () {
-        $("#cinematic-frame").hide();
-        $("#cinematic-frame-title").hide();
-        $("#cinematic-frame-location-date").hide();
-        $("#skip-button").hide();
-        $("#skip-button").off();
-        $("#play-frame").show();
-    };
-    Loader._loadSceneData = function (data, scene, callback) {
-        Loader.AddStaticsIntoScene(data.statics, scene, callback, 10);
-    };
-    Loader._loadStatic = function (name, scene, callback) {
-        BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, function (meshes, particleSystems, skeletons) {
-            Loader.LoadedStatics[name] = [];
-            for (var i = 0; i < meshes.length; i++) {
-                if (meshes[i] instanceof BABYLON.Mesh) {
-                    var mesh = meshes[i];
-                    Loader.LoadedStatics[name].push(mesh);
-                    Loader._loadMaterial(mesh.material, name, scene);
-                    for (var j = 0; j < mesh.instances.length; j++) {
-                        Loader.LoadedStatics[name].push(mesh.instances[j]);
-                        mesh.instances[j].isVisible = false;
-                        mesh.instances[j].isPickable = false;
-                    }
-                    mesh.isVisible = false;
-                    mesh.isPickable = false;
-                }
-            }
-            if (callback) {
-                callback(Loader.LoadedStatics[name]);
-            }
-        });
-    };
-    Loader._loadMaterial = function (material, name, scene) {
-        if (material instanceof BABYLON.StandardMaterial) {
-            material.bumpTexture = new BABYLON.Texture("./datas/" + name + "-bump.png", scene);
-            material.ambientTexture = new BABYLON.Texture("./datas/" + name + "-ao.png", scene);
-        }
-    };
-    Loader._cloneStaticIntoScene = function (sources, x, y, z, s, rX, rY, rZ, callback) {
-        if (s === void 0) { s = 1; }
-        if (rX === void 0) { rX = 0; }
-        if (rY === void 0) { rY = 0; }
-        if (rZ === void 0) { rZ = 0; }
-        var instance;
-        for (var i = 0; i < sources.length; i++) {
-            if (sources[i] instanceof BABYLON.Mesh) {
-                var source = sources[i];
-                instance = source.createInstance(source.name);
-                instance.position.copyFromFloats(x, y, z);
-                instance.rotation.copyFromFloats(rX, rY, rZ);
-                instance.scaling.copyFromFloats(s, s, s);
-                instance.computeWorldMatrix();
-                instance.freezeWorldMatrix();
-                if (source.name[0] === "S") {
-                    var radius = source.name.substring(2);
-                    instance.getBoundingInfo().boundingSphere.radius = parseFloat(radius);
-                    instance.getBoundingInfo().boundingSphere.radiusWorld = parseFloat(radius) * s;
-                }
-                Obstacle.PushSphere(instance.getBoundingInfo().boundingSphere);
-            }
-            else if (sources[i] instanceof BABYLON.InstancedMesh) {
-                var source = sources[i];
-                instance = source.sourceMesh.createInstance(source.name);
-                instance.position.copyFromFloats(x, y, z);
-                instance.rotation.copyFromFloats(rX, rY, rZ);
-                instance.computeWorldMatrix();
-                instance.freezeWorldMatrix();
-            }
-        }
-        if (callback) {
-            callback();
-        }
-    };
-    Loader.AddStaticsIntoScene = function (datas, scene, callback, delay, index) {
-        if (delay === void 0) { delay = 0; }
-        if (index === void 0) { index = 0; }
-        if (datas[index]) {
-            Loader.AddStaticIntoScene(datas[index], scene, function () {
-                setTimeout(function () {
-                    Loader.AddStaticsIntoScene(datas, scene, callback, delay, index + 1);
-                }, delay);
-            });
-        }
-        else {
-            if (callback) {
-                callback();
-            }
-        }
-    };
-    Loader.AddStaticIntoScene = function (data, scene, callback) {
-        if (Loader.LoadedStatics[data.name]) {
-            Loader._cloneStaticIntoScene(Loader.LoadedStatics[data.name], data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
-        }
-        else {
-            Loader._loadStatic(data.name, scene, function (loadedMeshes) {
-                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
-            });
-        }
-    };
-    return Loader;
-}());
-Loader.LoadedStatics = [];
-Loader.index = 0;
-Loader._timeoutHandle = 0;
 var State;
 (function (State) {
     State[State["Menu"] = 0] = "Menu";

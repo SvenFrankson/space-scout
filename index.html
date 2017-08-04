@@ -12,17 +12,21 @@
 </head>
 <body>
   <canvas id="render-canvas"></canvas>
-  <div id="focal-length" hidden></div>
-  <img id="target1" class="target" src="./datas/target1.png" hidden></img>
-  <img id="target2" class="target" src="./datas/target2.png" hidden></img>
-  <img id="target3" class="target" src="./datas/target3.png" hidden></img>
-  <img id="panel-right" src="./datas/panel-right.png" hidden></img>
-  <img id="speed-display" src="./datas/speed-display.png" hidden></img>
-  <img id="objective-radar" src="./datas/objective.png" hidden></img>
+  <div id="focal-length"></div>
+  <img id="target1" class="target" src="./datas/target1.png"></img>
+  <img id="target2" class="target" src="./datas/target2.png"></img>
+  <img id="target3" class="target" src="./datas/target3.png"></img>
+  <img id="panel-right" src="./datas/panel-right.png"></img>
+  <img id="speed-display" src="./datas/speed-display.png"></img>
+  <img id="objective-radar" src="./datas/objective.png"></img>
   <div id="com-link"></div>
-  <div id="team-panel" hidden>
+
+  <div id="team-panel">
+
     <div id="team-panel-internal">
+
       <h3 class="team-panel-title">Squad</h3>
+
       <table>
         <tr>
           <td class="space-line-head">Key</td>
@@ -35,10 +39,14 @@
           <td id="behaviour" class="space-line"></td>
         </tr>
       </table>
+
     </div>
+
   </div>
-  <div id="play-frame" hidden>Play</div>
-  <div id="cinematic-frame" class="frame no-click" hidden>
+
+  <div id="play-button" class="ss-button-lg">Play</div>
+
+  <div id="cinematic-frame" class="frame no-click">
 
     <div id="cinematic-frame-title" class="ss-title-container">
       <h1 class="ss-title">Space Scout</h1>
@@ -46,19 +54,23 @@
 
     <div id="cinematic-frame-location-date" class="row">
 
-      <div class="col-xs-6 ss-panel">
-        <div class="ss-panel-header">
-          <h2 class="ss-title">Location</h2>
-        </div>
-        <div id="cinematic-frame-location" class="ss-panel-body">
+      <div class="col-xs-6">
+        <div class=" ss-panel">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">Location</h2>
+          </div>
+          <div id="cinematic-frame-location" class="ss-panel-body">
+          </div>
         </div>
       </div>
 
-      <div class="col-xs-6 ss-panel">
-        <div class="ss-panel-header">
-          <h2 class="ss-title">Date</h2>
-        </div>
-        <div id="cinematic-frame-date" class="ss-panel-body">
+      <div class="col-xs-6">
+        <div class=" ss-panel">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">Date</h2>
+          </div>
+          <div id="cinematic-frame-date" class="ss-panel-body">
+          </div>
         </div>
       </div>
 
@@ -75,7 +87,8 @@
 
   </div>
 
-  <div id="game-over-frame" class="frame no-click" hidden>
+  <div id="game-over-frame" class="frame no-click">
+
     <div class="ss-title-container">
       <h1 class="ss-title">Success</h1>
     </div>
@@ -122,6 +135,83 @@
     </div>
 
   </div>
-  <div id="skip-button" class="ss-button" hidden>Skip</div>
+
+  <div id="main-menu">
+
+    <div class="row">
+      <div class="col-xs-6 col-xs-offset-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h1 class="ss-title">Space Scout - Main Menu</h1>
+          </div>
+          <div class="ss-panel-body">
+            Mission selection.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+
+      <div class="col-xs-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">0 - Fly by the rocks</h2>
+          </div>
+          <div class="ss-panel-body">
+            Squad is sent through the asteroid field.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xs-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">0 - Fly by the rocks</h2>
+          </div>
+          <div class="ss-panel-body">
+            Squad is sent through the asteroid field.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xs-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">0 - Fly by the rocks</h2>
+          </div>
+          <div class="ss-panel-body">
+            Squad is sent through the asteroid field.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xs-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">0 - Fly by the rocks</h2>
+          </div>
+          <div class="ss-panel-body">
+            Squad is sent through the asteroid field.
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xs-3">
+        <div class=" ss-panel dark">
+          <div class="ss-panel-header">
+            <h2 class="ss-title">0 - Fly by the rocks</h2>
+          </div>
+          <div class="ss-panel-body">
+            Squad is sent through the asteroid field.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="skip-button" class="ss-button" >Skip</div>
 </body>
 </html>

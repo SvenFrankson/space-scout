@@ -59,13 +59,9 @@ class Loader {
   private static index: number = 0;
   public static RunCinematic(data: ICinematic): void {
     Loader.index = -1;
-    $("#cinematic-frame").show();
-    $("#cinematic-frame-title").hide();
-    $("#cinematic-frame-location-date").show();
+    Layout.CinematicLayout();
     $("#cinematic-frame-location").text(data.location);
     $("#cinematic-frame-date").text(data.date);
-    $("#cinematic-frame-text").show();
-    $("#skip-button").show();
     $("#skip-button").on(
       "click",
       () => {
@@ -92,12 +88,8 @@ class Loader {
   }
 
   private static CloseCinematic(): void {
-    $("#cinematic-frame").hide();
-    $("#cinematic-frame-title").hide();
-    $("#cinematic-frame-location-date").hide();
-    $("#skip-button").hide();
-    $("#skip-button").off();
-    $("#play-frame").show();
+    // note : This should actually be "Loading Layout", and auto skip once level is fully loaded.
+    Layout.ReadyLayout();
   }
 
   public static _loadSceneData(data: IScene, scene: BABYLON.Scene, callback?: () => void): void {

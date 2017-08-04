@@ -79,12 +79,28 @@ class Layout {
     return Layout._frames;
   }
 
-  private static _playFrame: JQuery;
-  public static get playFrame(): JQuery {
-    if (!Layout._playFrame) {
-      Layout._playFrame = $("#play-frame");
+  private static _cinematicFrame: JQuery;
+  public static get cinematicFrame(): JQuery {
+    if (!Layout._cinematicFrame) {
+      Layout._cinematicFrame = $("#cinematic-frame");
     }
-    return Layout._playFrame;
+    return Layout._cinematicFrame;
+  }
+
+  private static _cinematicFrameTitle: JQuery;
+  public static get cinematicFrameTitle(): JQuery {
+    if (!Layout._cinematicFrameTitle) {
+      Layout._cinematicFrameTitle = $("#cinematic-frame-title");
+    }
+    return Layout._cinematicFrameTitle;
+  }
+
+  private static _cinematicFrameLocationDate: JQuery;
+  public static get cinematicFrameLocationDate(): JQuery {
+    if (!Layout._cinematicFrameLocationDate) {
+      Layout._cinematicFrameLocationDate = $("#cinematic-frame-location-date");
+    }
+    return Layout._cinematicFrameLocationDate;
   }
 
   private static _gameOverFrame: JQuery;
@@ -95,12 +111,28 @@ class Layout {
     return Layout._gameOverFrame;
   }
 
+  private static _mainMenu: JQuery;
+  public static get mainMenu(): JQuery {
+    if (!Layout._mainMenu) {
+      Layout._mainMenu = $("#main-menu");
+    }
+    return Layout._mainMenu;
+  }
+
   private static _playButton: JQuery;
   public static get playButton(): JQuery {
     if (!Layout._playButton) {
-      Layout._playButton = $("#play-frame");
+      Layout._playButton = $("#play-button");
     }
     return Layout._playButton;
+  }
+
+  private static _skipButton: JQuery;
+  public static get skipButton(): JQuery {
+    if (!Layout._skipButton) {
+      Layout._skipButton = $("#skip-button");
+    }
+    return Layout._skipButton;
   }
 
   private static HideAll(): void {
@@ -113,7 +145,9 @@ class Layout {
     Layout.comLink.hide();
     Layout.teamPanel.hide();
     Layout.frames.hide();
+    Layout.mainMenu.hide();
     Layout.playButton.hide();
+    Layout.skipButton.hide();
   }
 
   public static Resize(): void {
@@ -144,6 +178,27 @@ class Layout {
     Layout.objectiveRadar.css("height", size / 2 * 0.8 + "px");
     Layout.objectiveRadar.css("top", size / 2 * 0.1);
     Layout.objectiveRadar.css("left", size / 2 * 0.1);
+  }
+
+  public static IntroLayout(): void {
+    Layout.HideAll();
+    Layout.cinematicFrame.show();
+    Layout.skipButton.show();
+    Layout.cinematicFrameLocationDate.hide();
+    Layout.cinematicFrameTitle.show();
+  }
+
+  public static CinematicLayout(): void {
+    Layout.HideAll();
+    Layout.cinematicFrame.show();
+    Layout.skipButton.show();
+    Layout.cinematicFrameLocationDate.show();
+    Layout.cinematicFrameTitle.hide();
+  }
+
+  public static ReadyLayout(): void {
+    Layout.HideAll();
+    Layout.playButton.show();
   }
 
   public static GameOverLayout(): void {

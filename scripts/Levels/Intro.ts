@@ -18,10 +18,7 @@ class Intro {
 
   public static RunIntro(): void {
     Intro.index = -1;
-    $("#cinematic-frame").show();
-    $("#cinematic-frame-title").show();
-    $("#cinematic-frame-location-date").hide();
-    $("#skip-button").show();
+    Layout.IntroLayout();
     $("#skip-button").on(
       "click",
       () => {
@@ -49,10 +46,6 @@ class Intro {
   }
 
   private static CloseIntro(): void {
-    $("#cinematic-frame").hide();
-    $("#cinematic-frame-title").hide();
-    $("#cinematic-frame-location-date").hide();
-    $("#skip-button").hide();
     $("#skip-button").off();
     Menu.RunLevel1();
   }
