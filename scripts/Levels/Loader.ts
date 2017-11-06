@@ -39,7 +39,7 @@ class Loader {
         url: "./datas/scenes/" + name + ".json",
         success: (data: IScene) => {
           Main.Scene.activeCamera = Main.MenuCamera;
-          Main.MenuCamera.setPosition(new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam));
+          Main.MenuCamera.position = new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam);
           Loader.RunCinematic(data.cinematic);
           Loader._loadSceneData(
             data,
