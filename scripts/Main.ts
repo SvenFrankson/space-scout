@@ -45,8 +45,8 @@ class Main {
 		cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
 		cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
 
-		Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
-		Main.Scene.activeCamera = Main.MenuCamera;
+		//Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
+		//Main.Scene.activeCamera = Main.MenuCamera;
 
 		let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
 		skybox.rotation.y = Math.PI / 2;
@@ -201,9 +201,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	playerCharacter.setSection(station.sections[0]);
 	station.sections[0].instantiate(1);
 
-	Main.MenuCamera.parent = playerCharacter.instance;
-	Main.MenuCamera.position.copyFromFloats(0, 80, -40);
-	Main.MenuCamera.setTarget(playerCharacter.instance.position);
+	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
 
 	let playerControl: PlayerControler = new PlayerControler(playerCharacter);
 	playerControl.attachControl(Main.Canvas);

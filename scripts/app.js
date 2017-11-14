@@ -207,8 +207,8 @@ class Main {
         cloud.intensity = 0.3;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-        Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
-        Main.Scene.activeCamera = Main.MenuCamera;
+        //Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
+        //Main.Scene.activeCamera = Main.MenuCamera;
         let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
         skybox.rotation.y = Math.PI / 2;
         skybox.infiniteDistance = true;
@@ -331,9 +331,7 @@ window.addEventListener("DOMContentLoaded", () => {
     playerCharacter.instantiate();
     playerCharacter.setSection(station.sections[0]);
     station.sections[0].instantiate(1);
-    Main.MenuCamera.parent = playerCharacter.instance;
-    Main.MenuCamera.position.copyFromFloats(0, 80, -40);
-    Main.MenuCamera.setTarget(playerCharacter.instance.position);
+    let playerCamera = new PlayerCamera(playerCharacter, Main.Scene);
     let playerControl = new PlayerControler(playerCharacter);
     playerControl.attachControl(Main.Canvas);
     let stationLoadManager = new StationLoadManager(playerCharacter);
@@ -727,6 +725,36 @@ class CharacterInstance extends BABYLON.Mesh {
     constructor(character) {
         super(character.name, character.scene);
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
+    }
+}
+class PlayerCamera extends BABYLON.FreeCamera {
+    constructor(character, scene) {
+        super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
+        this.smoothness = 20;
+        this.alpha = Math.PI / 4;
+        this.distance = 40;
+        this._targetPosition = BABYLON.Vector3.Zero();
+        this._targetRotation = BABYLON.Quaternion.Identity();
+        this._update = () => {
+            this._updateTarget();
+            this._updatePositionRotation();
+        };
+        this.character = character;
+        this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        scene.registerBeforeRender(this._update);
+    }
+    _updateTarget() {
+        if (this.character && this.character.instance) {
+            this._targetPosition.copyFrom(this.character.instance.absolutePosition);
+            this._targetPosition.addInPlace(this.character.instance.getDirection(BABYLON.Axis.Z).scale(-this.distance * Math.cos(this.alpha)));
+            this._targetPosition.addInPlace(this.character.instance.getDirection(BABYLON.Axis.Y).scale(this.distance * Math.sin(this.alpha)));
+            this._targetRotation.copyFrom(BABYLON.Quaternion.RotationAxis(this.character.instance.getDirection(BABYLON.Axis.X), this.alpha));
+            this._targetRotation.multiplyInPlace(this.character.instance.rotationQuaternion);
+        }
+    }
+    _updatePositionRotation() {
+        BABYLON.Vector3.LerpToRef(this.position, this._targetPosition, 1 / this.smoothness, this.position);
+        BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, this._targetRotation, 1 / this.smoothness, this.rotationQuaternion);
     }
 }
 class PlayerControler {
