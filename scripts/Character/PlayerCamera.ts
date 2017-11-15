@@ -1,6 +1,6 @@
 class PlayerCamera extends BABYLON.FreeCamera {
 
-    public smoothness: number = 20;
+    public smoothness: number = 10;
     public character: Character;
     public alpha: number = Math.PI / 4;
     public distance: number = 40;

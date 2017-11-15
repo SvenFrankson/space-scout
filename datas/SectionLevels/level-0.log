@@ -8,7 +8,9 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  Level-0
-		WARNING: No materials have been assigned: 
+		processing begun of Standard material:  Black
+		processing begun of Standard material:  SpaceStation
+		processing begun of multimaterial:  level_0.Multimaterial#0
 		num positions      :  102
 		num normals        :  102
 		num uvs            :  0
@@ -18,4 +20,4 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0175 secs
+elapsed time:  0 min, 0.035 secs

@@ -332,7 +332,7 @@ window.addEventListener("DOMContentLoaded", () => {
     playerCharacter.setSection(station.sections[0]);
     station.sections[0].instantiate(1);
     let playerCamera = new PlayerCamera(playerCharacter, Main.Scene);
-    let playerControl = new PlayerControler(playerCharacter);
+    let playerControl = new PlayerControler(playerCamera);
     playerControl.attachControl(Main.Canvas);
     let stationLoadManager = new StationLoadManager(playerCharacter);
     /*
@@ -730,7 +730,7 @@ class CharacterInstance extends BABYLON.Mesh {
 class PlayerCamera extends BABYLON.FreeCamera {
     constructor(character, scene) {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
-        this.smoothness = 20;
+        this.smoothness = 10;
         this.alpha = Math.PI / 4;
         this.distance = 40;
         this._targetPosition = BABYLON.Vector3.Zero();
@@ -758,7 +758,12 @@ class PlayerCamera extends BABYLON.FreeCamera {
     }
 }
 class PlayerControler {
-    constructor(character) {
+    constructor(camera) {
+        this.horizontalSensibility = 8;
+        this.verticalSensibility = 2;
+        this._rotating = false;
+        this._deltaX = 0;
+        this._deltaY = 0;
         this._forward = false;
         this._backward = false;
         this._right = false;
@@ -771,16 +776,39 @@ class PlayerControler {
                 this.character.positionAdd(this.character.localForward.scale(-0.1));
             }
             if (this._left && !this._right) {
-                this.character.d -= 0.1;
+                this.character.positionAdd(this.character.localRight.scale(0.1));
             }
             if (this._right && !this._left) {
-                this.character.d += 0.1;
+                this.character.positionAdd(this.character.localRight.scale(-0.1));
+            }
+            this.character.d += this._deltaX / this._canvasWidth * this.horizontalSensibility;
+            this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
+            this._deltaX = 0;
+            this._deltaY = 0;
+        };
+        this._canvasWidth = 1;
+        this._canvasHeight = 1;
+        this._pointerObserver = (eventData, eventState) => {
+            if (eventData.type === BABYLON.PointerEventTypes._POINTERDOWN) {
+                this._rotating = true;
+            }
+            else if (eventData.type === BABYLON.PointerEventTypes._POINTERUP) {
+                this._rotating = false;
+            }
+            else if (eventData.type === BABYLON.PointerEventTypes._POINTERMOVE) {
+                if (this._rotating) {
+                    this._deltaX += eventData.event.movementX;
+                    this._deltaY += eventData.event.movementY;
+                }
             }
         };
-        this.character = character;
+        this.camera = camera;
+        this.character = camera.character;
         this.character.scene.registerBeforeRender(this._checkInputs);
     }
     attachControl(canvas) {
+        this._canvasWidth = canvas.width;
+        this._canvasHeight = canvas.height;
         canvas.addEventListener("keydown", (ev) => {
             if (ev.key === "z") {
                 this._forward = true;
@@ -809,6 +837,7 @@ class PlayerControler {
                 this._right = false;
             }
         });
+        this.character.scene.onPointerObservable.add(this._pointerObserver);
     }
 }
 class Layout {

@@ -203,7 +203,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
 
-	let playerControl: PlayerControler = new PlayerControler(playerCharacter);
+	let playerControl: PlayerControler = new PlayerControler(playerCamera);
 	playerControl.attachControl(Main.Canvas);
 
 	let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);

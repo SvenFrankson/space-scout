@@ -1,14 +1,24 @@
 class PlayerControler {
 
+    public horizontalSensibility: number = 8;
+    public verticalSensibility: number = 2;
+    public mouseWheelSensibility: number = 2;
+
+    private _rotating: boolean = false;
+    private _deltaX: number = 0;
+    private _deltaY: number = 0;
+    private _deltaWheel: number = 0;
     private _forward: boolean = false;
     private _backward: boolean = false;
     private _right: boolean = false;
     private _left: boolean = false;
 
     public character: Character;
+    public camera: PlayerCamera;
 
-    constructor(character: Character) {
-        this.character = character;
+    constructor(camera: PlayerCamera) {
+        this.camera = camera;
+        this.character = camera.character;
         this.character.scene.registerBeforeRender(this._checkInputs);
     }
 
@@ -20,14 +30,23 @@ class PlayerControler {
             this.character.positionAdd(this.character.localForward.scale(-0.1));
         }
         if (this._left && !this._right) {
-            this.character.d -= 0.1;
+            this.character.positionAdd(this.character.localRight.scale(0.1));
         }
         if (this._right && !this._left) {
-            this.character.d += 0.1;
+            this.character.positionAdd(this.character.localRight.scale(-0.1));
         }
+        this.character.d += this._deltaX / this._canvasWidth * this.horizontalSensibility;
+        this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
+        this._deltaX = 0;
+        this._deltaY = 0;
     }
 
+    private _canvasWidth: number = 1;
+    private _canvasHeight: number = 1;
     public attachControl(canvas: HTMLCanvasElement): void {
+        this._canvasWidth = canvas.width;
+        this._canvasHeight = canvas.height;
+
         canvas.addEventListener(
             "keydown",
             (ev: KeyboardEvent) => {
@@ -62,5 +81,24 @@ class PlayerControler {
                 }
             }
         );
+        this.character.scene.onPointerObservable.add(this._pointerObserver);
+    }
+
+    private _pointerObserver = (eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
+        if (eventData.type === BABYLON.PointerEventTypes._POINTERDOWN) {
+            this._rotating = true;
+        }
+        else if (eventData.type === BABYLON.PointerEventTypes._POINTERUP) {
+            this._rotating = false;
+        }
+        else if (eventData.type === BABYLON.PointerEventTypes._POINTERMOVE) {
+            if (this._rotating) {
+                this._deltaX += eventData.event.movementX;
+                this._deltaY += eventData.event.movementY;
+            }
+        }
+        else if (eventData.type === BABYLON.PointerEventTypes._POINTERWHEEL) {
+            this._deltaWheel 
+        }
     }
 }
