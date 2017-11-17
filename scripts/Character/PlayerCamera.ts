@@ -3,7 +3,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
     public smoothness: number = 10;
     public character: Character;
     public alpha: number = Math.PI / 4;
-    public distance: number = 40;
+    public distance: number = 100;
 
     private _targetPosition: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     private _targetRotation: BABYLON.Quaternion = BABYLON.Quaternion.Identity();

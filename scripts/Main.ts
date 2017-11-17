@@ -189,7 +189,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	game.createSceneSimple();
 	game.animate();
 
-	let data: StationData = Test.TestDataOne();
+	let data: StationData = Test.TestDataTwo();
 	console.log(data);
 	let station: Station = new Station();
 	station.load(data);

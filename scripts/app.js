@@ -321,7 +321,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let game = new Main("render-canvas");
     game.createSceneSimple();
     game.animate();
-    let data = Test.TestDataOne();
+    let data = Test.TestDataTwo();
     console.log(data);
     let station = new Station();
     station.load(data);
@@ -732,7 +732,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 40;
+        this.distance = 100;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
@@ -761,9 +761,11 @@ class PlayerControler {
     constructor(camera) {
         this.horizontalSensibility = 8;
         this.verticalSensibility = 2;
+        this.mouseWheelSensibility = 2;
         this._rotating = false;
         this._deltaX = 0;
         this._deltaY = 0;
+        this._deltaWheel = 0;
         this._forward = false;
         this._backward = false;
         this._right = false;
@@ -800,6 +802,8 @@ class PlayerControler {
                     this._deltaX += eventData.event.movementX;
                     this._deltaY += eventData.event.movementY;
                 }
+            }
+            else if (eventData.type === BABYLON.PointerEventTypes._POINTERWHEEL) {
             }
         };
         this.camera = camera;
@@ -1356,6 +1360,13 @@ class RandomGenerator {
             }
         }
         console.log(JSON.stringify(data));
+    }
+}
+class VertexDataLoader {
+    constructor(scene) {
+        this.scene = scene;
+        this._data = new Map();
+        VertexDataLoader.instance = this;
     }
 }
 class Flash {
@@ -2112,6 +2123,100 @@ class StationData {
     }
 }
 class Test {
+    static TestDataTwo() {
+        let data = new StationData();
+        data.name = "TestTwo";
+        data.index = EasyGUID.GetNewGUID();
+        let rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 12 / 180 * Math.PI);
+        let rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 6 / 180 * Math.PI);
+        let hubTop = new SectionData();
+        hubTop.name = "Section-" + 0;
+        hubTop.index = EasyGUID.GetNewGUID();
+        hubTop.outer = {
+            name: "hub-outer",
+            index: EasyGUID.GetNewGUID(),
+            level: -1,
+            joinedLevels: []
+        };
+        hubTop.levels = [
+            {
+                name: "hub-level-0",
+                index: EasyGUID.GetNewGUID(),
+                level: 0,
+                joinedLevels: []
+            },
+            {
+                name: "hub-level-1",
+                index: EasyGUID.GetNewGUID(),
+                level: 1,
+                joinedLevels: []
+            }
+        ];
+        hubTop.position = new BABYLON.Vector3(0, 200, 0);
+        hubTop.rotation = new BABYLON.Vector3(0, 0, 0);
+        data.sections[0] = hubTop;
+        let hubBottom = new SectionData();
+        hubBottom.name = "Section-" + 0;
+        hubBottom.index = EasyGUID.GetNewGUID();
+        hubBottom.outer = {
+            name: "hub-outer",
+            index: EasyGUID.GetNewGUID(),
+            level: -1,
+            joinedLevels: []
+        };
+        hubBottom.levels = [
+            {
+                name: "hub-level-0",
+                index: EasyGUID.GetNewGUID(),
+                level: 0,
+                joinedLevels: []
+            },
+            {
+                name: "hub-level-1",
+                index: EasyGUID.GetNewGUID(),
+                level: 1,
+                joinedLevels: []
+            }
+        ];
+        hubBottom.position = new BABYLON.Vector3(0, -200, 0);
+        hubBottom.rotation = new BABYLON.Vector3(Math.PI, Math.PI / 2, 0);
+        data.sections[1] = hubBottom;
+        for (let i = 0; i < 27; i++) {
+            let index = i + 2;
+            let section = new SectionData();
+            section.name = "Section-" + i;
+            section.index = EasyGUID.GetNewGUID();
+            section.outer = {
+                name: "way-outer",
+                index: EasyGUID.GetNewGUID(),
+                level: -1,
+                joinedLevels: []
+            };
+            section.levels = [
+                {
+                    name: "way-level-0",
+                    index: EasyGUID.GetNewGUID(),
+                    level: 0,
+                    joinedLevels: []
+                },
+                {
+                    name: "way-level-1",
+                    index: EasyGUID.GetNewGUID(),
+                    level: 1,
+                    joinedLevels: []
+                }
+            ];
+            if (i === 0) {
+                section.position = BABYLON.Vector3.TransformCoordinates(data.sections[0].position, rotationMatrixZero);
+            }
+            else {
+                section.position = BABYLON.Vector3.TransformCoordinates(data.sections[index - 1].position, rotationMatrix);
+            }
+            section.rotation = new BABYLON.Vector3(12 / 180 * Math.PI + i * (6 / 180 * Math.PI), 0, 0);
+            data.sections[index] = section;
+        }
+        return data;
+    }
     static TestDataOne() {
         let data = new StationData();
         data.name = "TestOne";

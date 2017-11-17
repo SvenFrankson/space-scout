@@ -1,0 +1,61 @@
+Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\SectionLevels\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  way-level-0
+		WARNING: No materials have been assigned: 
+		num positions      :  40
+		num normals        :  40
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  168
+	processing begun of mesh:  hub-outer
+		WARNING: No materials have been assigned: 
+		num positions      :  158
+		num normals        :  158
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  396
+	processing begun of mesh:  hub-level-0
+		processing begun of Standard material:  Material.001
+		num positions      :  335
+		num normals        :  335
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  750
+	processing begun of mesh:  way-outer
+		WARNING: No materials have been assigned: 
+		num positions      :  30
+		num normals        :  30
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  144
+	processing begun of mesh:  hub-level-1
+		registered as also a user of material:  Material.001
+		num positions      :  353
+		num normals        :  353
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  894
+	processing begun of mesh:  way-level-1
+		WARNING: No materials have been assigned: 
+		num positions      :  60
+		num normals        :  60
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  264
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.0906 secs

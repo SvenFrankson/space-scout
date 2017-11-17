@@ -98,7 +98,7 @@ class PlayerControler {
             }
         }
         else if (eventData.type === BABYLON.PointerEventTypes._POINTERWHEEL) {
-            this._deltaWheel 
+            
         }
     }
 }
