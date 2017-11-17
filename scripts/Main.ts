@@ -199,7 +199,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	playerCharacter.setXYH(4, 4, 2);
 	playerCharacter.instantiate();
 	playerCharacter.setSection(station.sections[0]);
-	station.sections[0].instantiate(1);
+	station.sections[0].instantiate(0);
 
 	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
 

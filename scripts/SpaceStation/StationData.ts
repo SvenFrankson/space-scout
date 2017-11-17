@@ -34,6 +34,17 @@ class StationData {
 
 class Test {
 
+    public static ConnectLevels(level1: LevelData, level2: LevelData): void {
+        level1.joinedLevels.push(level2.index);
+        level2.joinedLevels.push(level1.index);
+    }
+
+    public static ConnectSections(section1: SectionData, section2: SectionData): void {
+        Test.ConnectLevels(section1.outer, section2.outer);
+        Test.ConnectLevels(section1.levels[0], section2.levels[0]);
+        Test.ConnectLevels(section1.levels[1], section2.levels[1]);
+    }
+
     public static TestDataTwo(): StationData {
         let data: StationData = new StationData();
         data.name = "TestTwo";
@@ -96,39 +107,70 @@ class Test {
         hubBottom.rotation = new BABYLON.Vector3(Math.PI, Math.PI / 2, 0);
         data.sections[1] = hubBottom;
 
-        for (let i: number = 0; i < 27; i++) {
-            let index = i + 2;
-            let section: SectionData = new SectionData();
-            section.name = "Section-" + i;
-            section.index = EasyGUID.GetNewGUID();
-            section.outer = {
-                name: "way-outer",
-                index: EasyGUID.GetNewGUID(),
-                level: -1,
-                joinedLevels: []
-            };
-            section.levels = [
-                {
-                    name: "way-level-0",
-                    index: EasyGUID.GetNewGUID(),
-                    level: 0,
-                    joinedLevels: []
-                },
-                {
-                    name: "way-level-1",
-                    index: EasyGUID.GetNewGUID(),
-                    level: 1,
-                    joinedLevels: []
-                }
-            ];
-            if (i === 0) {
-                section.position = BABYLON.Vector3.TransformCoordinates(data.sections[0].position, rotationMatrixZero);
-            } else {
-                section.position = BABYLON.Vector3.TransformCoordinates(data.sections[index - 1].position, rotationMatrix);
+        for (let j: number = 0; j < 4; j++) {
+            if (j === 1) {
+                rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.Z, 12 / 180 * Math.PI);
+                rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.Z, 6 / 180 * Math.PI);
             }
-            section.rotation = new BABYLON.Vector3(12 / 180 * Math.PI + i * (6 / 180 * Math.PI), 0, 0);
-
-            data.sections[index] = section;
+            if (j === 2) {
+                rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, - 12 / 180 * Math.PI);
+                rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, - 6 / 180 * Math.PI);
+            }
+            if (j === 3) {
+                rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.Z, - 12 / 180 * Math.PI);
+                rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.Z, - 6 / 180 * Math.PI);
+            }
+            for (let i: number = 0; i < 27; i++) {
+                let index = i + 2 + j * 27;
+                let section: SectionData = new SectionData();
+                section.name = "Section-" + i;
+                section.index = EasyGUID.GetNewGUID();
+                section.outer = {
+                    name: "way-outer",
+                    index: EasyGUID.GetNewGUID(),
+                    level: -1,
+                    joinedLevels: []
+                };
+                section.levels = [
+                    {
+                        name: "way-level-0",
+                        index: EasyGUID.GetNewGUID(),
+                        level: 0,
+                        joinedLevels: []
+                    },
+                    {
+                        name: "way-level-1",
+                        index: EasyGUID.GetNewGUID(),
+                        level: 1,
+                        joinedLevels: []
+                    }
+                ];
+                if (i === 0) {
+                    section.position = BABYLON.Vector3.TransformCoordinates(data.sections[0].position, rotationMatrixZero);
+                } else {
+                    section.position = BABYLON.Vector3.TransformCoordinates(data.sections[index - 1].position, rotationMatrix);
+                }
+                if (j === 0) {
+                    section.rotation = new BABYLON.Vector3(12 / 180 * Math.PI + i * (6 / 180 * Math.PI), 0, 0);
+                } else if (j === 1) {
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, 12 / 180 * Math.PI + i * (6 / 180 * Math.PI));
+                    section.rotation = rZ.multiply(rY).toEulerAngles();
+                } else if (j === 2) {
+                    section.rotation = new BABYLON.Vector3(- 12 / 180 * Math.PI - i * (6 / 180 * Math.PI), 0, 0);
+                } else if (j === 3) {
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, - 12 / 180 * Math.PI - i * (6 / 180 * Math.PI));
+                    section.rotation = rZ.multiply(rY).toEulerAngles();
+                }
+                data.sections[index] = section;
+            }
+    
+            Test.ConnectSections(hubTop, data.sections[2 + j * 27])
+    
+            for (let i: number = 0; i < 26; i++) {
+                Test.ConnectSections(data.sections[i + j * 27], data.sections[i + 1 + j * 27]);
+            }
         }
 
         return data;

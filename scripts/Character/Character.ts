@@ -62,15 +62,14 @@ class Character {
 		this._localForward.z = Math.cos(this.d);
 		this._localForward.y = 0;
 		this._localForward.x = Math.sin(this.d);
-		console.log(this._localForward);
 		return this._localForward;
 	}
 	
 	private _localRight: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 	public get localRight(): BABYLON.Vector3 {
-		this._localRight.z = Math.sin(this.d);
+		this._localRight.z = Math.cos(this.d + Math.PI / 2);
 		this._localRight.y = 0;
-		this._localRight.x = Math.cos(this.d);
+		this._localRight.x = Math.sin(this.d + Math.PI / 2);
 		return this._localRight;
     }
 
@@ -113,7 +112,7 @@ class Character {
     public downRay(): BABYLON.Ray {
         if (this.instance) {
             if (!this._downRay) {
-                this._downRay = new BABYLON.Ray(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, -1, 0), 5);
+                this._downRay = new BABYLON.Ray(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, -1, 0), 6);
             }
             this._downRay.origin.copyFrom(this.instance.absolutePosition);
             this.instance.getDirectionToRef(BABYLON.Axis.Y, this._downRay.direction);
@@ -139,6 +138,7 @@ class Character {
         else if (this._section !== section) {
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.worldMatrix, this.position);
             this._section = section;
+            this.d = this.instance.rotationQuaternion.toEulerAngles().y - section.rotation.y;
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.invertedWorldMatrix, this.position);
             this.updatePosition();
         }
