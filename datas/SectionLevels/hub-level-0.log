@@ -8,7 +8,7 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  hub-level-0
-		processing begun of Standard material:  Material.001
+		processing begun of Standard material:  Floor
 		num positions      :  335
 		num normals        :  335
 		num uvs            :  0
@@ -18,4 +18,4 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.035 secs
+elapsed time:  0 min, 0.0368 secs

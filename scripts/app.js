@@ -793,16 +793,16 @@ class PlayerControler {
         this._left = false;
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
-                this.character.positionAdd(this.character.localForward.scale(1));
+                this.character.positionAdd(this.character.localForward.scale(0.2));
             }
             if (this._backward && !this._forward) {
-                this.character.positionAdd(this.character.localForward.scale(-1));
+                this.character.positionAdd(this.character.localForward.scale(-0.2));
             }
             if (this._left && !this._right) {
-                this.character.positionAdd(this.character.localRight.scale(1));
+                this.character.positionAdd(this.character.localRight.scale(0.2));
             }
             if (this._right && !this._left) {
-                this.character.positionAdd(this.character.localRight.scale(-1));
+                this.character.positionAdd(this.character.localRight.scale(-0.2));
             }
             this.character.rotate(this._deltaX / this._canvasWidth * this.horizontalSensibility);
             this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
