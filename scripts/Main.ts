@@ -189,6 +189,8 @@ window.addEventListener("DOMContentLoaded", () => {
 	game.createSceneSimple();
 	game.animate();
 
+	new MeshLoader(Main.Scene);
+
 	let data: StationData = Test.TestDataTwo();
 	console.log(data);
 	let station: Station = new Station();

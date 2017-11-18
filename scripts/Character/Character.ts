@@ -124,7 +124,7 @@ class Character {
     public applyGravity(): void {
         let downRay = this.downRay();
         if (downRay) {
-            let pick = this.scene.pickWithRay(downRay, (m) => { return m instanceof SectionLevelInstance });
+            let pick = this.scene.pickWithRay(downRay, (m) => { return SectionLevel.SectionLevels.get(parseInt(m.id)) !== undefined });
             if (pick.hit) {
                 this.position.y += 0.9 - pick.distance;
             }
@@ -169,17 +169,17 @@ class Character {
     public currentLevel(): SectionLevel {
         let downRay = this.downRay();
         if (downRay) {
-            let pick = this.scene.pickWithRay(downRay, (m) => { return m instanceof SectionLevelInstance });
+            let pick = this.scene.pickWithRay(downRay, (m) => { return SectionLevel.SectionLevels.get(parseInt(m.id)) !== undefined });
             if (pick.hit) {
-                if (pick.pickedMesh instanceof SectionLevelInstance) {
-                    let level: SectionLevel = pick.pickedMesh.level;
+                if (pick.pickedMesh) {
+                    let level: SectionLevel = SectionLevel.SectionLevels.get(parseInt(pick.pickedMesh.id));
                     if (this.position.y - Math.floor(this.position.y / 5) > 4) {
                         let above: SectionLevel = level.above();
                         if (above) {
                             return above;
                         }
                     }
-                    return pick.pickedMesh.level;
+                    return level;
                 }
             }
         }

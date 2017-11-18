@@ -20,7 +20,7 @@ class SectionLevel {
     public get scene(): BABYLON.Scene {
         return this.section.scene;
     }
-    public instance: SectionLevelInstance;
+    public instance: BABYLON.InstancedMesh;
 
     constructor(section: StationSection) {
         this.section = section;
@@ -56,26 +56,21 @@ class SectionLevel {
             }
             return;
         }
-        this.instance = new SectionLevelInstance(this);
-
-        BABYLON.SceneLoader.ImportMesh(
-            "",
-            "./datas/SectionLevels/" + this.name + ".babylon",
-            "",
-            this.scene,
-            (meshes, particleSystems, skeletons) => {
-                let m: BABYLON.AbstractMesh = meshes[0];
-                if (m instanceof BABYLON.Mesh) {
-                    let data: BABYLON.VertexData = BABYLON.VertexData.ExtractFromMesh(m);
-                    data.applyToMesh(this.instance);
-                    this.instance.freezeWorldMatrix();
-                    m.dispose();
+        MeshLoader.instance.get(
+            this.name,
+            (mesh) => {
+                if (!mesh) {
+                    console.warn("Could not instance " + this.name);
                 }
+                this.instance = mesh;
+                this.instance.position.copyFrom(this.section.position);
+                this.instance.rotation.copyFrom(this.section.rotation);
+                this.instance.id = this.index + "";
                 if (callback) {
                     callback();
                 }
             }
-        )
+        );
     }
 
     public static InstantiateRecursively(levels: SectionLevel[], callback?: () => void): void {

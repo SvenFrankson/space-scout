@@ -321,6 +321,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let game = new Main("render-canvas");
     game.createSceneSimple();
     game.animate();
+    new MeshLoader(Main.Scene);
     let data = Test.TestDataTwo();
     console.log(data);
     let station = new Station();
@@ -679,7 +680,7 @@ class Character {
     applyGravity() {
         let downRay = this.downRay();
         if (downRay) {
-            let pick = this.scene.pickWithRay(downRay, (m) => { return m instanceof SectionLevelInstance; });
+            let pick = this.scene.pickWithRay(downRay, (m) => { return SectionLevel.SectionLevels.get(parseInt(m.id)) !== undefined; });
             if (pick.hit) {
                 this.position.y += 0.9 - pick.distance;
             }
@@ -720,17 +721,17 @@ class Character {
     currentLevel() {
         let downRay = this.downRay();
         if (downRay) {
-            let pick = this.scene.pickWithRay(downRay, (m) => { return m instanceof SectionLevelInstance; });
+            let pick = this.scene.pickWithRay(downRay, (m) => { return SectionLevel.SectionLevels.get(parseInt(m.id)) !== undefined; });
             if (pick.hit) {
-                if (pick.pickedMesh instanceof SectionLevelInstance) {
-                    let level = pick.pickedMesh.level;
+                if (pick.pickedMesh) {
+                    let level = SectionLevel.SectionLevels.get(parseInt(pick.pickedMesh.id));
                     if (this.position.y - Math.floor(this.position.y / 5) > 4) {
                         let above = level.above();
                         if (above) {
                             return above;
                         }
                     }
-                    return pick.pickedMesh.level;
+                    return level;
                 }
             }
         }
@@ -1380,6 +1381,33 @@ class RandomGenerator {
             }
         }
         console.log(JSON.stringify(data));
+    }
+}
+class MeshLoader {
+    constructor(scene) {
+        this.scene = scene;
+        this.lookup = new Map();
+        MeshLoader.instance = this;
+    }
+    get(name, callback) {
+        let mesh = this.lookup.get(name);
+        if (mesh) {
+            callback(mesh.createInstance(mesh.name + "-instance"));
+        }
+        else {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/SectionLevels/" + name + ".babylon", "", this.scene, (meshes, particleSystems, skeletons) => {
+                let mesh = meshes[0];
+                if (mesh instanceof BABYLON.Mesh) {
+                    this.lookup.set(name, mesh);
+                    mesh.isVisible = false;
+                    callback(mesh.createInstance(mesh.name + "-instance"));
+                }
+                else {
+                    this.lookup.set(name, null);
+                    callback(null);
+                }
+            });
+        }
     }
 }
 class VertexDataLoader {
@@ -2074,15 +2102,14 @@ class SectionLevel {
             }
             return;
         }
-        this.instance = new SectionLevelInstance(this);
-        BABYLON.SceneLoader.ImportMesh("", "./datas/SectionLevels/" + this.name + ".babylon", "", this.scene, (meshes, particleSystems, skeletons) => {
-            let m = meshes[0];
-            if (m instanceof BABYLON.Mesh) {
-                let data = BABYLON.VertexData.ExtractFromMesh(m);
-                data.applyToMesh(this.instance);
-                this.instance.freezeWorldMatrix();
-                m.dispose();
+        MeshLoader.instance.get(this.name, (mesh) => {
+            if (!mesh) {
+                console.warn("Could not instance " + this.name);
             }
+            this.instance = mesh;
+            this.instance.position.copyFrom(this.section.position);
+            this.instance.rotation.copyFrom(this.section.rotation);
+            this.instance.id = this.index + "";
             if (callback) {
                 callback();
             }
@@ -2109,15 +2136,6 @@ class SectionLevel {
     }
 }
 SectionLevel.SectionLevels = new Map();
-class SectionLevelInstance extends BABYLON.Mesh {
-    constructor(level) {
-        super(level.name, level.scene);
-        this.level = level;
-        this.position.copyFrom(level.section.position);
-        this.rotation.copyFrom(level.section.rotation);
-        this.freezeWorldMatrix();
-    }
-}
 class Station {
     constructor() {
         this.name = "NewStation";
