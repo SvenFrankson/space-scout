@@ -50,19 +50,34 @@ class StationSection {
             for (let i: number = 0; i < this.levels.length; i++) {
                 this.levels[i].disposeInstance();
             }
-            this.outer.instantiate();
+            this.outer.instantiate(callback);
         }
         else {
             this.outer.disposeInstance();
-            for (let i: number = 0; i < this.levels.length && i <= level; i++) {
-                this.levels[i].instantiate();
-            }
             for (let i: number = level + 1; i < this.levels.length; i++) {
                 this.levels[i].disposeInstance();
             }
+            let levels: SectionLevel[] = [];
+            for (let i: number = 0; i < this.levels.length && i <= level; i++) {
+                levels.push(this.levels[i]);
+            }
+            SectionLevel.InstantiateRecursively(levels, callback);
         }
-        if (callback) {
-            callback();
+    }
+
+    public static InstantiateRecursively(sections: StationSection[], level: number, callback?: () => void): void {
+        let station = sections.pop();
+        if (station) {
+            station.instantiate(
+                level,
+                () => {
+                    StationSection.InstantiateRecursively(sections, level, callback);
+                }
+            );
+        } else {
+            if (callback) {
+                callback();
+            }
         }
     }
 }

@@ -24,18 +24,18 @@ class PlayerControler {
 
     private _checkInputs = () => {
         if (this._forward && !this._backward) {
-            this.character.positionAdd(this.character.localForward.scale(0.1));
+            this.character.positionAdd(this.character.localForward.scale(1));
         }
         if (this._backward && !this._forward) {
-            this.character.positionAdd(this.character.localForward.scale(-0.1));
+            this.character.positionAdd(this.character.localForward.scale(-1));
         }
         if (this._left && !this._right) {
-            this.character.positionAdd(this.character.localRight.scale(0.1));
+            this.character.positionAdd(this.character.localRight.scale(1));
         }
         if (this._right && !this._left) {
-            this.character.positionAdd(this.character.localRight.scale(-0.1));
+            this.character.positionAdd(this.character.localRight.scale(-1));
         }
-        this.character.d += this._deltaX / this._canvasWidth * this.horizontalSensibility;
+        this.character.rotate(this._deltaX / this._canvasWidth * this.horizontalSensibility);
         this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
         this._deltaX = 0;
         this._deltaY = 0;

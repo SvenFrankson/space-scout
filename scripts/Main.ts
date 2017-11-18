@@ -193,20 +193,26 @@ window.addEventListener("DOMContentLoaded", () => {
 	console.log(data);
 	let station: Station = new Station();
 	station.load(data);
-	station.instantiate(Main.Scene);
-
 	let playerCharacter: Character = new Character(station);
-	playerCharacter.setXYH(4, 4, 2);
-	playerCharacter.instantiate();
-	playerCharacter.setSection(station.sections[0]);
-	station.sections[0].instantiate(0);
-
 	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
+	station.instantiate(
+		Main.Scene,
+		() => {
+			station.sections[0].instantiate(
+				0,
+				() => {
+					playerCharacter.setXYH(4, 4, 2);
+					playerCharacter.instantiate();
+					playerCharacter.setSection(station.sections[0]);
 
-	let playerControl: PlayerControler = new PlayerControler(playerCamera);
-	playerControl.attachControl(Main.Canvas);
-
-	let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);
+					let playerControl: PlayerControler = new PlayerControler(playerCamera);
+					playerControl.attachControl(Main.Canvas);
+				
+					let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);
+				}
+			);
+		}
+	);
 
 	/*
 	Menu.RegisterToUI();

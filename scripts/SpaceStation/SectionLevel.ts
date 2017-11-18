@@ -71,8 +71,26 @@ class SectionLevel {
                     this.instance.freezeWorldMatrix();
                     m.dispose();
                 }
+                if (callback) {
+                    callback();
+                }
             }
         )
+    }
+
+    public static InstantiateRecursively(levels: SectionLevel[], callback?: () => void): void {
+        let level = levels.pop();
+        if (level) {
+            level.instantiate(
+                () => {
+                    SectionLevel.InstantiateRecursively(levels, callback);
+                }
+            );
+        } else {
+            if (callback) {
+                callback();
+            }
+        }
     }
 
     public disposeInstance(): void {

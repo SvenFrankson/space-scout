@@ -6,6 +6,7 @@ class Character {
     private _section: StationSection;
     public level: SectionLevel;
 	private position: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+	private rotation: BABYLON.Quaternion = BABYLON.Quaternion.Identity();
     
     public get scene(): BABYLON.Scene {
         return this.station.scene;
@@ -22,6 +23,7 @@ class Character {
         let data: BABYLON.VertexData = BABYLON.VertexData.ExtractFromMesh(m);
         data.applyToMesh(this.instance);
         m.dispose();
+        this.scene.registerBeforeRender(this.updateRotation);
     }
 
     public get x(): number {
@@ -48,29 +50,31 @@ class Character {
         this.updatePosition();
     }
 	
-	private _d: number = 0;
-    public get d(): number {
-        return this._d;
-    }
-    public set d(v: number) {
-        this._d = v;
-        this.updatePosition();
-	}
-	
-	private _localForward: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+	private _localForward: BABYLON.Vector3 = BABYLON.Vector3.One();
 	public get localForward(): BABYLON.Vector3 {
-		this._localForward.z = Math.cos(this.d);
-		this._localForward.y = 0;
-		this._localForward.x = Math.sin(this.d);
+		if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.Z, this._localForward);
+            if (this._section) {
+                BABYLON.Vector3.TransformNormalToRef(this._localForward, this._section.invertedWorldMatrix, this._localForward);
+            }
+        }
 		return this._localForward;
 	}
 	
-	private _localRight: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+	private _localRight: BABYLON.Vector3 = BABYLON.Vector3.One();
 	public get localRight(): BABYLON.Vector3 {
-		this._localRight.z = Math.cos(this.d + Math.PI / 2);
-		this._localRight.y = 0;
-		this._localRight.x = Math.sin(this.d + Math.PI / 2);
+		if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.X, this._localRight);
+        }
 		return this._localRight;
+    }
+	
+	private _localUp: BABYLON.Vector3 = BABYLON.Vector3.One();
+	public get localUp(): BABYLON.Vector3 {
+		if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.Y, this._localUp);
+        }
+		return this._localUp;
     }
 
     public setXYH(x: number, y: number, h: number): void {
@@ -81,7 +85,15 @@ class Character {
 	public positionAdd(delta: BABYLON.Vector3): void {
 		this.position.addInPlace(delta);
 		this.updatePosition();
-	}
+    }
+    
+    private _tmpQuaternion: BABYLON.Quaternion = BABYLON.Quaternion.Identity();
+    public rotate(angle: number): void {
+        BABYLON.Quaternion.RotationAxisToRef(this.localUp, angle, this._tmpQuaternion);
+        this._tmpQuaternion.multiplyInPlace(this.rotation);
+        this.rotation.copyFrom(this._tmpQuaternion);
+		this.updatePosition();
+    }
 
     public updatePosition(): void {
         if (this._section) {
@@ -92,11 +104,22 @@ class Character {
             if (this.instance) {
                 this.applyGravity();
 				BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.worldMatrix, this.instance.position);
-				this.instance.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._section.rotation.y, this._section.rotation.x, this._section.rotation.z);
-				this.instance.rotate(BABYLON.Axis.Y, this.d, BABYLON.Space.LOCAL);
             }
         }
-	}
+    }
+    
+    public updateRotation = () => {
+        this.instance.rotationQuaternion.copyFrom(this.rotation);
+        let currentUp: BABYLON.Vector3 = BABYLON.Vector3.Normalize(
+            BABYLON.Vector3.TransformNormal(BABYLON.Axis.Y, this.instance.getWorldMatrix())
+        );
+        let targetUp: BABYLON.Vector3 = BABYLON.Vector3.Normalize(this.instance.absolutePosition);
+        let correctionAxis: BABYLON.Vector3 = BABYLON.Vector3.Cross(currentUp, targetUp);
+        let correctionAngle: number = Math.abs(Math.asin(correctionAxis.length()));
+        let rotation: BABYLON.Quaternion = BABYLON.Quaternion.RotationAxis(correctionAxis, correctionAngle);
+        this.instance.rotationQuaternion = rotation.multiply(this.instance.rotationQuaternion);
+        this.rotation.copyFrom(this.instance.rotationQuaternion);
+    }
 
     public applyGravity(): void {
         let downRay = this.downRay();
@@ -138,7 +161,6 @@ class Character {
         else if (this._section !== section) {
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.worldMatrix, this.position);
             this._section = section;
-            this.d = this.instance.rotationQuaternion.toEulerAngles().y - section.rotation.y;
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.invertedWorldMatrix, this.position);
             this.updatePosition();
         }

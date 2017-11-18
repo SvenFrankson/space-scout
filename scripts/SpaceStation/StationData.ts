@@ -167,9 +167,10 @@ class Test {
             }
     
             Test.ConnectSections(hubTop, data.sections[2 + j * 27])
+            Test.ConnectSections(hubBottom, data.sections[28 + j * 27])
     
             for (let i: number = 0; i < 26; i++) {
-                Test.ConnectSections(data.sections[i + j * 27], data.sections[i + 1 + j * 27]);
+                Test.ConnectSections(data.sections[2 + i + j * 27], data.sections[2 + i + 1 + j * 27]);
             }
         }
 

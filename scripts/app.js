@@ -325,16 +325,18 @@ window.addEventListener("DOMContentLoaded", () => {
     console.log(data);
     let station = new Station();
     station.load(data);
-    station.instantiate(Main.Scene);
     let playerCharacter = new Character(station);
-    playerCharacter.setXYH(4, 4, 2);
-    playerCharacter.instantiate();
-    playerCharacter.setSection(station.sections[0]);
-    station.sections[0].instantiate(0);
     let playerCamera = new PlayerCamera(playerCharacter, Main.Scene);
-    let playerControl = new PlayerControler(playerCamera);
-    playerControl.attachControl(Main.Canvas);
-    let stationLoadManager = new StationLoadManager(playerCharacter);
+    station.instantiate(Main.Scene, () => {
+        station.sections[0].instantiate(0, () => {
+            playerCharacter.setXYH(4, 4, 2);
+            playerCharacter.instantiate();
+            playerCharacter.setSection(station.sections[0]);
+            let playerControl = new PlayerControler(playerCamera);
+            playerControl.attachControl(Main.Canvas);
+            let stationLoadManager = new StationLoadManager(playerCharacter);
+        });
+    });
     /*
     Menu.RegisterToUI();
     Intro.RunIntro();
@@ -578,9 +580,21 @@ class TrailMesh extends BABYLON.Mesh {
 class Character {
     constructor(station) {
         this.position = BABYLON.Vector3.Zero();
-        this._d = 0;
-        this._localForward = BABYLON.Vector3.Zero();
-        this._localRight = BABYLON.Vector3.Zero();
+        this.rotation = BABYLON.Quaternion.Identity();
+        this._localForward = BABYLON.Vector3.One();
+        this._localRight = BABYLON.Vector3.One();
+        this._localUp = BABYLON.Vector3.One();
+        this._tmpQuaternion = BABYLON.Quaternion.Identity();
+        this.updateRotation = () => {
+            this.instance.rotationQuaternion.copyFrom(this.rotation);
+            let currentUp = BABYLON.Vector3.Normalize(BABYLON.Vector3.TransformNormal(BABYLON.Axis.Y, this.instance.getWorldMatrix()));
+            let targetUp = BABYLON.Vector3.Normalize(this.instance.absolutePosition);
+            let correctionAxis = BABYLON.Vector3.Cross(currentUp, targetUp);
+            let correctionAngle = Math.abs(Math.asin(correctionAxis.length()));
+            let rotation = BABYLON.Quaternion.RotationAxis(correctionAxis, correctionAngle);
+            this.instance.rotationQuaternion = rotation.multiply(this.instance.rotationQuaternion);
+            this.rotation.copyFrom(this.instance.rotationQuaternion);
+        };
         this.station = station;
     }
     get scene() {
@@ -592,6 +606,7 @@ class Character {
         let data = BABYLON.VertexData.ExtractFromMesh(m);
         data.applyToMesh(this.instance);
         m.dispose();
+        this.scene.registerBeforeRender(this.updateRotation);
     }
     get x() {
         return this.position.x;
@@ -614,24 +629,26 @@ class Character {
         this.position.y = v;
         this.updatePosition();
     }
-    get d() {
-        return this._d;
-    }
-    set d(v) {
-        this._d = v;
-        this.updatePosition();
-    }
     get localForward() {
-        this._localForward.z = Math.cos(this.d);
-        this._localForward.y = 0;
-        this._localForward.x = Math.sin(this.d);
+        if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.Z, this._localForward);
+            if (this._section) {
+                BABYLON.Vector3.TransformNormalToRef(this._localForward, this._section.invertedWorldMatrix, this._localForward);
+            }
+        }
         return this._localForward;
     }
     get localRight() {
-        this._localRight.z = Math.cos(this.d + Math.PI / 2);
-        this._localRight.y = 0;
-        this._localRight.x = Math.sin(this.d + Math.PI / 2);
+        if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.X, this._localRight);
+        }
         return this._localRight;
+    }
+    get localUp() {
+        if (this.instance) {
+            this.instance.getDirectionToRef(BABYLON.Axis.Y, this._localUp);
+        }
+        return this._localUp;
     }
     setXYH(x, y, h) {
         this.position.copyFromFloats(x, h, y);
@@ -639,6 +656,12 @@ class Character {
     }
     positionAdd(delta) {
         this.position.addInPlace(delta);
+        this.updatePosition();
+    }
+    rotate(angle) {
+        BABYLON.Quaternion.RotationAxisToRef(this.localUp, angle, this._tmpQuaternion);
+        this._tmpQuaternion.multiplyInPlace(this.rotation);
+        this.rotation.copyFrom(this._tmpQuaternion);
         this.updatePosition();
     }
     updatePosition() {
@@ -650,8 +673,6 @@ class Character {
             if (this.instance) {
                 this.applyGravity();
                 BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.worldMatrix, this.instance.position);
-                this.instance.rotationQuaternion = BABYLON.Quaternion.RotationYawPitchRoll(this._section.rotation.y, this._section.rotation.x, this._section.rotation.z);
-                this.instance.rotate(BABYLON.Axis.Y, this.d, BABYLON.Space.LOCAL);
             }
         }
     }
@@ -692,7 +713,6 @@ class Character {
         else if (this._section !== section) {
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.worldMatrix, this.position);
             this._section = section;
-            this.d = this.instance.rotationQuaternion.toEulerAngles().y - section.rotation.y;
             BABYLON.Vector3.TransformCoordinatesToRef(this.position, this._section.invertedWorldMatrix, this.position);
             this.updatePosition();
         }
@@ -772,18 +792,18 @@ class PlayerControler {
         this._left = false;
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
-                this.character.positionAdd(this.character.localForward.scale(0.1));
+                this.character.positionAdd(this.character.localForward.scale(1));
             }
             if (this._backward && !this._forward) {
-                this.character.positionAdd(this.character.localForward.scale(-0.1));
+                this.character.positionAdd(this.character.localForward.scale(-1));
             }
             if (this._left && !this._right) {
-                this.character.positionAdd(this.character.localRight.scale(0.1));
+                this.character.positionAdd(this.character.localRight.scale(1));
             }
             if (this._right && !this._left) {
-                this.character.positionAdd(this.character.localRight.scale(-0.1));
+                this.character.positionAdd(this.character.localRight.scale(-1));
             }
-            this.character.d += this._deltaX / this._canvasWidth * this.horizontalSensibility;
+            this.character.rotate(this._deltaX / this._canvasWidth * this.horizontalSensibility);
             this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
             this._deltaX = 0;
             this._deltaY = 0;
@@ -2063,7 +2083,23 @@ class SectionLevel {
                 this.instance.freezeWorldMatrix();
                 m.dispose();
             }
+            if (callback) {
+                callback();
+            }
         });
+    }
+    static InstantiateRecursively(levels, callback) {
+        let level = levels.pop();
+        if (level) {
+            level.instantiate(() => {
+                SectionLevel.InstantiateRecursively(levels, callback);
+            });
+        }
+        else {
+            if (callback) {
+                callback();
+            }
+        }
     }
     disposeInstance() {
         if (this.instance) {
@@ -2098,9 +2134,11 @@ class Station {
     }
     instantiate(scene, callback) {
         this.scene = scene;
+        let sections = [];
         for (let i = 0; i < this.sections.length; i++) {
-            this.sections[i].instantiate(-1);
+            sections.push(this.sections[i]);
         }
+        StationSection.InstantiateRecursively(sections, -1, callback);
     }
 }
 class EasyGUID {
@@ -2253,8 +2291,9 @@ class Test {
                 data.sections[index] = section;
             }
             Test.ConnectSections(hubTop, data.sections[2 + j * 27]);
+            Test.ConnectSections(hubBottom, data.sections[28 + j * 27]);
             for (let i = 0; i < 26; i++) {
-                Test.ConnectSections(data.sections[i + j * 27], data.sections[i + 1 + j * 27]);
+                Test.ConnectSections(data.sections[2 + i + j * 27], data.sections[2 + i + 1 + j * 27]);
             }
         }
         return data;
@@ -2407,19 +2446,31 @@ class StationSection {
             for (let i = 0; i < this.levels.length; i++) {
                 this.levels[i].disposeInstance();
             }
-            this.outer.instantiate();
+            this.outer.instantiate(callback);
         }
         else {
             this.outer.disposeInstance();
-            for (let i = 0; i < this.levels.length && i <= level; i++) {
-                this.levels[i].instantiate();
-            }
             for (let i = level + 1; i < this.levels.length; i++) {
                 this.levels[i].disposeInstance();
             }
+            let levels = [];
+            for (let i = 0; i < this.levels.length && i <= level; i++) {
+                levels.push(this.levels[i]);
+            }
+            SectionLevel.InstantiateRecursively(levels, callback);
         }
-        if (callback) {
-            callback();
+    }
+    static InstantiateRecursively(sections, level, callback) {
+        let station = sections.pop();
+        if (station) {
+            station.instantiate(level, () => {
+                StationSection.InstantiateRecursively(sections, level, callback);
+            });
+        }
+        else {
+            if (callback) {
+                callback();
+            }
         }
     }
 }

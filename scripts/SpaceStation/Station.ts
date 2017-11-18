@@ -20,8 +20,10 @@ class Station {
 
     public instantiate(scene: BABYLON.Scene, callback?: () => void): void {
         this.scene = scene;
+        let sections: StationSection[] = [];
         for (let i: number = 0; i < this.sections.length; i++) {
-            this.sections[i].instantiate(-1);
+           sections.push(this.sections[i]);
         }
+        StationSection.InstantiateRecursively(sections, -1, callback);
     }
 }
