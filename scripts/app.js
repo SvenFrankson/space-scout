@@ -201,12 +201,14 @@ class Main {
     createSceneSimple() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
-        let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-        sun.intensity = 0.8;
-        let cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-        cloud.intensity = 0.3;
-        cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
-        cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+        // let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
+        // sun.intensity = 0.8;
+        // let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
+        // cloud.intensity = 0.3;
+        // cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
+        // cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+        let light = new BABYLON.HemisphericLight("Light", BABYLON.Vector3.Up(), Main.Scene);
+        light.intensity = 0.7;
         //Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
         //Main.Scene.activeCamera = Main.MenuCamera;
         let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
@@ -753,7 +755,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 100;
+        this.distance = 40;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
@@ -1401,6 +1403,17 @@ class MeshLoader {
                     this.lookup.set(name, mesh);
                     mesh.isVisible = false;
                     callback(mesh.createInstance(mesh.name + "-instance"));
+                    if (mesh.material && mesh.material instanceof BABYLON.MultiMaterial) {
+                        mesh.material.subMaterials.forEach((m) => {
+                            if (m instanceof BABYLON.StandardMaterial) {
+                                if (m.name.endsWith("Floor")) {
+                                    console.log("Texture loading");
+                                    m.diffuseTexture = new BABYLON.Texture("./datas/floor.png", this.scene);
+                                    m.diffuseColor.copyFromFloats(1, 1, 1);
+                                }
+                            }
+                        });
+                    }
                 }
                 else {
                     this.lookup.set(name, null);
@@ -2294,7 +2307,11 @@ class Test {
                     section.rotation = new BABYLON.Vector3(12 / 180 * Math.PI + i * (6 / 180 * Math.PI), 0, 0);
                 }
                 else if (j === 1) {
-                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let flip = 1;
+                    if (i % 2 === 0) {
+                        flip = -1;
+                    }
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, flip * Math.PI / 2);
                     let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, 12 / 180 * Math.PI + i * (6 / 180 * Math.PI));
                     section.rotation = rZ.multiply(rY).toEulerAngles();
                 }
@@ -2302,7 +2319,11 @@ class Test {
                     section.rotation = new BABYLON.Vector3(-12 / 180 * Math.PI - i * (6 / 180 * Math.PI), 0, 0);
                 }
                 else if (j === 3) {
-                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let flip = 1;
+                    if (i % 2 === 0) {
+                        flip = -1;
+                    }
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, flip * Math.PI / 2);
                     let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, -12 / 180 * Math.PI - i * (6 / 180 * Math.PI));
                     section.rotation = rZ.multiply(rY).toEulerAngles();
                 }

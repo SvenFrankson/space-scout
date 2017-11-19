@@ -14,11 +14,11 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 		processing begun of multimaterial:  hub_level_1.Multimaterial#0
 		num positions      :  457
 		num normals        :  457
-		num uvs            :  0
+		num uvs            :  914
 		num uvs2           :  0
 		num colors         :  0
 		num indices        :  1146
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0445 secs
+elapsed time:  0 min, 0.0846 secs

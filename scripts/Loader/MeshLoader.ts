@@ -27,6 +27,20 @@ class MeshLoader {
                         this.lookup.set(name, mesh);
                         mesh.isVisible = false;
                         callback(mesh.createInstance(mesh.name + "-instance"));
+                        if (mesh.material && mesh.material instanceof BABYLON.MultiMaterial) {
+                            mesh.material.subMaterials.forEach(
+                                (m: BABYLON.Material) => {
+                                    if (m instanceof BABYLON.StandardMaterial) {
+                                        if (m.name.endsWith("Floor")) {
+                                            console.log("Texture loading");
+                                            m.diffuseTexture = new BABYLON.Texture("./datas/floor.png", this.scene);
+                                            
+                                            m.diffuseColor.copyFromFloats(1, 1, 1);
+                                        }
+                                    }
+                                }
+                            )
+                        }
                     } else {
                         this.lookup.set(name, null);
                         callback(null);

@@ -9,13 +9,16 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  hub-level-0
 		processing begun of Standard material:  Floor
-		num positions      :  335
-		num normals        :  335
-		num uvs            :  0
+		processing begun of Standard material:  Black
+		processing begun of Standard material:  Glass
+		processing begun of multimaterial:  hub_level_0.Multimaterial#0
+		num positions      :  685
+		num normals        :  685
+		num uvs            :  1370
 		num uvs2           :  0
 		num colors         :  0
-		num indices        :  750
+		num indices        :  1266
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0368 secs
+elapsed time:  0 min, 0.0931 secs

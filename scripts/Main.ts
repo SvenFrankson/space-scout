@@ -38,12 +38,15 @@ class Main {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 		this.resize();
 
-		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-		sun.intensity = 0.8;
-		let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-		cloud.intensity = 0.3;
-		cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
-		cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+		// let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
+		// sun.intensity = 0.8;
+		// let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
+		// cloud.intensity = 0.3;
+		// cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
+		// cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+
+		let light = new BABYLON.HemisphericLight("Light", BABYLON.Vector3.Up(), Main.Scene);
+		light.intensity = 0.7;
 
 		//Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
 		//Main.Scene.activeCamera = Main.MenuCamera;

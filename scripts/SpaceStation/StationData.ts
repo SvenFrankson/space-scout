@@ -153,13 +153,21 @@ class Test {
                 if (j === 0) {
                     section.rotation = new BABYLON.Vector3(12 / 180 * Math.PI + i * (6 / 180 * Math.PI), 0, 0);
                 } else if (j === 1) {
-                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let flip = 1;
+                    if (i % 2 === 0) {
+                        flip = -1;
+                    }
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, flip * Math.PI / 2);
                     let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, 12 / 180 * Math.PI + i * (6 / 180 * Math.PI));
                     section.rotation = rZ.multiply(rY).toEulerAngles();
                 } else if (j === 2) {
                     section.rotation = new BABYLON.Vector3(- 12 / 180 * Math.PI - i * (6 / 180 * Math.PI), 0, 0);
                 } else if (j === 3) {
-                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI / 2);
+                    let flip = 1;
+                    if (i % 2 === 0) {
+                        flip = -1;
+                    }
+                    let rY = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, flip * Math.PI / 2);
                     let rZ = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Z, - 12 / 180 * Math.PI - i * (6 / 180 * Math.PI));
                     section.rotation = rZ.multiply(rY).toEulerAngles();
                 }
