@@ -644,6 +644,9 @@ class Character {
     get localRight() {
         if (this.instance) {
             this.instance.getDirectionToRef(BABYLON.Axis.X, this._localRight);
+            if (this._section) {
+                BABYLON.Vector3.TransformNormalToRef(this._localRight, this._section.invertedWorldMatrix, this._localRight);
+            }
         }
         return this._localRight;
     }
@@ -755,7 +758,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 40;
+        this.distance = 50;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
@@ -1410,6 +1413,15 @@ class MeshLoader {
                                     console.log("Texture loading");
                                     m.diffuseTexture = new BABYLON.Texture("./datas/floor.png", this.scene);
                                     m.diffuseColor.copyFromFloats(1, 1, 1);
+                                    m.bumpTexture = new BABYLON.Texture("./datas/floor-normal.png", this.scene);
+                                    m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
+                                }
+                                if (m.name.endsWith("Road")) {
+                                    console.log("Texture loading");
+                                    m.diffuseTexture = new BABYLON.Texture("./datas/road.png", this.scene);
+                                    m.diffuseColor.copyFromFloats(1, 1, 1);
+                                    m.bumpTexture = new BABYLON.Texture("./datas/road-normal.png", this.scene);
+                                    m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
                                 }
                             }
                         });

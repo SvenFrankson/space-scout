@@ -65,6 +65,9 @@ class Character {
 	public get localRight(): BABYLON.Vector3 {
 		if (this.instance) {
             this.instance.getDirectionToRef(BABYLON.Axis.X, this._localRight);
+            if (this._section) {
+                BABYLON.Vector3.TransformNormalToRef(this._localRight, this._section.invertedWorldMatrix, this._localRight);
+            }
         }
 		return this._localRight;
     }
