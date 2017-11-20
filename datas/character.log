@@ -28,7 +28,7 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		processing begun of bone:  UpperLeg-R, index:  17
 		processing begun of bone:  LowerLeg-R, index:  18
 		processing begun of bone:  Foot-R, index:  19
-		processing action Action:  in[1 - 120], out[0 - 120]
+		processing action Walk:  in[1 - 50], out[0 - 50]
 	processing begun of mesh:  nude
 		WARNING: No materials have been assigned: 
 		num positions      :  308
@@ -47,4 +47,4 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.768 secs
+elapsed time:  0 min, 0.5859 secs

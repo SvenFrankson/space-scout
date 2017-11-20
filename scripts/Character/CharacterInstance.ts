@@ -18,7 +18,7 @@ class CharacterInstance extends BABYLON.Mesh {
                             this.mesh = m;
                             this.mesh.parent = this;
                             console.log(this.mesh.skeleton);
-                            this.mesh.skeleton.beginAnimation("Action", true);
+                            this.mesh.skeleton.beginAnimation("Walk", true);
                         }
                     }
                 )
