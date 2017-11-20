@@ -199,6 +199,7 @@ window.addEventListener("DOMContentLoaded", () => {
 	let station: Station = new Station();
 	station.load(data);
 	let playerCharacter: Character = new Character(station);
+	playerCharacter.name = "character";
 	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
 	station.instantiate(
 		Main.Scene,

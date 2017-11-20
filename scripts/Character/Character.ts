@@ -19,10 +19,6 @@ class Character {
 
     public instantiate() {
         this.instance = new CharacterInstance(this);
-        let m: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("tmp_box", {size: 0.5, height: 2, width: 1}, this.scene);
-        let data: BABYLON.VertexData = BABYLON.VertexData.ExtractFromMesh(m);
-        data.applyToMesh(this.instance);
-        m.dispose();
         this.scene.registerBeforeRender(this.updateRotation);
     }
 
@@ -141,6 +137,7 @@ class Character {
                 this._downRay = new BABYLON.Ray(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, -1, 0), 6);
             }
             this._downRay.origin.copyFrom(this.instance.absolutePosition);
+            this._downRay.origin.addInPlace(this._localUp.scale(0.9));
             this.instance.getDirectionToRef(BABYLON.Axis.Y, this._downRay.direction);
             this._downRay.direction.scaleInPlace(-1);
         } else {

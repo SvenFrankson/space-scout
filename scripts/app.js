@@ -329,6 +329,7 @@ window.addEventListener("DOMContentLoaded", () => {
     let station = new Station();
     station.load(data);
     let playerCharacter = new Character(station);
+    playerCharacter.name = "character";
     let playerCamera = new PlayerCamera(playerCharacter, Main.Scene);
     station.instantiate(Main.Scene, () => {
         station.sections[0].instantiate(0, () => {
@@ -605,10 +606,6 @@ class Character {
     }
     instantiate() {
         this.instance = new CharacterInstance(this);
-        let m = BABYLON.MeshBuilder.CreateBox("tmp_box", { size: 0.5, height: 2, width: 1 }, this.scene);
-        let data = BABYLON.VertexData.ExtractFromMesh(m);
-        data.applyToMesh(this.instance);
-        m.dispose();
         this.scene.registerBeforeRender(this.updateRotation);
     }
     get x() {
@@ -697,6 +694,7 @@ class Character {
                 this._downRay = new BABYLON.Ray(BABYLON.Vector3.Zero(), new BABYLON.Vector3(0, -1, 0), 6);
             }
             this._downRay.origin.copyFrom(this.instance.absolutePosition);
+            this._downRay.origin.addInPlace(this._localUp.scale(0.9));
             this.instance.getDirectionToRef(BABYLON.Axis.Y, this._downRay.direction);
             this._downRay.direction.scaleInPlace(-1);
         }
@@ -751,6 +749,16 @@ class CharacterInstance extends BABYLON.Mesh {
     constructor(character) {
         super(character.name, character.scene);
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        BABYLON.SceneLoader.ImportMesh("", "./datas/" + character.name + ".babylon", "", character.scene, (meshes) => {
+            console.log(meshes.length);
+            meshes.forEach((m) => {
+                if (m instanceof BABYLON.Mesh) {
+                    this.mesh = m;
+                    this.mesh.parent = this;
+                    this.mesh.skeleton.beginAnimation("ArmatureAction", true);
+                }
+            });
+        });
     }
 }
 class PlayerCamera extends BABYLON.FreeCamera {
@@ -758,7 +766,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 50;
+        this.distance = 30;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
