@@ -756,7 +756,7 @@ class CharacterInstance extends BABYLON.Mesh {
                     this.mesh = m;
                     this.mesh.parent = this;
                     console.log(this.mesh.skeleton);
-                    this.mesh.skeleton.beginAnimation("Walk", true);
+                    character.scene.beginAnimation(this.mesh.skeleton, 56, 80, true, 2);
                 }
             });
         });
@@ -767,7 +767,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 30;
+        this.distance = 15;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
@@ -807,16 +807,16 @@ class PlayerControler {
         this._left = false;
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
-                this.character.positionAdd(this.character.localForward.scale(0.2));
+                this.character.positionAdd(this.character.localForward.scale(0.1));
             }
             if (this._backward && !this._forward) {
-                this.character.positionAdd(this.character.localForward.scale(-0.2));
+                this.character.positionAdd(this.character.localForward.scale(-0.1));
             }
             if (this._left && !this._right) {
-                this.character.positionAdd(this.character.localRight.scale(0.2));
+                this.character.positionAdd(this.character.localRight.scale(0.1));
             }
             if (this._right && !this._left) {
-                this.character.positionAdd(this.character.localRight.scale(-0.2));
+                this.character.positionAdd(this.character.localRight.scale(-0.1));
             }
             this.character.rotate(this._deltaX / this._canvasWidth * this.horizontalSensibility);
             this.camera.alpha += this._deltaY / this._canvasHeight * this.verticalSensibility;
@@ -1430,6 +1430,13 @@ class MeshLoader {
                                     m.diffuseTexture = new BABYLON.Texture("./datas/road.png", this.scene);
                                     m.diffuseColor.copyFromFloats(1, 1, 1);
                                     m.bumpTexture = new BABYLON.Texture("./datas/road-normal.png", this.scene);
+                                    m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
+                                }
+                                if (m.name.endsWith("Wall")) {
+                                    console.log("Texture loading");
+                                    m.diffuseTexture = new BABYLON.Texture("./datas/wall.png", this.scene);
+                                    m.diffuseColor.copyFromFloats(1, 1, 1);
+                                    m.bumpTexture = new BABYLON.Texture("./datas/wall-normal.png", this.scene);
                                     m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
                                 }
                             }

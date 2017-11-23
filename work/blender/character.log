@@ -7,6 +7,7 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\work\blender\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	WARNING: The following armature not visible in scene thus ignored: Armature.001
 	processing begun of skeleton:  Armature, id:  0
 		processing begun of bone:  root, index:  0
 		processing begun of bone:  Spine, index:  1
@@ -28,8 +29,9 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		processing begun of bone:  UpperLeg-R, index:  17
 		processing begun of bone:  LowerLeg-R, index:  18
 		processing begun of bone:  Foot-R, index:  19
-		processing action Action:  in[0 - 1], out[0 - 1]
-		processing action Walk:  in[1 - 120], out[10 - 130]
+		processing action Armature.001Action.001:  in[1 - 40], out[0 - 40]
+		processing action Walk:  in[0 - 1], out[50 - 51]
+		processing action Wave:  in[1 - 40], out[60 - 100]
 	processing begun of mesh:  nude
 		WARNING: No materials have been assigned: 
 		num positions      :  308
@@ -48,4 +50,4 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.5857 secs
+elapsed time:  0 min, 0.4708 secs

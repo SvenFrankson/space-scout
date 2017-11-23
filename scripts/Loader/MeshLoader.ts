@@ -49,6 +49,15 @@ class MeshLoader {
 
                                             m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
                                         }
+                                        if (m.name.endsWith("Wall")) {
+                                            console.log("Texture loading");
+                                            m.diffuseTexture = new BABYLON.Texture("./datas/wall.png", this.scene);
+                                            
+                                            m.diffuseColor.copyFromFloats(1, 1, 1);
+                                            m.bumpTexture = new BABYLON.Texture("./datas/wall-normal.png", this.scene);
+
+                                            m.specularColor.copyFromFloats(0.6, 0.6, 0.6);
+                                        }
                                     }
                                 }
                             )
