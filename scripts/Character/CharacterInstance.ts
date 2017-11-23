@@ -25,6 +25,7 @@ class CharacterInstance extends BABYLON.Mesh {
                         if (m instanceof BABYLON.Mesh) {
                             this.mesh = m;
                             this.mesh.parent = this;
+                            this.mesh.skeleton.enableBlending(120);
                             this.idle();
                         }
                     }

@@ -1,4 +1,4 @@
-Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
+Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Conversion from Blender to Babylon.js =========
 	Scene settings used:
 		selected layers only:  true
@@ -11,6 +11,8 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 		processing begun of Standard material:  Floor
 		processing begun of Standard material:  Black
 		processing begun of Standard material:  Glass
+		processing begun of Standard material:  Undefined
+		processing begun of Standard material:  Wall
 		processing begun of multimaterial:  hub_level_1.Multimaterial#0
 		num positions      :  457
 		num normals        :  457
@@ -21,4 +23,4 @@ Exporter version: 5.2.0, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0846 secs
+elapsed time:  0 min, 0.0926 secs

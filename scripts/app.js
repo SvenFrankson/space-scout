@@ -763,6 +763,7 @@ class CharacterInstance extends BABYLON.Mesh {
                 if (m instanceof BABYLON.Mesh) {
                     this.mesh = m;
                     this.mesh.parent = this;
+                    this.mesh.skeleton.enableBlending(120);
                     this.idle();
                 }
             });
@@ -812,7 +813,7 @@ class PlayerCamera extends BABYLON.FreeCamera {
         super("PlayerCamera", BABYLON.Vector3.Zero(), scene);
         this.smoothness = 10;
         this.alpha = Math.PI / 4;
-        this.distance = 15;
+        this.distance = 25;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
         this._update = () => {
@@ -853,7 +854,7 @@ class PlayerControler {
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
                 this.character.positionAdd(this.character.localForward.scale(0.1));
-                this.character.instance.updateAnimation(2.5);
+                this.character.instance.updateAnimation(1.5);
             }
             else {
                 this.character.instance.updateAnimation(0);
