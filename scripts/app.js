@@ -745,9 +745,17 @@ class Character {
         this.instance = undefined;
     }
 }
+var AnimationState;
+(function (AnimationState) {
+    AnimationState[AnimationState["Idle"] = 0] = "Idle";
+    AnimationState[AnimationState["Walk"] = 1] = "Walk";
+    AnimationState[AnimationState["Run"] = 2] = "Run";
+})(AnimationState || (AnimationState = {}));
 class CharacterInstance extends BABYLON.Mesh {
     constructor(character) {
         super(character.name, character.scene);
+        this._currentAnimationState = AnimationState.Idle;
+        this.character = character;
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
         BABYLON.SceneLoader.ImportMesh("", "./datas/" + character.name + ".babylon", "", character.scene, (meshes) => {
             console.log(meshes.length);
@@ -755,11 +763,48 @@ class CharacterInstance extends BABYLON.Mesh {
                 if (m instanceof BABYLON.Mesh) {
                     this.mesh = m;
                     this.mesh.parent = this;
-                    console.log(this.mesh.skeleton);
-                    character.scene.beginAnimation(this.mesh.skeleton, 56, 80, true, 2);
+                    this.idle();
                 }
             });
         });
+    }
+    idle() {
+        if (this.character && this.mesh) {
+            this._currentAnimationState = AnimationState.Idle;
+            this.character.scene.beginAnimation(this.mesh.skeleton, 1, 60, true, 1);
+        }
+    }
+    walk() {
+        if (this.character && this.mesh) {
+            this._currentAnimationState = AnimationState.Walk;
+            this.character.scene.beginAnimation(this.mesh.skeleton, 61, 116, true, 1);
+        }
+    }
+    run() {
+        if (this.character && this.mesh) {
+            this._currentAnimationState = AnimationState.Run;
+            this.character.scene.beginAnimation(this.mesh.skeleton, 117, 141, true, 1);
+        }
+    }
+    updateAnimation(speed) {
+        if (this._currentAnimationState === AnimationState.Idle) {
+            if (speed > 1) {
+                this.walk();
+            }
+        }
+        else if (this._currentAnimationState === AnimationState.Walk) {
+            if (speed < 1) {
+                this.idle();
+            }
+            else if (speed > 2) {
+                this.run();
+            }
+        }
+        else if (this._currentAnimationState === AnimationState.Run) {
+            if (speed < 2) {
+                this.walk();
+            }
+        }
     }
 }
 class PlayerCamera extends BABYLON.FreeCamera {
@@ -808,6 +853,10 @@ class PlayerControler {
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
                 this.character.positionAdd(this.character.localForward.scale(0.1));
+                this.character.instance.updateAnimation(2.5);
+            }
+            else {
+                this.character.instance.updateAnimation(0);
             }
             if (this._backward && !this._forward) {
                 this.character.positionAdd(this.character.localForward.scale(-0.1));

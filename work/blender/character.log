@@ -7,31 +7,33 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\work\blender\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
-	WARNING: The following armature not visible in scene thus ignored: Armature.001
-	processing begun of skeleton:  Armature, id:  0
+	processing begun of skeleton:  IKs, id:  0
 		processing begun of bone:  root, index:  0
-		processing begun of bone:  Spine, index:  1
-		processing begun of bone:  Shoulder-L, index:  2
-		processing begun of bone:  UpperArm-L, index:  3
-		processing begun of bone:  LowerArm-L, index:  4
-		processing begun of bone:  Hand-L, index:  5
-		processing begun of bone:  Neck, index:  6
-		processing begun of bone:  Head, index:  7
-		processing begun of bone:  Shoulder-R, index:  8
-		processing begun of bone:  UpperArm-R, index:  9
-		processing begun of bone:  LowerArm-R, index:  10
-		processing begun of bone:  Hand-R, index:  11
-		processing begun of bone:  Hip-L, index:  12
-		processing begun of bone:  UpperLeg-L, index:  13
-		processing begun of bone:  LowerLeg-L, index:  14
-		processing begun of bone:  Foot-L, index:  15
-		processing begun of bone:  Hip-R, index:  16
-		processing begun of bone:  UpperLeg-R, index:  17
-		processing begun of bone:  LowerLeg-R, index:  18
-		processing begun of bone:  Foot-R, index:  19
-		processing action Armature.001Action.001:  in[1 - 40], out[0 - 40]
-		processing action Walk:  in[0 - 1], out[50 - 51]
-		processing action Wave:  in[1 - 40], out[60 - 100]
+		processing begun of bone:  Hip-L, index:  1
+		processing begun of bone:  UpperLeg-L, index:  2
+		processing begun of bone:  LowerLeg-L, index:  3
+		processing begun of bone:  Foot-L, index:  4
+		processing begun of bone:  Hip-R, index:  5
+		processing begun of bone:  UpperLeg-R, index:  6
+		processing begun of bone:  LowerLeg-R, index:  7
+		processing begun of bone:  Foot-R, index:  8
+		processing begun of bone:  Spine, index:  9
+		processing begun of bone:  Chest, index:  10
+		processing begun of bone:  Shoulder-L, index:  11
+		processing begun of bone:  UpperArm-L, index:  12
+		processing begun of bone:  LowerArm-L, index:  13
+		processing begun of bone:  Hand-L, index:  14
+		processing begun of bone:  Neck, index:  15
+		processing begun of bone:  Head, index:  16
+		processing begun of bone:  Shoulder-R, index:  17
+		processing begun of bone:  UpperArm-R, index:  18
+		processing begun of bone:  LowerArm-R, index:  19
+		processing begun of bone:  Hand-R, index:  20
+		processing action Action.001:  in[0 - 1], out[0 - 1]
+		processing action Action.002:  in[0 - 1], out[10 - 11]
+		processing action Action:  in[1 - 141], out[20 - 161]
+		processing action Action.003:  in[0 - 1], out[170 - 171]
+		processing action IKsAction2:  in[1 - 141], out[180 - 321]
 	processing begun of mesh:  nude
 		WARNING: No materials have been assigned: 
 		num positions      :  308
@@ -41,13 +43,13 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		num colors         :  0
 		num indices        :  1788
 		Skeleton stats:  
-			WARNING: Maximum # of influencers exceeded for 20 vertices, extras ignored
-			Total Influencers:  699
-			Avg # of influencers per vertex:  2.2695
-			Highest # of influencers observed:  6, num vertices with this:  2
+			WARNING: Maximum # of influencers exceeded for 28 vertices, extras ignored
+			Total Influencers:  717
+			Avg # of influencers per vertex:  2.3279
+			Highest # of influencers observed:  7, num vertices with this:  1
 			exported as 4 influencers
 			num skeletonWeights and skeletonIndices:  1232
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.4708 secs
+elapsed time:  0 min, 1.0099 secs

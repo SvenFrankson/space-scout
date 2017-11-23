@@ -7,7 +7,7 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
-	processing begun of skeleton:  IKis, id:  0
+	processing begun of skeleton:  IKs, id:  0
 		processing begun of bone:  root, index:  0
 		processing begun of bone:  Hip-L, index:  1
 		processing begun of bone:  UpperLeg-L, index:  2
@@ -29,8 +29,7 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		processing begun of bone:  UpperArm-R, index:  18
 		processing begun of bone:  LowerArm-R, index:  19
 		processing begun of bone:  Hand-R, index:  20
-		processing action Actions:  in[1 - 80], out[0 - 80]
-		processing action Walk:  in[0 - 1], out[90 - 91]
+		processing action Action:  in[1 - 141], out[0 - 141]
 	processing begun of mesh:  nude
 		WARNING: No materials have been assigned: 
 		num positions      :  308
@@ -49,4 +48,4 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.5106 secs
+elapsed time:  0 min, 0.6163 secs
