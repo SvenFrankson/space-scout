@@ -215,6 +215,10 @@ window.addEventListener("DOMContentLoaded", () => {
 					playerControl.attachControl(Main.Canvas);
 				
 					let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);
+
+					MeshLoader.instance.get("metro", (m) => {
+						m.position.y = 200;
+					})
 				}
 			);
 		}

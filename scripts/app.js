@@ -339,6 +339,9 @@ window.addEventListener("DOMContentLoaded", () => {
             let playerControl = new PlayerControler(playerCamera);
             playerControl.attachControl(Main.Canvas);
             let stationLoadManager = new StationLoadManager(playerCharacter);
+            MeshLoader.instance.get("metro", (m) => {
+                m.position.y = 200;
+            });
         });
     });
     /*
@@ -1459,12 +1462,20 @@ class MeshLoader {
             callback(mesh.createInstance(mesh.name + "-instance"));
         }
         else {
-            BABYLON.SceneLoader.ImportMesh("", "./datas/SectionLevels/" + name + ".babylon", "", this.scene, (meshes, particleSystems, skeletons) => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", this.scene, (meshes, particleSystems, skeletons) => {
                 let mesh = meshes[0];
                 if (mesh instanceof BABYLON.Mesh) {
                     this.lookup.set(name, mesh);
                     mesh.isVisible = false;
                     callback(mesh.createInstance(mesh.name + "-instance"));
+                    if (mesh.material instanceof BABYLON.StandardMaterial) {
+                        if (mesh.material.name.endsWith("metro")) {
+                            console.log("Texture loading for " + mesh.material.name);
+                            mesh.material.diffuseTexture = new BABYLON.Texture("./datas/metro.png", this.scene);
+                            mesh.material.diffuseColor.copyFromFloats(1, 1, 1);
+                            mesh.material.specularColor.copyFromFloats(0.6, 0.6, 0.6);
+                        }
+                    }
                     if (mesh.material && mesh.material instanceof BABYLON.MultiMaterial) {
                         mesh.material.subMaterials.forEach((m) => {
                             if (m instanceof BABYLON.StandardMaterial) {
@@ -2193,7 +2204,7 @@ class SectionLevel {
             }
             return;
         }
-        MeshLoader.instance.get(this.name, (mesh) => {
+        MeshLoader.instance.get("SectionLevels/" + this.name, (mesh) => {
             if (!mesh) {
                 console.warn("Could not instance " + this.name);
             }

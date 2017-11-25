@@ -18,7 +18,7 @@ class MeshLoader {
         } else {
             BABYLON.SceneLoader.ImportMesh(
                 "",
-                "./datas/SectionLevels/" + name + ".babylon",
+                "./datas/" + name + ".babylon",
                 "",
                 this.scene,
                 (meshes, particleSystems, skeletons) => {
@@ -27,6 +27,15 @@ class MeshLoader {
                         this.lookup.set(name, mesh);
                         mesh.isVisible = false;
                         callback(mesh.createInstance(mesh.name + "-instance"));
+                        if (mesh.material instanceof BABYLON.StandardMaterial) {
+                            if (mesh.material.name.endsWith("metro")) {
+                                console.log("Texture loading for " + mesh.material.name);
+                                mesh.material.diffuseTexture = new BABYLON.Texture("./datas/metro.png", this.scene);
+                                mesh.material.diffuseColor.copyFromFloats(1, 1, 1);
+
+                                mesh.material.specularColor.copyFromFloats(0.6, 0.6, 0.6);
+                            }
+                        }
                         if (mesh.material && mesh.material instanceof BABYLON.MultiMaterial) {
                             mesh.material.subMaterials.forEach(
                                 (m: BABYLON.Material) => {

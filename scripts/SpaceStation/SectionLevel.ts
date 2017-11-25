@@ -57,7 +57,7 @@ class SectionLevel {
             return;
         }
         MeshLoader.instance.get(
-            this.name,
+            "SectionLevels/" + this.name,
             (mesh) => {
                 if (!mesh) {
                     console.warn("Could not instance " + this.name);
