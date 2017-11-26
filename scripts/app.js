@@ -316,6 +316,54 @@ class Main {
         Main._tmpWingMan.position.copyFromFloats(0, 0, 30);
         Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
+    static LogPath() {
+        BABYLON.SceneLoader.ImportMesh("", "./work/babylon/metro-line-2.babylon", "", Main.Scene, (meshes) => {
+            let positionsPool = [];
+            let positions = [];
+            meshes.forEach((m) => {
+                if (m.name === "001") {
+                    positions[0] = m.position;
+                }
+                else if (m.name === "002") {
+                    positions[1] = m.position;
+                }
+                if (m instanceof BABYLON.Mesh) {
+                    m.instances.forEach((inst) => {
+                        if (inst.name === "001") {
+                            positions[0] = inst.position;
+                        }
+                        else if (inst.name === "002") {
+                            positions[1] = inst.position;
+                        }
+                    });
+                }
+            });
+            meshes.forEach((m) => {
+                positionsPool.push(m.position);
+                if (m instanceof BABYLON.Mesh) {
+                    m.instances.forEach((inst) => {
+                        positionsPool.push(inst.position);
+                    });
+                }
+            });
+            console.log("Path Length = " + positionsPool.length);
+            positionsPool.splice(positionsPool.indexOf(positions[0]), 1);
+            positionsPool.splice(positionsPool.indexOf(positions[1]), 1);
+            while (positionsPool.length > 0) {
+                let last = positions[positions.length - 1];
+                positionsPool.sort((a, b) => {
+                    return BABYLON.Vector3.DistanceSquared(a, last) - BABYLON.Vector3.DistanceSquared(b, last);
+                });
+                positions.push(positionsPool[0]);
+                positionsPool.splice(0, 1);
+            }
+            let out = "";
+            positions.forEach((p) => {
+                out += "new BABYLON.Vector3(" + p.x + ", " + p.y + ", " + p.z + "),\n";
+            });
+            console.log(out);
+        });
+    }
 }
 Main._state = State.Menu;
 Main.playStart = 0;
@@ -339,9 +387,6 @@ window.addEventListener("DOMContentLoaded", () => {
             let playerControl = new PlayerControler(playerCamera);
             playerControl.attachControl(Main.Canvas);
             let stationLoadManager = new StationLoadManager(playerCharacter);
-            MeshLoader.instance.get("metro", (m) => {
-                m.position.y = 200;
-            });
         });
     });
     /*
@@ -374,6 +419,19 @@ class SpaceMath {
             angle = -angle;
         }
         return angle;
+    }
+    static CatmullRomPath(path) {
+        let interpolatedPoints = [];
+        for (let i = 0; i < path.length; i++) {
+            let p0 = path[(i - 1 + path.length) % path.length];
+            let p1 = path[i];
+            let p2 = path[(i + 1) % path.length];
+            let p3 = path[(i + 2) % path.length];
+            interpolatedPoints.push(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, 0.5));
+        }
+        for (let i = 0; i < interpolatedPoints.length; i++) {
+            path.splice(2 * i + 1, 0, interpolatedPoints[i]);
+        }
     }
 }
 class Obstacle {
@@ -856,8 +914,8 @@ class PlayerControler {
         this._left = false;
         this._checkInputs = () => {
             if (this._forward && !this._backward) {
-                this.character.positionAdd(this.character.localForward.scale(0.1));
-                this.character.instance.updateAnimation(1.5);
+                this.character.positionAdd(this.character.localForward.scale(0.3));
+                this.character.instance.updateAnimation(2.5);
             }
             else {
                 this.character.instance.updateAnimation(0);
@@ -1644,6 +1702,87 @@ class TrailMaterial extends BABYLON.ShaderMaterial {
         this.setColor4("diffuseColor2", this._diffuseColor2);
     }
 }
+class Metro {
+    constructor(line) {
+        this.position = 0;
+        this._timer = 0;
+        this.timeStop = 300;
+        this.timeTravel = 600;
+        this.lengthStep = 4;
+        this.easing = new BABYLON.CubicEase();
+        this.debugRoll = () => {
+            this._timer++;
+            let steps = Math.floor(this._timer / this.timeStep);
+            let delta = this._timer - steps * this.timeStep;
+            let deltaPosition = Math.max(0, Math.min(1, (delta - this.timeStop / 2) / this.timeTravel));
+            deltaPosition = this.easing.ease(deltaPosition);
+            this.position = this.lengthStep * (steps + deltaPosition);
+            if (this.position > this.line.path.length) {
+                this._timer = 0;
+                this.position = 0;
+            }
+        };
+        this.line = line;
+        this.easing = new BABYLON.CubicEase();
+        this.easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+    }
+    get timeStep() {
+        return this.timeStop + this.timeTravel;
+    }
+    instantiate() {
+        MeshLoader.instance.get("metro", (m) => {
+            this.instance = m;
+            this.instance.rotationQuaternion = BABYLON.Quaternion.Identity();
+            this.instance.getScene().registerBeforeRender(() => {
+                this.debugRoll();
+                this.updatePosition();
+            });
+        });
+    }
+    updatePosition() {
+        if (this.instance) {
+            console.log(this.position);
+            this.line.evaluatePositionToRef(this.position, this.instance.position);
+            let up = this.instance.position.clone().normalize();
+            let forward = this.line.evaluateDirection(this.position).scale(-1);
+            BABYLON.Quaternion.RotationQuaternionFromAxisToRef(BABYLON.Vector3.Cross(up, forward), up, forward, this.instance.rotationQuaternion);
+        }
+    }
+}
+class MetroLine {
+    constructor() {
+        this.path = [];
+    }
+    load(data) {
+        this.name = data.name;
+        this.index = data.index;
+        this.path = data.path;
+    }
+    evaluatePosition(t) {
+        let v = BABYLON.Vector3.Zero();
+        this.evaluatePositionToRef(t, v);
+        return v;
+    }
+    evaluatePositionToRef(t, v) {
+        let pIndex = (Math.floor(t) + this.path.length) % this.path.length;
+        let delta = t - pIndex;
+        let p0 = this.path[(pIndex - 1 + this.path.length) % this.path.length];
+        let p1 = this.path[pIndex];
+        let p2 = this.path[(pIndex + 1) % this.path.length];
+        let p3 = this.path[(pIndex + 2) % this.path.length];
+        v.copyFrom(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, delta));
+    }
+    evaluateDirection(t) {
+        let v = BABYLON.Vector3.Zero();
+        this.evaluateDirectionToRef(t, v);
+        return v;
+    }
+    evaluateDirectionToRef(t, v) {
+        this.evaluatePositionToRef(t + 0.1, v);
+        v.subtractInPlace(this.evaluatePosition(t - 0.1));
+        v.normalize();
+    }
+}
 class SpaceShip extends BABYLON.Mesh {
     constructor(name, scene) {
         super(name, scene);
@@ -2242,6 +2381,7 @@ class Station {
     constructor() {
         this.name = "NewStation";
         this.sections = [];
+        this.lines = [];
     }
     load(data, callback) {
         this.name = data.name;
@@ -2250,6 +2390,13 @@ class Station {
             let section = new StationSection(this);
             section.load(data.sections[i]);
             this.sections[i] = section;
+        }
+        for (let i = 0; i < data.lines.length; i++) {
+            let line = new MetroLine();
+            line.load(data.lines[i]);
+            this.lines[i] = line;
+            let metro1 = new Metro(line);
+            metro1.instantiate();
         }
     }
     instantiate(scene, callback) {
@@ -2268,6 +2415,11 @@ class EasyGUID {
     }
 }
 EasyGUID._current = 0;
+class MetroLineData {
+    constructor() {
+        this.path = [];
+    }
+}
 class LevelData {
 }
 class SectionData {
@@ -2278,6 +2430,7 @@ class SectionData {
 class StationData {
     constructor() {
         this.sections = [];
+        this.lines = [];
     }
 }
 class Test {
@@ -2294,6 +2447,264 @@ class Test {
         let data = new StationData();
         data.name = "TestTwo";
         data.index = EasyGUID.GetNewGUID();
+        data.lines[0] = new MetroLineData();
+        data.lines[0].name = "MetroLine-0";
+        data.lines[0].index = EasyGUID.GetNewGUID();
+        data.lines[0].path = [
+            new BABYLON.Vector3(-1.5214, 199.39, -13.066),
+            new BABYLON.Vector3(1.4907, 198.2007, -26.0936),
+            new BABYLON.Vector3(1.5, 195.6295, -41.5823),
+            new BABYLON.Vector3(1.5, 190.2113, -61.8034),
+            new BABYLON.Vector3(1.5, 182.7091, -81.3473),
+            new BABYLON.Vector3(1.5, 173.2051, -100),
+            new BABYLON.Vector3(1.5, 161.8034, -117.5571),
+            new BABYLON.Vector3(1.5, 148.629, -133.8261),
+            new BABYLON.Vector3(1.5, 133.8261, -148.629),
+            new BABYLON.Vector3(1.5, 117.5571, -161.8034),
+            new BABYLON.Vector3(1.5, 100, -173.2051),
+            new BABYLON.Vector3(1.5, 81.3473, -182.7091),
+            new BABYLON.Vector3(1.5, 61.8034, -190.2113),
+            new BABYLON.Vector3(1.5, 41.5823, -195.6295),
+            new BABYLON.Vector3(1.5, 20.9057, -198.9044),
+            new BABYLON.Vector3(1.5, 0, -200),
+            new BABYLON.Vector3(1.5, -20.9057, -198.9044),
+            new BABYLON.Vector3(1.5, -41.5823, -195.6295),
+            new BABYLON.Vector3(1.5, -61.8034, -190.2113),
+            new BABYLON.Vector3(1.5, -81.3474, -182.7091),
+            new BABYLON.Vector3(1.5, -100, -173.2051),
+            new BABYLON.Vector3(1.5, -117.5571, -161.8034),
+            new BABYLON.Vector3(1.5, -133.8261, -148.629),
+            new BABYLON.Vector3(1.5, -148.629, -133.8261),
+            new BABYLON.Vector3(1.5, -161.8034, -117.5571),
+            new BABYLON.Vector3(1.5, -173.2051, -100),
+            new BABYLON.Vector3(1.5, -182.7091, -81.3473),
+            new BABYLON.Vector3(1.5, -190.2113, -61.8034),
+            new BABYLON.Vector3(1.5, -195.6295, -41.5823),
+            new BABYLON.Vector3(1.5033, -198.2007, -26.0936),
+            new BABYLON.Vector3(4.2298, -199.2822, -14.1952),
+            new BABYLON.Vector3(14.1952, -199.2822, -4.2298),
+            new BABYLON.Vector3(26.0936, -198.2007, -1.5033),
+            new BABYLON.Vector3(41.5823, -195.6295, -1.5),
+            new BABYLON.Vector3(61.8034, -190.2113, -1.5),
+            new BABYLON.Vector3(81.3473, -182.709, -1.5),
+            new BABYLON.Vector3(100, -173.205, -1.5),
+            new BABYLON.Vector3(117.5571, -161.8033, -1.5),
+            new BABYLON.Vector3(133.8261, -148.6289, -1.5),
+            new BABYLON.Vector3(148.629, -133.8261, -1.5),
+            new BABYLON.Vector3(161.8034, -117.557, -1.5),
+            new BABYLON.Vector3(173.2051, -100, -1.5),
+            new BABYLON.Vector3(182.7091, -81.3473, -1.5),
+            new BABYLON.Vector3(190.2113, -61.8034, -1.5),
+            new BABYLON.Vector3(195.6295, -41.5823, -1.5),
+            new BABYLON.Vector3(198.9044, -20.9057, -1.5),
+            new BABYLON.Vector3(200, 0, -1.5),
+            new BABYLON.Vector3(198.9044, 20.9057, -1.5),
+            new BABYLON.Vector3(195.6295, 41.5823, -1.5),
+            new BABYLON.Vector3(190.2113, 61.8034, -1.5),
+            new BABYLON.Vector3(182.7091, 81.3473, -1.5),
+            new BABYLON.Vector3(173.2051, 100, -1.5),
+            new BABYLON.Vector3(161.8034, 117.557, -1.5),
+            new BABYLON.Vector3(148.629, 133.8261, -1.5),
+            new BABYLON.Vector3(133.8261, 148.6289, -1.5),
+            new BABYLON.Vector3(117.5571, 161.8034, -1.5),
+            new BABYLON.Vector3(100, 173.205, -1.5),
+            new BABYLON.Vector3(81.3473, 182.7091, -1.5),
+            new BABYLON.Vector3(61.8034, 190.2113, -1.5),
+            new BABYLON.Vector3(41.5823, 195.6295, -1.5),
+            new BABYLON.Vector3(26.0936, 198.2007, -1.5),
+            new BABYLON.Vector3(13.066, 199.39, 1.5214),
+            new BABYLON.Vector3(1.5213, 199.39, 13.066),
+            new BABYLON.Vector3(-1.4907, 198.2007, 26.0936),
+            new BABYLON.Vector3(-1.5, 195.6295, 41.5823),
+            new BABYLON.Vector3(-1.5, 190.2113, 61.8034),
+            new BABYLON.Vector3(-1.5, 182.7091, 81.3473),
+            new BABYLON.Vector3(-1.5, 173.2051, 100),
+            new BABYLON.Vector3(-1.5, 161.8034, 117.5571),
+            new BABYLON.Vector3(-1.5, 148.6289, 133.8261),
+            new BABYLON.Vector3(-1.5, 133.8261, 148.629),
+            new BABYLON.Vector3(-1.5, 117.557, 161.8034),
+            new BABYLON.Vector3(-1.5, 100, 173.2051),
+            new BABYLON.Vector3(-1.5, 81.3473, 182.7091),
+            new BABYLON.Vector3(-1.5, 61.8034, 190.2113),
+            new BABYLON.Vector3(-1.5, 41.5823, 195.6295),
+            new BABYLON.Vector3(-1.5, 20.9057, 198.9044),
+            new BABYLON.Vector3(-1.5, 0, 200),
+            new BABYLON.Vector3(-1.5, -20.9057, 198.9044),
+            new BABYLON.Vector3(-1.5, -41.5823, 195.6295),
+            new BABYLON.Vector3(-1.5, -61.8034, 190.2113),
+            new BABYLON.Vector3(-1.5, -81.3474, 182.7091),
+            new BABYLON.Vector3(-1.5, -100, 173.2051),
+            new BABYLON.Vector3(-1.5, -117.5571, 161.8034),
+            new BABYLON.Vector3(-1.5, -133.8261, 148.629),
+            new BABYLON.Vector3(-1.5, -148.629, 133.8261),
+            new BABYLON.Vector3(-1.5, -161.8034, 117.5571),
+            new BABYLON.Vector3(-1.5, -173.205, 100),
+            new BABYLON.Vector3(-1.5, -182.7091, 81.3473),
+            new BABYLON.Vector3(-1.5, -190.2113, 61.8034),
+            new BABYLON.Vector3(-1.5, -195.6295, 41.5823),
+            new BABYLON.Vector3(-1.5033, -198.2007, 26.0936),
+            new BABYLON.Vector3(-4.2298, -199.2822, 14.1952),
+            new BABYLON.Vector3(-14.1952, -199.2822, 4.2298),
+            new BABYLON.Vector3(-26.0936, -198.2007, 1.5033),
+            new BABYLON.Vector3(-41.5823, -195.6295, 1.5),
+            new BABYLON.Vector3(-61.8034, -190.2113, 1.5),
+            new BABYLON.Vector3(-81.3473, -182.7091, 1.5),
+            new BABYLON.Vector3(-100, -173.2051, 1.5),
+            new BABYLON.Vector3(-117.5571, -161.8034, 1.5),
+            new BABYLON.Vector3(-133.8261, -148.629, 1.5),
+            new BABYLON.Vector3(-148.629, -133.8261, 1.5),
+            new BABYLON.Vector3(-161.8034, -117.5571, 1.5),
+            new BABYLON.Vector3(-173.2051, -100, 1.5),
+            new BABYLON.Vector3(-182.7091, -81.3474, 1.5),
+            new BABYLON.Vector3(-190.2113, -61.8034, 1.5),
+            new BABYLON.Vector3(-195.6295, -41.5823, 1.5),
+            new BABYLON.Vector3(-198.9044, -20.9057, 1.5),
+            new BABYLON.Vector3(-200, 0, 1.5),
+            new BABYLON.Vector3(-198.9044, 20.9057, 1.5),
+            new BABYLON.Vector3(-195.6295, 41.5823, 1.5),
+            new BABYLON.Vector3(-190.2113, 61.8034, 1.5),
+            new BABYLON.Vector3(-182.7091, 81.3473, 1.5),
+            new BABYLON.Vector3(-173.2051, 100, 1.5),
+            new BABYLON.Vector3(-161.8034, 117.557, 1.5),
+            new BABYLON.Vector3(-148.629, 133.8261, 1.5),
+            new BABYLON.Vector3(-133.8261, 148.629, 1.5),
+            new BABYLON.Vector3(-117.5571, 161.8034, 1.5),
+            new BABYLON.Vector3(-100, 173.2051, 1.5),
+            new BABYLON.Vector3(-81.3473, 182.7091, 1.5),
+            new BABYLON.Vector3(-61.8034, 190.2113, 1.5),
+            new BABYLON.Vector3(-41.5823, 195.6295, 1.5),
+            new BABYLON.Vector3(-26.0936, 198.2007, 1.5),
+            new BABYLON.Vector3(-13.066, 199.39, -1.5214)
+        ];
+        data.lines[1] = new MetroLineData();
+        data.lines[1].name = "MetroLine-1";
+        data.lines[1].index = EasyGUID.GetNewGUID();
+        data.lines[1].path = [
+            new BABYLON.Vector3(-4.2298, 199.2822, -14.1952),
+            new BABYLON.Vector3(-14.1952, 199.2822, -4.2298),
+            new BABYLON.Vector3(-26.0936, 198.2007, -1.5033),
+            new BABYLON.Vector3(-41.5823, 195.6295, -1.5),
+            new BABYLON.Vector3(-61.8034, 190.2113, -1.5),
+            new BABYLON.Vector3(-81.3473, 182.7091, -1.5),
+            new BABYLON.Vector3(-100, 173.2051, -1.5),
+            new BABYLON.Vector3(-117.5571, 161.8034, -1.5),
+            new BABYLON.Vector3(-133.8261, 148.629, -1.5),
+            new BABYLON.Vector3(-148.629, 133.8261, -1.5),
+            new BABYLON.Vector3(-161.8034, 117.557, -1.5),
+            new BABYLON.Vector3(-173.2051, 100, -1.5),
+            new BABYLON.Vector3(-182.7091, 81.3473, -1.5),
+            new BABYLON.Vector3(-190.2113, 61.8034, -1.5),
+            new BABYLON.Vector3(-195.6295, 41.5823, -1.5),
+            new BABYLON.Vector3(-198.9044, 20.9057, -1.5),
+            new BABYLON.Vector3(-200, 0, -1.5),
+            new BABYLON.Vector3(-198.9044, -20.9057, -1.5),
+            new BABYLON.Vector3(-195.6295, -41.5823, -1.5),
+            new BABYLON.Vector3(-190.2113, -61.8034, -1.5),
+            new BABYLON.Vector3(-182.7091, -81.3474, -1.5),
+            new BABYLON.Vector3(-173.2051, -100, -1.5),
+            new BABYLON.Vector3(-161.8034, -117.5571, -1.5),
+            new BABYLON.Vector3(-148.629, -133.8261, -1.5),
+            new BABYLON.Vector3(-133.8261, -148.629, -1.5),
+            new BABYLON.Vector3(-117.5571, -161.8034, -1.5),
+            new BABYLON.Vector3(-100, -173.2051, -1.5),
+            new BABYLON.Vector3(-81.3473, -182.7091, -1.5),
+            new BABYLON.Vector3(-61.8034, -190.2113, -1.5),
+            new BABYLON.Vector3(-41.5823, -195.6295, -1.5),
+            new BABYLON.Vector3(-26.0936, -198.2007, -1.5),
+            new BABYLON.Vector3(-13.066, -199.39, 1.5214),
+            new BABYLON.Vector3(-1.5214, -199.39, 13.066),
+            new BABYLON.Vector3(1.4907, -198.2007, 26.0936),
+            new BABYLON.Vector3(1.5, -195.6295, 41.5823),
+            new BABYLON.Vector3(1.5, -190.2113, 61.8034),
+            new BABYLON.Vector3(1.5, -182.7091, 81.3473),
+            new BABYLON.Vector3(1.5, -173.205, 100),
+            new BABYLON.Vector3(1.5, -161.8034, 117.5571),
+            new BABYLON.Vector3(1.5, -148.629, 133.8261),
+            new BABYLON.Vector3(1.5, -133.8261, 148.629),
+            new BABYLON.Vector3(1.5, -117.5571, 161.8034),
+            new BABYLON.Vector3(1.5, -100, 173.2051),
+            new BABYLON.Vector3(1.5, -81.3474, 182.7091),
+            new BABYLON.Vector3(1.5, -61.8034, 190.2113),
+            new BABYLON.Vector3(1.5, -41.5823, 195.6295),
+            new BABYLON.Vector3(1.5, -20.9057, 198.9044),
+            new BABYLON.Vector3(1.5, 0, 200),
+            new BABYLON.Vector3(1.5, 20.9057, 198.9044),
+            new BABYLON.Vector3(1.5, 41.5823, 195.6295),
+            new BABYLON.Vector3(1.5, 61.8034, 190.2113),
+            new BABYLON.Vector3(1.5, 81.3473, 182.7091),
+            new BABYLON.Vector3(1.5, 100, 173.2051),
+            new BABYLON.Vector3(1.5, 117.557, 161.8034),
+            new BABYLON.Vector3(1.5, 133.8261, 148.629),
+            new BABYLON.Vector3(1.5, 148.6289, 133.8261),
+            new BABYLON.Vector3(1.5, 161.8034, 117.5571),
+            new BABYLON.Vector3(1.5, 173.2051, 100),
+            new BABYLON.Vector3(1.5, 182.7091, 81.3473),
+            new BABYLON.Vector3(1.5, 190.2113, 61.8034),
+            new BABYLON.Vector3(1.5, 195.6295, 41.5823),
+            new BABYLON.Vector3(1.5033, 198.2007, 26.0936),
+            new BABYLON.Vector3(4.2298, 199.2822, 14.1952),
+            new BABYLON.Vector3(14.1952, 199.2822, 4.2298),
+            new BABYLON.Vector3(26.0936, 198.2007, 1.5033),
+            new BABYLON.Vector3(41.5823, 195.6295, 1.5),
+            new BABYLON.Vector3(61.8034, 190.2113, 1.5),
+            new BABYLON.Vector3(81.3473, 182.7091, 1.5),
+            new BABYLON.Vector3(100, 173.205, 1.5),
+            new BABYLON.Vector3(117.5571, 161.8034, 1.5),
+            new BABYLON.Vector3(133.8261, 148.6289, 1.5),
+            new BABYLON.Vector3(148.629, 133.8261, 1.5),
+            new BABYLON.Vector3(161.8034, 117.557, 1.5),
+            new BABYLON.Vector3(173.2051, 100, 1.5),
+            new BABYLON.Vector3(182.7091, 81.3473, 1.5),
+            new BABYLON.Vector3(190.2113, 61.8034, 1.5),
+            new BABYLON.Vector3(195.6295, 41.5823, 1.5),
+            new BABYLON.Vector3(198.9044, 20.9057, 1.5),
+            new BABYLON.Vector3(200, 0, 1.5),
+            new BABYLON.Vector3(198.9044, -20.9057, 1.5),
+            new BABYLON.Vector3(195.6295, -41.5823, 1.5),
+            new BABYLON.Vector3(190.2113, -61.8034, 1.5),
+            new BABYLON.Vector3(182.7091, -81.3473, 1.5),
+            new BABYLON.Vector3(173.2051, -100, 1.5),
+            new BABYLON.Vector3(161.8034, -117.557, 1.5),
+            new BABYLON.Vector3(148.629, -133.8261, 1.5),
+            new BABYLON.Vector3(133.8261, -148.6289, 1.5),
+            new BABYLON.Vector3(117.5571, -161.8033, 1.5),
+            new BABYLON.Vector3(100, -173.205, 1.5),
+            new BABYLON.Vector3(81.3473, -182.709, 1.5),
+            new BABYLON.Vector3(61.8034, -190.2113, 1.5),
+            new BABYLON.Vector3(41.5823, -195.6295, 1.5),
+            new BABYLON.Vector3(26.0936, -198.2007, 1.5),
+            new BABYLON.Vector3(13.066, -199.39, -1.5213),
+            new BABYLON.Vector3(1.5213, -199.39, -13.066),
+            new BABYLON.Vector3(-1.4907, -198.2007, -26.0936),
+            new BABYLON.Vector3(-1.5, -195.6295, -41.5823),
+            new BABYLON.Vector3(-1.5, -190.2113, -61.8034),
+            new BABYLON.Vector3(-1.5, -182.7091, -81.3473),
+            new BABYLON.Vector3(-1.5, -173.2051, -100),
+            new BABYLON.Vector3(-1.5, -161.8034, -117.5571),
+            new BABYLON.Vector3(-1.5, -148.629, -133.8261),
+            new BABYLON.Vector3(-1.5, -133.8261, -148.629),
+            new BABYLON.Vector3(-1.5, -117.5571, -161.8034),
+            new BABYLON.Vector3(-1.5, -100, -173.2051),
+            new BABYLON.Vector3(-1.5, -81.3474, -182.7091),
+            new BABYLON.Vector3(-1.5, -61.8034, -190.2113),
+            new BABYLON.Vector3(-1.5, -41.5823, -195.6295),
+            new BABYLON.Vector3(-1.5, -20.9057, -198.9044),
+            new BABYLON.Vector3(-1.5, 0, -200),
+            new BABYLON.Vector3(-1.5, 20.9057, -198.9044),
+            new BABYLON.Vector3(-1.5, 41.5823, -195.6295),
+            new BABYLON.Vector3(-1.5, 61.8034, -190.2113),
+            new BABYLON.Vector3(-1.5, 81.3473, -182.7091),
+            new BABYLON.Vector3(-1.5, 100, -173.2051),
+            new BABYLON.Vector3(-1.5, 117.5571, -161.8034),
+            new BABYLON.Vector3(-1.5, 133.8261, -148.629),
+            new BABYLON.Vector3(-1.5, 148.629, -133.8261),
+            new BABYLON.Vector3(-1.5, 161.8034, -117.5571),
+            new BABYLON.Vector3(-1.5, 173.2051, -100),
+            new BABYLON.Vector3(-1.5, 182.7091, -81.3473),
+            new BABYLON.Vector3(-1.5, 190.2113, -61.8034),
+            new BABYLON.Vector3(-1.5, 195.6295, -41.5823),
+            new BABYLON.Vector3(-1.5033, 198.2007, -26.0936)
+        ];
         let rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 12 / 180 * Math.PI);
         let rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 6 / 180 * Math.PI);
         let hubTop = new SectionData();

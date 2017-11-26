@@ -24,8 +24,8 @@ class PlayerControler {
 
     private _checkInputs = () => {
         if (this._forward && !this._backward) {
-            this.character.positionAdd(this.character.localForward.scale(0.1));
-            this.character.instance.updateAnimation(1.5);
+            this.character.positionAdd(this.character.localForward.scale(0.3));
+            this.character.instance.updateAnimation(2.5);
         } else {
             this.character.instance.updateAnimation(0);
         }

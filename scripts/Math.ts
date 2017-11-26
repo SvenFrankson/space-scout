@@ -25,4 +25,18 @@ class SpaceMath {
     }
     return angle;
   }
+
+  public static CatmullRomPath(path: BABYLON.Vector3[]): void {
+    let interpolatedPoints: BABYLON.Vector3[] = [];
+    for (let i: number = 0; i < path.length; i++) {
+      let p0 = path[(i - 1 + path.length) % path.length];
+      let p1 = path[i];
+      let p2 = path[(i + 1) % path.length];
+      let p3 = path[(i + 2) % path.length];
+      interpolatedPoints.push(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, 0.5));
+    }
+    for (let i: number = 0; i < interpolatedPoints.length; i++) {
+      path.splice(2 * i + 1, 0, interpolatedPoints[i]);
+    }
+  }
 }

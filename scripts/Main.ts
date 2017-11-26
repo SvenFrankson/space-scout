@@ -185,7 +185,75 @@ class Main {
 		Main._tmpWingMan.position.copyFromFloats(0, 0, 30);
 		Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
 	}
+
+
+	public static LogPath(): void {
+		BABYLON.SceneLoader.ImportMesh(
+			"",
+			"./work/babylon/metro-line-2.babylon",
+			"",
+			Main.Scene,
+			(meshes) => {
+				let positionsPool = [];
+				let positions = [];
+				meshes.forEach(
+					(m) => {
+						if (m.name === "001") {
+							positions[0] = m.position;
+						} else if (m.name === "002") {
+							positions[1] = m.position;
+						}
+						if (m instanceof BABYLON.Mesh) {
+							m.instances.forEach(
+								(inst) => {
+									if (inst.name === "001") {
+										positions[0] = inst.position;
+									} else if (inst.name === "002") {
+										positions[1] = inst.position;
+									}
+								}
+							)
+						}
+					}
+				)
+				meshes.forEach(
+					(m) => {
+						positionsPool.push(m.position);
+						if (m instanceof BABYLON.Mesh) {
+							m.instances.forEach(
+								(inst) => {
+									positionsPool.push(inst.position);
+								}
+							)
+						}
+					}
+				)
+				console.log("Path Length = " + positionsPool.length);
+				positionsPool.splice(positionsPool.indexOf(positions[0]), 1);
+				positionsPool.splice(positionsPool.indexOf(positions[1]), 1);
+
+				while (positionsPool.length > 0) {
+					let last = positions[positions.length - 1];
+					positionsPool.sort(
+						(a, b) => {
+							return BABYLON.Vector3.DistanceSquared(a, last) - BABYLON.Vector3.DistanceSquared(b, last);
+						}
+					)
+					positions.push(positionsPool[0]);
+					positionsPool.splice(0, 1);
+				}
+				let out = "";
+				positions.forEach(
+					(p) => {
+						out += "new BABYLON.Vector3(" + p.x + ", " + p.y + ", " + p.z + "),\n"
+					}
+				)
+				console.log(out);
+			}
+		)
+	}
 }
+
 
 window.addEventListener("DOMContentLoaded", () => {
 	let game: Main = new Main("render-canvas");
@@ -216,9 +284,7 @@ window.addEventListener("DOMContentLoaded", () => {
 				
 					let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);
 
-					MeshLoader.instance.get("metro", (m) => {
-						m.position.y = 200;
-					})
+					
 				}
 			);
 		}

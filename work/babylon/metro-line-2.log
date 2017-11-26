@@ -1,0 +1,267 @@
+Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  true
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\work\babylon\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Cube.248
+		WARNING: No materials have been assigned: 
+		num positions      :  8
+		num normals        :  8
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  36
+	processing begun of mesh:  Cube.247
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.244
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.243
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.240
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.239
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.236
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.235
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.232
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.231
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.228
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.227
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.224
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.223
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.220
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.219
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.216
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.215
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.212
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.211
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.208
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.207
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.204
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.203
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.201
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.198
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.197
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.195
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.192
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.191
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.189
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.186
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.185
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.182
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.181
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.178
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.177
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.174
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.173
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.170
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.169
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.166
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.165
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.162
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.161
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.158
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.157
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.154
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.153
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.150
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.149
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.146
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.145
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.142
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.140
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.139
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.136
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.135
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.132
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.131
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.128
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.127
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.124
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.123
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.120
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.119
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.116
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.115
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.112
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.111
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.108
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.107
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.104
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.103
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.100
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.099
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.096
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.095
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.093
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.090
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.089
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.087
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.084
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.083
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.081
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.078
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.077
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.074
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.073
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.070
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.069
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.066
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.065
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.062
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.061
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.058
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.057
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.054
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.053
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.050
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.049
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.046
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.045
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.042
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.041
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.038
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.037
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.034
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.033
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.023
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.022
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.011
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.008
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.005
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.004
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.002
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.030
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.027
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.026
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.024
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.019
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  002
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  Cube.016
+		mesh is an instance of :  Cube.248.  Processing halted.
+	processing begun of mesh:  001
+		mesh is an instance of :  Cube.248.  Processing halted.
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.0926 secs
