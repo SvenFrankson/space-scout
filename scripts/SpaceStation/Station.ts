@@ -22,7 +22,11 @@ class Station {
             let line: MetroLine = new MetroLine();
             line.load(data.lines[i]);
             this.lines[i] = line;
-            let metro1 = new Metro(line);
+            let t0 = 0;
+            if (i === 0) {
+                t0 = 450;
+            }
+            let metro1 = new Metro(line, t0);
             metro1.instantiate();
         }
     }

@@ -2,8 +2,8 @@ class Metro {
 
     public position: number = 0;
     private _timer: number = 0;
-    public timeStop: number = 300;
-    public timeTravel: number = 600;
+    public timeStop: number = 30;
+    public timeTravel: number = 60;
     public get timeStep(): number {
         return this.timeStop + this.timeTravel;
     }
@@ -11,8 +11,9 @@ class Metro {
     public line: MetroLine;
     public instance: BABYLON.InstancedMesh;
 
-    constructor(line: MetroLine) {
+    constructor(line: MetroLine, timerZero: number = 0) {
         this.line = line;
+        this._timer = timerZero;
         this.easing = new BABYLON.CubicEase();
         this.easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
     }
@@ -42,7 +43,7 @@ class Metro {
         let deltaPosition = Math.max(0, Math.min(1, (delta - this.timeStop / 2) / this.timeTravel));
         deltaPosition = this.easing.ease(deltaPosition);
         this.position = this.lengthStep * (steps + deltaPosition);
-        if (this.position > this.line.path.length) {
+        if (this.position >= this.line.path.length) {
             this._timer = 0;
             this.position = 0;
         }
@@ -50,7 +51,6 @@ class Metro {
 
     public updatePosition(): void {
         if (this.instance) {
-            console.log(this.position);
             this.line.evaluatePositionToRef(this.position, this.instance.position);
             let up = this.instance.position.clone().normalize();
             let forward = this.line.evaluateDirection(this.position).scale(-1);

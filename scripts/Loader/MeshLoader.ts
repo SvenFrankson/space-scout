@@ -32,6 +32,8 @@ class MeshLoader {
                                 console.log("Texture loading for " + mesh.material.name);
                                 mesh.material.diffuseTexture = new BABYLON.Texture("./datas/metro.png", this.scene);
                                 mesh.material.diffuseColor.copyFromFloats(1, 1, 1);
+                                
+                                mesh.material.bumpTexture = new BABYLON.Texture("./datas/metro-normal.png", this.scene);
 
                                 mesh.material.specularColor.copyFromFloats(0.6, 0.6, 0.6);
                             }

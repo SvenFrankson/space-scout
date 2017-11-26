@@ -186,6 +186,7 @@ class Test {
             new BABYLON.Vector3(-13.066, 199.39, -1.5214)
         ];
 
+        /*
         data.lines[1] = new MetroLineData();
         data.lines[1].name = "MetroLine-1"
         data.lines[1].index = EasyGUID.GetNewGUID();
@@ -315,6 +316,7 @@ class Test {
             new BABYLON.Vector3(-1.5, 195.6295, -41.5823),
             new BABYLON.Vector3(-1.5033, 198.2007, -26.0936)
         ]
+        */
         
         let rotationMatrixZero: BABYLON.Matrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 12 / 180 * Math.PI);
         let rotationMatrix: BABYLON.Matrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 6 / 180 * Math.PI);

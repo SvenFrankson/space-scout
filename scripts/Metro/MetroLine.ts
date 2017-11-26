@@ -17,11 +17,14 @@ class MetroLine {
     }
 
     public evaluatePositionToRef(t: number, v: BABYLON.Vector3): void {
-        
-        let pIndex = (Math.floor(t) + this.path.length) % this.path.length;
+        if (t < 0) {
+            t += this.path.length;
+        }
+        let pIndex = Math.floor(t);
+        console.log(pIndex);
         let delta = t - pIndex;
         let p0 = this.path[(pIndex - 1 + this.path.length) % this.path.length];
-        let p1 = this.path[pIndex];
+        let p1 = this.path[pIndex % this.path.length];
         let p2 = this.path[(pIndex + 1) % this.path.length];
         let p3 = this.path[(pIndex + 2) % this.path.length];
         v.copyFrom(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, delta));

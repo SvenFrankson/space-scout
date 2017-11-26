@@ -1531,6 +1531,7 @@ class MeshLoader {
                             console.log("Texture loading for " + mesh.material.name);
                             mesh.material.diffuseTexture = new BABYLON.Texture("./datas/metro.png", this.scene);
                             mesh.material.diffuseColor.copyFromFloats(1, 1, 1);
+                            mesh.material.bumpTexture = new BABYLON.Texture("./datas/metro-normal.png", this.scene);
                             mesh.material.specularColor.copyFromFloats(0.6, 0.6, 0.6);
                         }
                     }
@@ -1703,11 +1704,11 @@ class TrailMaterial extends BABYLON.ShaderMaterial {
     }
 }
 class Metro {
-    constructor(line) {
+    constructor(line, timerZero = 0) {
         this.position = 0;
         this._timer = 0;
-        this.timeStop = 300;
-        this.timeTravel = 600;
+        this.timeStop = 30;
+        this.timeTravel = 60;
         this.lengthStep = 4;
         this.easing = new BABYLON.CubicEase();
         this.debugRoll = () => {
@@ -1717,12 +1718,13 @@ class Metro {
             let deltaPosition = Math.max(0, Math.min(1, (delta - this.timeStop / 2) / this.timeTravel));
             deltaPosition = this.easing.ease(deltaPosition);
             this.position = this.lengthStep * (steps + deltaPosition);
-            if (this.position > this.line.path.length) {
+            if (this.position >= this.line.path.length) {
                 this._timer = 0;
                 this.position = 0;
             }
         };
         this.line = line;
+        this._timer = timerZero;
         this.easing = new BABYLON.CubicEase();
         this.easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
     }
@@ -1741,7 +1743,6 @@ class Metro {
     }
     updatePosition() {
         if (this.instance) {
-            console.log(this.position);
             this.line.evaluatePositionToRef(this.position, this.instance.position);
             let up = this.instance.position.clone().normalize();
             let forward = this.line.evaluateDirection(this.position).scale(-1);
@@ -1764,10 +1765,14 @@ class MetroLine {
         return v;
     }
     evaluatePositionToRef(t, v) {
-        let pIndex = (Math.floor(t) + this.path.length) % this.path.length;
+        if (t < 0) {
+            t += this.path.length;
+        }
+        let pIndex = Math.floor(t);
+        console.log(pIndex);
         let delta = t - pIndex;
         let p0 = this.path[(pIndex - 1 + this.path.length) % this.path.length];
-        let p1 = this.path[pIndex];
+        let p1 = this.path[pIndex % this.path.length];
         let p2 = this.path[(pIndex + 1) % this.path.length];
         let p3 = this.path[(pIndex + 2) % this.path.length];
         v.copyFrom(BABYLON.Vector3.CatmullRom(p0, p1, p2, p3, delta));
@@ -2395,7 +2400,11 @@ class Station {
             let line = new MetroLine();
             line.load(data.lines[i]);
             this.lines[i] = line;
-            let metro1 = new Metro(line);
+            let t0 = 0;
+            if (i === 0) {
+                t0 = 450;
+            }
+            let metro1 = new Metro(line, t0);
             metro1.instantiate();
         }
     }
@@ -2576,8 +2585,9 @@ class Test {
             new BABYLON.Vector3(-26.0936, 198.2007, 1.5),
             new BABYLON.Vector3(-13.066, 199.39, -1.5214)
         ];
+        /*
         data.lines[1] = new MetroLineData();
-        data.lines[1].name = "MetroLine-1";
+        data.lines[1].name = "MetroLine-1"
         data.lines[1].index = EasyGUID.GetNewGUID();
         data.lines[1].path = [
             new BABYLON.Vector3(-4.2298, 199.2822, -14.1952),
@@ -2704,7 +2714,8 @@ class Test {
             new BABYLON.Vector3(-1.5, 190.2113, -61.8034),
             new BABYLON.Vector3(-1.5, 195.6295, -41.5823),
             new BABYLON.Vector3(-1.5033, 198.2007, -26.0936)
-        ];
+        ]
+        */
         let rotationMatrixZero = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 12 / 180 * Math.PI);
         let rotationMatrix = BABYLON.Matrix.RotationAxis(BABYLON.Axis.X, 6 / 180 * Math.PI);
         let hubTop = new SectionData();
