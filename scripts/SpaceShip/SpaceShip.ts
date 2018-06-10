@@ -85,6 +85,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public controler: SpaceShipControler;
 	private _colliders: Array<BABYLON.BoundingSphere> = [];
 	public shield: Shield;
+	public impactParticle: BABYLON.ParticleSystem;
 	public wingTipRight: BABYLON.Mesh;
 	public wingTipLeft: BABYLON.Mesh;
 	public focalPlane: BABYLON.Mesh;
@@ -117,8 +118,21 @@ class SpaceShip extends BABYLON.Mesh {
 		this._rX = BABYLON.Quaternion.Identity();
 		this._rY = BABYLON.Quaternion.Identity();
 		this._rZ = BABYLON.Quaternion.Identity();
+
 		this.shield = new Shield(this);
 		this.shield.initialize();
+		this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
+		this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
+		this.impactParticle.emitter = this;
+		this.impactParticle.direction1.copyFromFloats(50, 50, 50);
+		this.impactParticle.direction2.copyFromFloats(-50, -50, -50);
+		this.impactParticle.emitRate = 800;
+		this.impactParticle.minLifeTime = 0.02;
+		this.impactParticle.maxLifeTime = 0.05;
+		this.impactParticle.manualEmitCount = 100;
+		this.impactParticle.minSize = 0.05;
+		this.impactParticle.maxSize = 0.3;
+
 		this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
 		this.wingTipLeft.parent = this;
 		this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
@@ -307,7 +321,13 @@ class SpaceShip extends BABYLON.Mesh {
 	public onWoundObservable: BABYLON.Observable<Projectile> = new BABYLON.Observable<Projectile>();
 	public wound(projectile: Projectile): void {
 		this.hitPoint -= projectile.power;
+		
+		this.impactParticle.emitter = projectile.position.clone();
+		this.impactParticle.manualEmitCount = 100;
+		this.impactParticle.start();
+
 		this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
+
 		this.onWoundObservable.notifyObservers(projectile);
 		if (this.hitPoint <= 0) {
 			this.hitPoint = 0;

@@ -1907,7 +1907,7 @@ class MetroLine {
 class Projectile extends BABYLON.Mesh {
     constructor(direction, shooter) {
         super("projectile", shooter.getScene());
-        this.speed = 100;
+        this.speed = 150;
         this._lifeSpan = 5;
         this.power = 10;
         this._update = () => {
@@ -2012,6 +2012,17 @@ class SpaceShip extends BABYLON.Mesh {
         this._rZ = BABYLON.Quaternion.Identity();
         this.shield = new Shield(this);
         this.shield.initialize();
+        this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
+        this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
+        this.impactParticle.emitter = this;
+        this.impactParticle.direction1.copyFromFloats(50, 50, 50);
+        this.impactParticle.direction2.copyFromFloats(-50, -50, -50);
+        this.impactParticle.emitRate = 800;
+        this.impactParticle.minLifeTime = 0.02;
+        this.impactParticle.maxLifeTime = 0.05;
+        this.impactParticle.manualEmitCount = 100;
+        this.impactParticle.minSize = 0.05;
+        this.impactParticle.maxSize = 0.3;
         this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
         this.wingTipLeft.parent = this;
         this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
@@ -2211,6 +2222,9 @@ class SpaceShip extends BABYLON.Mesh {
     }
     wound(projectile) {
         this.hitPoint -= projectile.power;
+        this.impactParticle.emitter = projectile.position.clone();
+        this.impactParticle.manualEmitCount = 100;
+        this.impactParticle.start();
         this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
         this.onWoundObservable.notifyObservers(projectile);
         if (this.hitPoint <= 0) {

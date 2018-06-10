@@ -2,7 +2,7 @@ class Projectile extends BABYLON.Mesh {
 
     private _direction: BABYLON.Vector3;
     public shooter: SpaceShip;
-    public speed: number = 100;
+    public speed: number = 150;
     private _lifeSpan: number = 5;
     public power: number = 10;
     private _displacementRay: BABYLON.Ray;
