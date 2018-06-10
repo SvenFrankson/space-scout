@@ -93,8 +93,11 @@ class SpaceShip extends BABYLON.Mesh {
 	public isAlive: boolean = true;
 	public hitPoint: number;
 	public stamina: number = 50;
-	public cooldown: number = 0.3;
-	public _cool: number = 0;
+
+	public shootPower: number = 1;
+	public shootSpeed: number = 100;
+	public shootCoolDown: number = 0.3;
+	public _shootCool: number = 0;
 
 	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
 		super(data.model, scene);
@@ -109,6 +112,9 @@ class SpaceShip extends BABYLON.Mesh {
 		this._rollDrag = data.rollDrag;
 		this._yawDrag = data.yawDrag;
 		this._pitchDrag = data.pitchDrag;
+		this.shootPower = data.shootPower;
+		this.shootCoolDown = data.shootCooldown;
+		this.shootSpeed = data.shootSpeed;
 
 		this._localX = new BABYLON.Vector3(1, 0, 0);
 		this._localY = new BABYLON.Vector3(0, 1, 0);
@@ -208,8 +214,8 @@ class SpaceShip extends BABYLON.Mesh {
 		BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
 		BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
 
-		this._cool -= this._dt;
-		this._cool = Math.max(0, this._cool);
+		this._shootCool -= this._dt;
+		this._shootCool = Math.max(0, this._shootCool);
 
 		if (!(Main.State === State.Game)) {
 			return;
@@ -304,10 +310,10 @@ class SpaceShip extends BABYLON.Mesh {
 	}
 
 	public shoot(direction: BABYLON.Vector3): void {
-		if (this._cool > 0) {
+		if (this._shootCool > 0) {
 			return;
 		}
-		this._cool = this.cooldown;
+		this._shootCool = this.shootCoolDown;
 		let dir = direction.clone();
 		if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
 			let n = BABYLON.Vector3.Cross(this.localZ, dir);
@@ -320,7 +326,7 @@ class SpaceShip extends BABYLON.Mesh {
 
     public projectileDurationTo(spaceship: SpaceShip): number {
         let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
-        return dist / 150;
+        return dist / this.shootSpeed;
     }
 
 	public onWoundObservable: BABYLON.Observable<Projectile> = new BABYLON.Observable<Projectile>();

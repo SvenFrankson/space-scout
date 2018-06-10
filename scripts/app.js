@@ -1966,7 +1966,7 @@ class Projectile extends BABYLON.Mesh {
     constructor(direction, shooter) {
         super("projectile", shooter.getScene());
         this.speed = 150;
-        this._lifeSpan = 5;
+        this._lifeSpan = 3;
         this.power = 2;
         this._update = () => {
             let dt = this.getEngine().getDeltaTime() / 1000;
@@ -1988,6 +1988,8 @@ class Projectile extends BABYLON.Mesh {
         };
         this._direction = direction;
         this.shooter = shooter;
+        this.speed = this.shooter.shootSpeed;
+        this.power = this.shooter.shootPower;
         this.position.copyFrom(shooter.position);
         this.rotationQuaternion = shooter.rotationQuaternion.clone();
         this._displacementRay = new BABYLON.Ray(this.position, this._direction.clone());
@@ -2047,8 +2049,10 @@ class SpaceShip extends BABYLON.Mesh {
         this._colliders = [];
         this.isAlive = true;
         this.stamina = 50;
-        this.cooldown = 0.3;
-        this._cool = 0;
+        this.shootPower = 1;
+        this.shootSpeed = 100;
+        this.shootCoolDown = 0.3;
+        this._shootCool = 0;
         this.onWoundObservable = new BABYLON.Observable();
         this.stamina = data.stamina;
         this._enginePower = data.enginePower;
@@ -2060,6 +2064,9 @@ class SpaceShip extends BABYLON.Mesh {
         this._rollDrag = data.rollDrag;
         this._yawDrag = data.yawDrag;
         this._pitchDrag = data.pitchDrag;
+        this.shootPower = data.shootPower;
+        this.shootCoolDown = data.shootCooldown;
+        this.shootSpeed = data.shootSpeed;
         this._localX = new BABYLON.Vector3(1, 0, 0);
         this._localY = new BABYLON.Vector3(0, 1, 0);
         this._localZ = new BABYLON.Vector3(0, 0, 1);
@@ -2185,8 +2192,8 @@ class SpaceShip extends BABYLON.Mesh {
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
-        this._cool -= this._dt;
-        this._cool = Math.max(0, this._cool);
+        this._shootCool -= this._dt;
+        this._shootCool = Math.max(0, this._shootCool);
         if (!(Main.State === State.Game)) {
             return;
         }
@@ -2265,10 +2272,10 @@ class SpaceShip extends BABYLON.Mesh {
         }
     }
     shoot(direction) {
-        if (this._cool > 0) {
+        if (this._shootCool > 0) {
             return;
         }
-        this._cool = this.cooldown;
+        this._shootCool = this.shootCoolDown;
         let dir = direction.clone();
         if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
             let n = BABYLON.Vector3.Cross(this.localZ, dir);
@@ -2280,7 +2287,7 @@ class SpaceShip extends BABYLON.Mesh {
     }
     projectileDurationTo(spaceship) {
         let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
-        return dist / 150;
+        return dist / this.shootSpeed;
     }
     wound(projectile) {
         this.hitPoint -= projectile.power;

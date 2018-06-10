@@ -3,7 +3,7 @@ class Projectile extends BABYLON.Mesh {
     private _direction: BABYLON.Vector3;
     public shooter: SpaceShip;
     public speed: number = 150;
-    private _lifeSpan: number = 5;
+    private _lifeSpan: number = 3;
     public power: number = 2;
     private _displacementRay: BABYLON.Ray;
 
@@ -11,6 +11,8 @@ class Projectile extends BABYLON.Mesh {
         super("projectile", shooter.getScene());
         this._direction = direction;
         this.shooter = shooter;
+        this.speed = this.shooter.shootSpeed;
+        this.power = this.shooter.shootPower;
         this.position.copyFrom(shooter.position);
         this.rotationQuaternion = shooter.rotationQuaternion.clone();
         this._displacementRay = new BABYLON.Ray(this.position, this._direction.clone());

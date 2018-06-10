@@ -9,5 +9,8 @@
     "backDrag": 1,
     "rollDrag": 2,
     "yawDrag": 2,
-    "pitchDrag": 2
+    "pitchDrag": 2,
+    "shootPower": 2,
+    "shootCooldown": 0.3,
+    "shootSpeed": 200
 }

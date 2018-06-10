@@ -10,6 +10,9 @@ interface ISpaceshipData {
     rollDrag: number;
     yawDrag: number;
     pitchDrag: number;
+    shootPower: number;
+    shootCooldown: number;
+    shootSpeed: number;
 }
 
 class SpaceshipLoader {
