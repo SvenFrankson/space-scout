@@ -28,9 +28,6 @@ class Main {
 
 	constructor(canvasElement: string) {
 		Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
-		Main.Canvas.addEventListener("click", () => {
-			Main.OnClick();
-		});
 		Main.Engine = new BABYLON.Engine(Main.Canvas, true);
 		BABYLON.Engine.ShadersRepository = "./shaders/";
 	}
@@ -87,12 +84,6 @@ class Main {
 		Layout.Resize();
 	}
 
-	public static OnClick(): void {
-		if (Main.State === State.Ready) {
-			Main.Play();
-		}
-	}
-
 	public static Menu(): void {
 		Main.State = State.Menu;
 		Loader.UnloadScene();
@@ -109,7 +100,7 @@ class Main {
 	public static playStart: number = 0;
 	public static Play(): void {
 		Main.State = State.Game;
-		Layout.GameLayout();
+		$("#page").hide(500, "linear");
 		Main.Scene.activeCamera = Main.GameCamera;
 		Main.Level.OnGameStart();
 		Main.playStart = (new Date()).getTime();
@@ -135,7 +126,6 @@ class Main {
 				playerControl.attachControl(Main.Canvas);
 			}
 		);
-		new HUD(Main.Scene);
 	}
 	public static TMPResetPlayer(): void {
 		Main._tmpPlayer.position.copyFromFloats(0, 0, 0);
@@ -184,8 +174,12 @@ window.addEventListener("DOMContentLoaded", async () => {
 	game.createScene();
 	game.animate();
 
-	Menu.RegisterToUI();
-	//Intro.RunIntro();
+	window.addEventListener("hashchange", Route.route);
+	return Route.route();
+
+	/*
+	Home.RegisterToUI();
+	Intro.RunIntro();
 	await Main.TMPCreatePlayer();
 	await Main.TMPCreateWingMan();
 	await Main.TMPCreateWingMan();
@@ -195,5 +189,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 	await Main.TMPCreateRogue();
 	await Main.TMPCreateRogue();
 	await Main.TMPCreateRogue();
-    Loader.LoadScene("level-0", Main.Scene);
+	Loader.LoadScene("level-0", Main.Scene);
+	*/
 });

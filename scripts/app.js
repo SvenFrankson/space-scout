@@ -194,9 +194,6 @@ var State;
 class Main {
     constructor(canvasElement) {
         Main.Canvas = document.getElementById(canvasElement);
-        Main.Canvas.addEventListener("click", () => {
-            Main.OnClick();
-        });
         Main.Engine = new BABYLON.Engine(Main.Canvas, true);
         BABYLON.Engine.ShadersRepository = "./shaders/";
     }
@@ -246,11 +243,6 @@ class Main {
         Main.Engine.resize();
         Layout.Resize();
     }
-    static OnClick() {
-        if (Main.State === State.Ready) {
-            Main.Play();
-        }
-    }
     static Menu() {
         Main.State = State.Menu;
         Loader.UnloadScene();
@@ -265,7 +257,7 @@ class Main {
     }
     static Play() {
         Main.State = State.Game;
-        Layout.GameLayout();
+        $("#page").hide(500, "linear");
         Main.Scene.activeCamera = Main.GameCamera;
         Main.Level.OnGameStart();
         Main.playStart = (new Date()).getTime();
@@ -286,7 +278,6 @@ class Main {
                 Main._tmpPlayer.attachControler(playerControl);
                 playerControl.attachControl(Main.Canvas);
             });
-            new HUD(Main.Scene);
         });
     }
     static TMPResetPlayer() {
@@ -330,18 +321,22 @@ window.addEventListener("DOMContentLoaded", () => __awaiter(this, void 0, void 0
     let game = new Main("render-canvas");
     game.createScene();
     game.animate();
-    Menu.RegisterToUI();
-    //Intro.RunIntro();
-    yield Main.TMPCreatePlayer();
-    yield Main.TMPCreateWingMan();
-    yield Main.TMPCreateWingMan();
-    yield Main.TMPCreateWingMan();
-    yield Main.TMPCreateWingMan();
-    yield Main.TMPCreateRogue();
-    yield Main.TMPCreateRogue();
-    yield Main.TMPCreateRogue();
-    yield Main.TMPCreateRogue();
+    window.addEventListener("hashchange", Route.route);
+    return Route.route();
+    /*
+    Home.RegisterToUI();
+    Intro.RunIntro();
+    await Main.TMPCreatePlayer();
+    await Main.TMPCreateWingMan();
+    await Main.TMPCreateWingMan();
+    await Main.TMPCreateWingMan();
+    await Main.TMPCreateWingMan();
+    await Main.TMPCreateRogue();
+    await Main.TMPCreateRogue();
+    await Main.TMPCreateRogue();
+    await Main.TMPCreateRogue();
     Loader.LoadScene("level-0", Main.Scene);
+    */
 }));
 class SpaceMath {
     static ProjectPerpendicularAt(v, at) {
@@ -938,7 +933,7 @@ class PlayerControler {
     }
 }
 class HUD {
-    constructor(scene) {
+    constructor(input, scene) {
         this.spaceshipInfos = [];
         this._updateSpaceshipInfos = () => {
             SpaceShipControler.Instances.forEach((spaceShipControler) => {
@@ -964,6 +959,22 @@ class HUD {
         };
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._updateSpaceshipInfos);
+        let w = Main.Canvas.width;
+        let h = Main.Canvas.height;
+        let r = Math.min(w, h);
+        let size = r / 1.5;
+        this.target0 = new BABYLON.GUI.Image("target0", "./datas/textures/hud/target1.png");
+        this.target0.width = size + "px";
+        this.target0.height = size + "px";
+        Main.GuiTexture.addControl(this.target0);
+        this.target1 = new BABYLON.GUI.Image("target0", "./datas/textures/hud/target2.png");
+        this.target1.width = size / 2 + "px";
+        this.target1.height = size / 2 + "px";
+        Main.GuiTexture.addControl(this.target1);
+        this.target2 = new BABYLON.GUI.Image("target0", "./datas/textures/hud/target3.png");
+        this.target2.width = size / 4 + "px";
+        this.target2.height = size / 4 + "px";
+        Main.GuiTexture.addControl(this.target2);
     }
     destroy() {
         this.scene.onBeforeRenderObservable.removeCallback(this._updateSpaceshipInfos);
@@ -972,6 +983,9 @@ class HUD {
             spaceshipInfo.destroy();
             this.spaceshipInfos.splice(0, 1);
         }
+        this.target0.dispose();
+        this.target1.dispose();
+        this.target2.dispose();
     }
 }
 class HUDSpaceshipInfo extends BABYLON.TransformNode {
@@ -1025,21 +1039,15 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
 }
 class Layout {
     static get focalLength() {
-        if (!Layout._focalLength) {
-            Layout._focalLength = $("#focal-length");
-        }
+        Layout._focalLength = $("#focal-length");
         return Layout._focalLength;
     }
     static get targets() {
-        if (!Layout._targets) {
-            Layout._targets = $(".target");
-        }
+        Layout._targets = $(".target");
         return Layout._targets;
     }
     static get target1() {
-        if (!Layout._target1) {
-            Layout._target1 = $("#target1");
-        }
+        Layout._target1 = $("#target1");
         return Layout._target1;
     }
     static get mapIcons() {
@@ -1047,81 +1055,55 @@ class Layout {
         return Layout._mapIcons;
     }
     static get panelRight() {
-        if (!Layout._panelRight) {
-            Layout._panelRight = $("#panel-right");
-        }
+        Layout._panelRight = $("#panel-right");
         return Layout._panelRight;
     }
     static get speedDisplay() {
-        if (!Layout._speedDisplay) {
-            Layout._speedDisplay = $("speed-display");
-        }
+        Layout._speedDisplay = $("speed-display");
         return Layout._speedDisplay;
     }
     static get objectiveRadar() {
-        if (!Layout._objectiveRadar) {
-            Layout._objectiveRadar = $("#objective-radar");
-        }
+        Layout._objectiveRadar = $("#objective-radar");
         return Layout._objectiveRadar;
     }
     static get comLink() {
-        if (!Layout._comLink) {
-            Layout._comLink = $("#com-link");
-        }
+        Layout._comLink = $("#com-link");
         return Layout._comLink;
     }
     static get teamPanel() {
-        if (!Layout._teamPanel) {
-            Layout._teamPanel = $("#team-panel");
-        }
+        Layout._teamPanel = $("#team-panel");
         return Layout._teamPanel;
     }
     static get frames() {
-        if (!Layout._frames) {
-            Layout._frames = $(".frame");
-        }
+        Layout._frames = $(".frame");
         return Layout._frames;
     }
     static get cinematicFrame() {
-        if (!Layout._cinematicFrame) {
-            Layout._cinematicFrame = $("#cinematic-frame");
-        }
+        Layout._cinematicFrame = $("#cinematic-frame");
         return Layout._cinematicFrame;
     }
     static get cinematicFrameTitle() {
-        if (!Layout._cinematicFrameTitle) {
-            Layout._cinematicFrameTitle = $("#cinematic-frame-title");
-        }
+        Layout._cinematicFrameTitle = $("#cinematic-frame-title");
         return Layout._cinematicFrameTitle;
     }
     static get cinematicFrameLocationDate() {
-        if (!Layout._cinematicFrameLocationDate) {
-            Layout._cinematicFrameLocationDate = $("#cinematic-frame-location-date");
-        }
+        Layout._cinematicFrameLocationDate = $("#cinematic-frame-location-date");
         return Layout._cinematicFrameLocationDate;
     }
     static get gameOverFrame() {
-        if (!Layout._gameOverFrame) {
-            Layout._gameOverFrame = $("#game-over-frame");
-        }
+        Layout._gameOverFrame = $("#game-over-frame");
         return Layout._gameOverFrame;
     }
     static get mainMenu() {
-        if (!Layout._mainMenu) {
-            Layout._mainMenu = $("#main-menu");
-        }
+        Layout._mainMenu = $("#main-menu");
         return Layout._mainMenu;
     }
     static get playButton() {
-        if (!Layout._playButton) {
-            Layout._playButton = $("#play-button");
-        }
+        Layout._playButton = $("#play-button");
         return Layout._playButton;
     }
     static get skipButton() {
-        if (!Layout._skipButton) {
-            Layout._skipButton = $("#skip-button");
-        }
+        Layout._skipButton = $("#skip-button");
         return Layout._skipButton;
     }
     static HideAll() {
@@ -1176,6 +1158,7 @@ class Layout {
     }
     static CinematicLayout() {
         Layout.HideAll();
+        Layout.Resize();
         Layout.cinematicFrame.show();
         Layout.skipButton.show();
         Layout.cinematicFrameLocationDate.show();
@@ -1189,16 +1172,18 @@ class Layout {
         Layout.HideAll();
         Layout.gameOverFrame.show();
     }
-    static GameLayout() {
-        Layout.HideAll();
-        Layout.focalLength.show();
-        Layout.targets.show();
-        Layout.mapIcons.show();
-        Layout.panelRight.show();
-        Layout.speedDisplay.show();
-        Layout.objectiveRadar.show();
-        Layout.comLink.show();
-        Layout.teamPanel.show();
+}
+class Home {
+    static Start() {
+        $.ajax({
+            url: "./pages/menu.html",
+            success: (data) => {
+                $("#page").fadeOut(500, "linear", () => {
+                    document.getElementById("page").innerHTML = data;
+                    $("#page").fadeIn(500);
+                });
+            }
+        });
     }
 }
 class Intro {
@@ -1269,6 +1254,22 @@ class Level0 {
             "- Well done Jack ! Get back to base. Over."
         ];
     }
+    static Start() {
+        $.ajax({
+            url: "./pages/level.html",
+            success: (data) => {
+                $("#page").fadeOut(500, "linear", () => {
+                    document.getElementById("page").innerHTML = data;
+                    $("#page").fadeIn(500, "linear", () => __awaiter(this, void 0, void 0, function* () {
+                        yield Main.TMPCreatePlayer();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateRogue();
+                        Loader.LoadScene("level-0", Main.Scene);
+                    }));
+                });
+            }
+        });
+    }
     LoadLevel(scene) {
         let beaconMasterName = "beacon";
         let beaconMaster = Loader.LoadedStatics.get(beaconMasterName)[0];
@@ -1298,7 +1299,9 @@ class Level0 {
                 scene.registerBeforeRender(beaconCheck);
             }
         }
-        Main.State = State.Ready;
+        $("#play-button").on("pointerup", () => {
+            Main.Play();
+        });
     }
     OnGameStart() {
         let delay = 1000;
@@ -1482,25 +1485,6 @@ class Loader {
 Loader.LoadedStatics = new Map();
 Loader.index = 0;
 Loader._timeoutHandle = 0;
-class Menu {
-    static RunLevel1() {
-        Loader.LoadScene("level-0", Main.Scene);
-    }
-    static ShowMenu() {
-        //
-    }
-    static HideMenu() {
-        //
-    }
-    static RegisterToUI() {
-        $("#game-over-continue").on("click", (e) => {
-            Main.Menu();
-        });
-        $("#level-0").on("click", (e) => {
-            Loader.LoadScene("level-0", Main.Scene);
-        });
-    }
-}
 class RandomGenerator {
     static Level1() {
         console.log(".");
@@ -1548,6 +1532,17 @@ class RandomGenerator {
             }
         }
         console.log(JSON.stringify(data));
+    }
+}
+class Route {
+    static route() {
+        let hash = window.location.hash.slice(1) || "home";
+        if (hash === "home") {
+            Home.Start();
+        }
+        if (hash === "level-0") {
+            Level0.Start();
+        }
     }
 }
 class MaterialLoader {
@@ -2292,6 +2287,12 @@ class SpaceShipInputs extends SpaceShipControler {
         }
         return this._spaceShipCamera;
     }
+    get hud() {
+        if (!this._hud) {
+            this._hud = new HUD(this, this.spaceShip.getScene());
+        }
+        return this._hud;
+    }
     _loadPointer() {
         BABYLON.SceneLoader.ImportMesh("", "./datas/target.babylon", "", Main.Scene, (meshes, particleSystems, skeletons) => {
             for (let i = 0; i < meshes.length; i++) {
@@ -2445,12 +2446,12 @@ class SpaceShipInputs extends SpaceShipControler {
         let x = (this._scene.pointerX - w / 2) / r;
         let y = (this._scene.pointerY - h / 2) / r;
         let mouseInput = new BABYLON.Vector2(x, y);
-        this.updateUI(mouseInput);
         let power = mouseInput.length();
         if (power > 1) {
             mouseInput.x = mouseInput.x / power;
             mouseInput.y = mouseInput.y / power;
         }
+        this.updateUI(mouseInput);
         mouseInput.x = BABYLON.Scalar.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
         mouseInput.y = BABYLON.Scalar.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
         this._spaceShip.yawInput = mouseInput.x;
@@ -2461,11 +2462,15 @@ class SpaceShipInputs extends SpaceShipControler {
         let h = this._canvas.height;
         let r = Math.min(w, h);
         let size = r / 2;
+        this.hud.target1.left = (r * mouseInput.x / 4) + "px";
+        this.hud.target1.top = (r * mouseInput.y / 4) + "px";
         $("#target2").css("width", size + "px");
         $("#target2").css("height", size + "px");
         $("#target2").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 4);
         $("#target2").css("left", Main.Canvas.width / 2 - size / 2 + r * mouseInput.x / 4);
         size = size / 2;
+        this.hud.target2.left = (r * mouseInput.x / 2) + "px";
+        this.hud.target2.top = (r * mouseInput.y / 2) + "px";
         $("#target3").css("width", size + "px");
         $("#target3").css("height", size + "px");
         $("#target3").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 2);

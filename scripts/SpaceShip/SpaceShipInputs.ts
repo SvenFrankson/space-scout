@@ -23,6 +23,14 @@ class SpaceShipInputs extends SpaceShipControler {
 		return this._spaceShipCamera;
 	}
 
+	private _hud: HUD;
+	private get hud(): HUD {
+		if (!this._hud) {
+			this._hud = new HUD(this, this.spaceShip.getScene());
+		}
+		return this._hud;
+	}
+
 	constructor(spaceShip: SpaceShip, scene: BABYLON.Scene) {
 		super(spaceShip, ISquadRole.Leader, 0);
 		SpaceShipInputs.SSIInstances.push(this);
@@ -249,12 +257,12 @@ class SpaceShipInputs extends SpaceShipControler {
 		let x: number = (this._scene.pointerX - w / 2) / r;
 		let y: number = (this._scene.pointerY - h / 2) / r;
 		let mouseInput: BABYLON.Vector2 = new BABYLON.Vector2(x, y);
-		this.updateUI(mouseInput);
 		let power: number = mouseInput.length();
 		if (power > 1) {
 			mouseInput.x = mouseInput.x / power;
 			mouseInput.y = mouseInput.y / power;
 		}
+		this.updateUI(mouseInput);
 		mouseInput.x = BABYLON.Scalar.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
 		mouseInput.y = BABYLON.Scalar.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
 		this._spaceShip.yawInput = mouseInput.x;
@@ -267,12 +275,16 @@ class SpaceShipInputs extends SpaceShipControler {
 		let r: number = Math.min(w, h);
 
 		let size: number = r / 2;
+		this.hud.target1.left = (r * mouseInput.x / 4) + "px";
+		this.hud.target1.top = (r * mouseInput.y / 4) + "px";
 		$("#target2").css("width", size + "px");
 		$("#target2").css("height", size + "px");
 		$("#target2").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 4);
 		$("#target2").css("left", Main.Canvas.width / 2 - size / 2 + r * mouseInput.x / 4);
 
 		size = size / 2;
+		this.hud.target2.left = (r * mouseInput.x / 2) + "px";
+		this.hud.target2.top = (r * mouseInput.y / 2) + "px";
 		$("#target3").css("width", size + "px");
 		$("#target3").css("height", size + "px");
 		$("#target3").css("top", Main.Canvas.height / 2 - size / 2 + r * mouseInput.y / 2);
