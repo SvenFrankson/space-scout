@@ -28,7 +28,7 @@ class HUD {
     constructor(input: SpaceShipInputs, scene: BABYLON.Scene) {
         this.input = input;
         this.scene = scene;
-        this.scene.onBeforeRenderObservable.add(this._updateSpaceshipInfos);
+        this.scene.onBeforeRenderObservable.add(this._update);
         let w: number = Main.Canvas.width;
 		let h: number = Main.Canvas.height;
 		let r: number = Math.min(w, h);
@@ -49,7 +49,7 @@ class HUD {
     }
 
     public destroy(): void {
-        this.scene.onBeforeRenderObservable.removeCallback(this._updateSpaceshipInfos);
+        this.scene.onBeforeRenderObservable.removeCallback(this._update);
         while (this.spaceshipInfos.length > 0) {
             let spaceshipInfo = this.spaceshipInfos[0];
             spaceshipInfo.destroy();
@@ -60,7 +60,16 @@ class HUD {
         this.target2.dispose();
     }
 
-    private _updateSpaceshipInfos = () => {
+    private _update = () => {
+        this._updateSpaceshipInfos();
+        if (this.lockedTarget) {
+            if (this.input.spaceShip.focalPlane) {
+                this.input.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.input.spaceShip.position, this.lockedTarget.position);
+            }
+        }
+    }
+
+    private _updateSpaceshipInfos(): void {
         SpaceShipControler.Instances.forEach(
             (spaceShipControler) => {
                 if (!(spaceShipControler instanceof SpaceShipInputs)) {

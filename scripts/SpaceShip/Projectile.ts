@@ -4,7 +4,7 @@ class Projectile extends BABYLON.Mesh {
     public shooter: SpaceShip;
     public speed: number = 150;
     private _lifeSpan: number = 5;
-    public power: number = 10;
+    public power: number = 2;
     private _displacementRay: BABYLON.Ray;
 
     constructor(direction: BABYLON.Vector3, shooter: SpaceShip) {

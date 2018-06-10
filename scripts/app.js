@@ -935,31 +935,17 @@ class PlayerControler {
 class HUD {
     constructor(input, scene) {
         this.spaceshipInfos = [];
-        this._updateSpaceshipInfos = () => {
-            SpaceShipControler.Instances.forEach((spaceShipControler) => {
-                if (!(spaceShipControler instanceof SpaceShipInputs)) {
-                    let spaceship = spaceShipControler.spaceShip;
-                    let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === spaceship; });
-                    if (!spaceshipInfo) {
-                        this.spaceshipInfos.push(new HUDSpaceshipInfo(spaceship, this));
-                    }
-                }
-            });
-            let i = 0;
-            while (i < this.spaceshipInfos.length) {
-                let spaceshipInfo = this.spaceshipInfos[i];
-                if (!spaceshipInfo.spaceship.isAlive) {
-                    spaceshipInfo.destroy();
-                    this.spaceshipInfos.splice(i, 1);
-                }
-                else {
-                    i++;
+        this._update = () => {
+            this._updateSpaceshipInfos();
+            if (this.lockedTarget) {
+                if (this.input.spaceShip.focalPlane) {
+                    this.input.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.input.spaceShip.position, this.lockedTarget.position);
                 }
             }
         };
         this.input = input;
         this.scene = scene;
-        this.scene.onBeforeRenderObservable.add(this._updateSpaceshipInfos);
+        this.scene.onBeforeRenderObservable.add(this._update);
         let w = Main.Canvas.width;
         let h = Main.Canvas.height;
         let r = Math.min(w, h);
@@ -995,7 +981,7 @@ class HUD {
         }
     }
     destroy() {
-        this.scene.onBeforeRenderObservable.removeCallback(this._updateSpaceshipInfos);
+        this.scene.onBeforeRenderObservable.removeCallback(this._update);
         while (this.spaceshipInfos.length > 0) {
             let spaceshipInfo = this.spaceshipInfos[0];
             spaceshipInfo.destroy();
@@ -1004,6 +990,28 @@ class HUD {
         this.target0.dispose();
         this.target1.dispose();
         this.target2.dispose();
+    }
+    _updateSpaceshipInfos() {
+        SpaceShipControler.Instances.forEach((spaceShipControler) => {
+            if (!(spaceShipControler instanceof SpaceShipInputs)) {
+                let spaceship = spaceShipControler.spaceShip;
+                let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === spaceship; });
+                if (!spaceshipInfo) {
+                    this.spaceshipInfos.push(new HUDSpaceshipInfo(spaceship, this));
+                }
+            }
+        });
+        let i = 0;
+        while (i < this.spaceshipInfos.length) {
+            let spaceshipInfo = this.spaceshipInfos[i];
+            if (!spaceshipInfo.spaceship.isAlive) {
+                spaceshipInfo.destroy();
+                this.spaceshipInfos.splice(i, 1);
+            }
+            else {
+                i++;
+            }
+        }
     }
 }
 class HUDSpaceshipInfo extends BABYLON.TransformNode {
@@ -1063,8 +1071,8 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
     }
     destroy() {
         this.dispose();
-        if (this.lockCircle) {
-            this.lockCircle.dispose();
+        if (this.circleNextPos) {
+            this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
         this.spaceship.onWoundObservable.removeCallback(this.onWound);
@@ -1959,7 +1967,7 @@ class Projectile extends BABYLON.Mesh {
         super("projectile", shooter.getScene());
         this.speed = 150;
         this._lifeSpan = 5;
-        this.power = 10;
+        this.power = 2;
         this._update = () => {
             let dt = this.getEngine().getDeltaTime() / 1000;
             this._lifeSpan -= dt;

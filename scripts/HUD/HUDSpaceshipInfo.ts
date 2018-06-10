@@ -52,8 +52,8 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
 
     public destroy(): void {
         this.dispose();
-        if (this.lockCircle) {
-            this.lockCircle.dispose();
+        if (this.circleNextPos) {
+            this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
         this.spaceship.onWoundObservable.removeCallback(this.onWound);
