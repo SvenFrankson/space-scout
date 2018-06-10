@@ -1,3 +1,11 @@
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 class BeaconEmiter extends BABYLON.Mesh {
     constructor(name, scene) {
         super(name, scene);
@@ -104,8 +112,8 @@ class Config {
     }
     static DevConfig() {
         Config.tmpPlayerSpeed = 20;
-        Config.activationSqrRange = 100000;
-        Config.sceneLoaderDelay = 1;
+        Config.activationSqrRange = 100;
+        Config.sceneLoaderDelay = 0;
     }
 }
 Config.DevConfig();
@@ -198,42 +206,19 @@ class Main {
     static set State(v) {
         Main._state = v;
     }
-    createSceneSimple() {
-        Main.Scene = new BABYLON.Scene(Main.Engine);
-        this.resize();
-        // let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-        // sun.intensity = 0.8;
-        // let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-        // cloud.intensity = 0.3;
-        // cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
-        // cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-        let light = new BABYLON.HemisphericLight("Light", BABYLON.Vector3.Up(), Main.Scene);
-        light.intensity = 0.7;
-        //Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
-        //Main.Scene.activeCamera = Main.MenuCamera;
-        let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
-        skybox.rotation.y = Math.PI / 2;
-        skybox.infiniteDistance = true;
-        let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
-        skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("./datas/skyboxes/green-nebulae", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
-        skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-        skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-        skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-        skybox.material = skyboxMaterial;
-    }
     createScene() {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
+        Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
         let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
         sun.intensity = 0.8;
         let cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
         cloud.intensity = 0.3;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-        // Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
-        // Main.Scene.activeCamera = Main.MenuCamera;
-        // Main.MenuCamera.setPosition(new BABYLON.Vector3(- 160, 80, -160));
+        Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
+        Main.Scene.activeCamera = Main.MenuCamera;
+        Main.MenuCamera.setPosition(new BABYLON.Vector3(-160, 80, -160));
         let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
         skybox.rotation.y = Math.PI / 2;
         skybox.infiniteDistance = true;
@@ -244,6 +229,9 @@ class Main {
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
         skybox.material = skyboxMaterial;
+        new VertexDataLoader(Main.Scene);
+        new MaterialLoader(Main.Scene);
+        new SpaceshipLoader(Main.Scene);
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -287,14 +275,18 @@ class Main {
         Layout.GameOverLayout();
     }
     static TMPCreatePlayer() {
-        Main._tmpPlayer = new SpaceShip("Player", Main.Scene);
-        Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
-        Main.GameCamera.attachSpaceShipControl(Main.Canvas);
-        Main.GameCamera.setEnabled(false);
-        Main._tmpPlayer.initialize("spaceship", () => {
-            let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
-            Main._tmpPlayer.attachControler(playerControl);
-            playerControl.attachControl(Main.Canvas);
+        return __awaiter(this, void 0, void 0, function* () {
+            let spaceshipData = yield SpaceshipLoader.instance.get("scout-2");
+            Main._tmpPlayer = new SpaceShip(spaceshipData, Main.Scene);
+            Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
+            Main.GameCamera.attachSpaceShipControl(Main.Canvas);
+            Main.GameCamera.setEnabled(false);
+            Main._tmpPlayer.initialize("spaceship", () => {
+                let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
+                Main._tmpPlayer.attachControler(playerControl);
+                playerControl.attachControl(Main.Canvas);
+            });
+            new HUD(Main.Scene);
         });
     }
     static TMPResetPlayer() {
@@ -302,100 +294,55 @@ class Main {
         Main._tmpPlayer.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
     static TMPCreateWingMan() {
-        SpaceShipFactory.AddSpaceShipToScene({
-            name: "Voyoslov",
-            url: "spaceship",
-            x: 0, y: 0, z: 30,
-            team: 0,
-            role: ISquadRole.WingMan
-        }, Main.Scene, (spaceShip) => {
-            Main._tmpWingMan = spaceShip;
+        return __awaiter(this, void 0, void 0, function* () {
+            return SpaceShipFactory.AddSpaceShipToScene({
+                name: "Voyoslov",
+                url: "scout-1",
+                x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
+                team: 0,
+                role: ISquadRole.Default
+            }, Main.Scene);
         });
     }
     static TMPResetWingMan() {
         Main._tmpWingMan.position.copyFromFloats(0, 0, 30);
         Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
-    static LogPath() {
-        BABYLON.SceneLoader.ImportMesh("", "./work/babylon/metro-line-2.babylon", "", Main.Scene, (meshes) => {
-            let positionsPool = [];
-            let positions = [];
-            meshes.forEach((m) => {
-                if (m.name === "001") {
-                    positions[0] = m.position;
-                }
-                else if (m.name === "002") {
-                    positions[1] = m.position;
-                }
-                if (m instanceof BABYLON.Mesh) {
-                    m.instances.forEach((inst) => {
-                        if (inst.name === "001") {
-                            positions[0] = inst.position;
-                        }
-                        else if (inst.name === "002") {
-                            positions[1] = inst.position;
-                        }
-                    });
-                }
-            });
-            meshes.forEach((m) => {
-                positionsPool.push(m.position);
-                if (m instanceof BABYLON.Mesh) {
-                    m.instances.forEach((inst) => {
-                        positionsPool.push(inst.position);
-                    });
-                }
-            });
-            console.log("Path Length = " + positionsPool.length);
-            positionsPool.splice(positionsPool.indexOf(positions[0]), 1);
-            positionsPool.splice(positionsPool.indexOf(positions[1]), 1);
-            while (positionsPool.length > 0) {
-                let last = positions[positions.length - 1];
-                positionsPool.sort((a, b) => {
-                    return BABYLON.Vector3.DistanceSquared(a, last) - BABYLON.Vector3.DistanceSquared(b, last);
-                });
-                positions.push(positionsPool[0]);
-                positionsPool.splice(0, 1);
-            }
-            let out = "";
-            positions.forEach((p) => {
-                out += "new BABYLON.Vector3(" + p.x + ", " + p.y + ", " + p.z + "),\n";
-            });
-            console.log(out);
+    static TMPCreateRogue() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return SpaceShipFactory.AddSpaceShipToScene({
+                name: "Rogue",
+                url: "arrow-1",
+                x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
+                team: 1,
+                role: ISquadRole.Default
+            }, Main.Scene);
         });
+    }
+    static TMPResetRogue() {
+        Main._tmpRogue.position.copyFromFloats(0, 0, 100);
+        Main._tmpRogue.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
 }
 Main._state = State.Menu;
 Main.playStart = 0;
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", () => __awaiter(this, void 0, void 0, function* () {
     let game = new Main("render-canvas");
-    game.createSceneSimple();
+    game.createScene();
     game.animate();
-    new MeshLoader(Main.Scene);
-    let data = Test.TestDataTwo();
-    console.log(data);
-    let station = new Station();
-    station.load(data);
-    let playerCharacter = new Character(station);
-    playerCharacter.name = "character";
-    let playerCamera = new PlayerCamera(playerCharacter, Main.Scene);
-    station.instantiate(Main.Scene, () => {
-        station.sections[0].instantiate(0, () => {
-            playerCharacter.setXYH(4, 4, 2);
-            playerCharacter.instantiate();
-            playerCharacter.setSection(station.sections[0]);
-            let playerControl = new PlayerControler(playerCamera);
-            playerControl.attachControl(Main.Canvas);
-            let stationLoadManager = new StationLoadManager(playerCharacter);
-        });
-    });
-    /*
     Menu.RegisterToUI();
-    Intro.RunIntro();
-    Main.TMPCreatePlayer();
-    Main.TMPCreateWingMan();
-    */
-});
+    //Intro.RunIntro();
+    yield Main.TMPCreatePlayer();
+    yield Main.TMPCreateWingMan();
+    yield Main.TMPCreateWingMan();
+    yield Main.TMPCreateWingMan();
+    yield Main.TMPCreateWingMan();
+    yield Main.TMPCreateRogue();
+    yield Main.TMPCreateRogue();
+    yield Main.TMPCreateRogue();
+    yield Main.TMPCreateRogue();
+    Loader.LoadScene("level-0", Main.Scene);
+}));
 class SpaceMath {
     static ProjectPerpendicularAt(v, at) {
         let p = BABYLON.Vector3.Zero();
@@ -534,7 +481,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
         return this._focalLength;
     }
     set focalLength(v) {
-        this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+        this._focalLength = BABYLON.Scalar.Clamp(v, 10, 1000);
         if (this._spaceShip.focalPlane) {
             this._spaceShip.focalPlane.position.z = this._focalLength;
         }
@@ -559,7 +506,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     }
     attachSpaceShipControl(canvas) {
         canvas.addEventListener("wheel", (event) => {
-            this.focalLength *= 1 + BABYLON.MathTools.Sign(event.wheelDeltaY) * 0.05;
+            this.focalLength *= 1 + BABYLON.Scalar.Sign(event.wheelDeltaY) * 0.05;
         });
     }
 }
@@ -990,6 +937,92 @@ class PlayerControler {
         this.character.scene.onPointerObservable.add(this._pointerObserver);
     }
 }
+class HUD {
+    constructor(scene) {
+        this.spaceshipInfos = [];
+        this._updateSpaceshipInfos = () => {
+            SpaceShipControler.Instances.forEach((spaceShipControler) => {
+                if (!(spaceShipControler instanceof SpaceShipInputs)) {
+                    let spaceship = spaceShipControler.spaceShip;
+                    let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === spaceship; });
+                    if (!spaceshipInfo) {
+                        this.spaceshipInfos.push(new HUDSpaceshipInfo(spaceship));
+                    }
+                }
+            });
+            let i = 0;
+            while (i < this.spaceshipInfos.length) {
+                let spaceshipInfo = this.spaceshipInfos[i];
+                if (!spaceshipInfo.spaceship.isAlive) {
+                    spaceshipInfo.destroy();
+                    this.spaceshipInfos.splice(i, 1);
+                }
+                else {
+                    i++;
+                }
+            }
+        };
+        this.scene = scene;
+        this.scene.onBeforeRenderObservable.add(this._updateSpaceshipInfos);
+    }
+    destroy() {
+        this.scene.onBeforeRenderObservable.removeCallback(this._updateSpaceshipInfos);
+        while (this.spaceshipInfos.length > 0) {
+            let spaceshipInfo = this.spaceshipInfos[0];
+            spaceshipInfo.destroy();
+            this.spaceshipInfos.splice(0, 1);
+        }
+    }
+}
+class HUDSpaceshipInfo extends BABYLON.TransformNode {
+    constructor(spaceship) {
+        super("hudSpaceshipInfo", spaceship.getScene());
+        this._update = () => {
+            this.lookAt(this.getScene().activeCamera.position);
+            this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
+        };
+        this.onWound = () => {
+            this.hitpointInfo.dispose();
+            let color = new BABYLON.Color4(0, 1, 0, 1);
+            let ratio = this.spaceship.hitPoint / this.spaceship.stamina;
+            if (ratio < 0.25) {
+                color.copyFromFloats(1, 0, 0, 1);
+            }
+            else if (ratio < 0.5) {
+                color.copyFromFloats(1, 0.5, 0, 1);
+            }
+            else if (ratio < 0.75) {
+                color.copyFromFloats(1, 1, 0, 1);
+            }
+            this.hitpointInfo = SSMeshBuilder.CreateZRailMesh(6.5, 7.5, Math.PI / 4 - Math.PI / 2 * ratio, Math.PI / 4, 64, this.getScene(), color);
+            this.hitpointInfo.parent = this;
+        };
+        this.spaceship = spaceship;
+        this.position = spaceship.position;
+        this.circle = SSMeshBuilder.CreateZCircleMesh(6, spaceship.getScene());
+        this.circle.parent = this;
+        this.hitpointInfo = SSMeshBuilder.CreateZRailMesh(6.5, 7.5, -Math.PI / 4, Math.PI / 4, 64, this.getScene(), new BABYLON.Color4(0, 1, 0, 1));
+        this.hitpointInfo.parent = this;
+        let distanceInfoPosition = new BABYLON.Mesh("distanceInfoPosition", this.getScene());
+        distanceInfoPosition.parent = this;
+        distanceInfoPosition.position.y = -6;
+        this.distanceInfo = new BABYLON.GUI.TextBlock("distanceInfo", "42 m");
+        this.distanceInfo.fontFamily = "consolas";
+        this.distanceInfo.fontSize = "12px";
+        this.distanceInfo.color = "white";
+        Main.GuiTexture.addControl(this.distanceInfo);
+        this.distanceInfo.linkWithMesh(distanceInfoPosition);
+        this.distanceInfo.linkOffsetY = "9px";
+        this.getScene().onBeforeRenderObservable.add(this._update);
+        this.spaceship.onWoundObservable.add(this.onWound);
+    }
+    destroy() {
+        this.dispose();
+        this.distanceInfo.dispose();
+        this.spaceship.onWoundObservable.removeCallback(this.onWound);
+        this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+    }
+}
 class Layout {
     static get focalLength() {
         if (!Layout._focalLength) {
@@ -1297,21 +1330,29 @@ class Level0 {
     }
 }
 class Loader {
-    static LoadScene(name, scene, callback) {
-        Main.Level = new Level0();
-        $.ajax({
-            url: "./datas/scenes/" + name + ".json",
-            success: (data) => {
-                Main.Scene.activeCamera = Main.MenuCamera;
-                Main.MenuCamera.position = new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam);
-                Loader.RunCinematic(data.cinematic);
-                Loader._loadSceneData(data, scene, () => {
-                    Main.Level.LoadLevel(scene);
-                    if (callback) {
-                        callback();
-                    }
+    static _sleep(delay) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => {
+                setTimeout(resolve, delay);
+            });
+        });
+    }
+    static LoadScene(name, scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            Main.Level = new Level0();
+            return new Promise((resolve) => {
+                $.ajax({
+                    url: "./datas/scenes/" + name + ".json",
+                    success: (data) => __awaiter(this, void 0, void 0, function* () {
+                        Main.Scene.activeCamera = Main.MenuCamera;
+                        Main.MenuCamera.position = new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam);
+                        Loader.RunCinematic(data.cinematic);
+                        yield Loader._loadSceneData(data, scene);
+                        yield Main.Level.LoadLevel(scene);
+                        resolve();
+                    })
                 });
-            }
+            });
         });
     }
     static RunCinematic(data) {
@@ -1339,29 +1380,33 @@ class Loader {
         // note : This should actually be "Loading Layout", and auto skip once level is fully loaded.
         Layout.ReadyLayout();
     }
-    static _loadSceneData(data, scene, callback) {
-        Loader.AddStaticsIntoScene(data.statics, scene, callback, Config.sceneLoaderDelay);
+    static _loadSceneData(data, scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield Loader.AddStaticsIntoScene(data.statics, scene, Config.sceneLoaderDelay);
+        });
     }
-    static _loadStatic(name, scene, callback) {
-        BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, (meshes, particleSystems, skeletons) => {
-            Loader.LoadedStatics.set(name, []);
-            for (let i = 0; i < meshes.length; i++) {
-                if (meshes[i] instanceof BABYLON.Mesh) {
-                    let mesh = meshes[i];
-                    Loader.LoadedStatics.get(name).push(mesh);
-                    Loader._loadMaterial(mesh.material, name, scene);
-                    for (let j = 0; j < mesh.instances.length; j++) {
-                        Loader.LoadedStatics.get(name).push(mesh.instances[j]);
-                        mesh.instances[j].isVisible = false;
-                        mesh.instances[j].isPickable = false;
+    static _loadStatic(name, scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => {
+                BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, (meshes, particleSystems, skeletons) => {
+                    Loader.LoadedStatics.set(name, []);
+                    for (let i = 0; i < meshes.length; i++) {
+                        if (meshes[i] instanceof BABYLON.Mesh) {
+                            let mesh = meshes[i];
+                            Loader.LoadedStatics.get(name).push(mesh);
+                            Loader._loadMaterial(mesh.material, name, scene);
+                            for (let j = 0; j < mesh.instances.length; j++) {
+                                Loader.LoadedStatics.get(name).push(mesh.instances[j]);
+                                mesh.instances[j].isVisible = false;
+                                mesh.instances[j].isPickable = false;
+                            }
+                            mesh.isVisible = false;
+                            mesh.isPickable = false;
+                        }
                     }
-                    mesh.isVisible = false;
-                    mesh.isPickable = false;
-                }
-            }
-            if (callback) {
-                callback(Loader.LoadedStatics.get(name));
-            }
+                    resolve(Loader.LoadedStatics.get(name));
+                });
+            });
         });
     }
     static _loadMaterial(material, name, scene) {
@@ -1401,29 +1446,26 @@ class Loader {
             callback();
         }
     }
-    static AddStaticsIntoScene(datas, scene, callback, delay = 0, index = 0) {
-        if (datas[index]) {
-            Loader.AddStaticIntoScene(datas[index], scene, () => {
-                setTimeout(() => {
-                    Loader.AddStaticsIntoScene(datas, scene, callback, delay, index + 1);
-                }, delay);
-            });
-        }
-        else {
-            if (callback) {
-                callback();
+    static AddStaticsIntoScene(datas, scene, delay = 1) {
+        return __awaiter(this, void 0, void 0, function* () {
+            for (let i = 0; i < datas.length; i++) {
+                yield Loader.AddStaticIntoScene(datas[i], scene);
+                if (delay > 0) {
+                    yield Loader._sleep(delay);
+                }
             }
-        }
+        });
     }
-    static AddStaticIntoScene(data, scene, callback) {
-        if (Loader.LoadedStatics.get(data.name)) {
-            Loader._cloneStaticIntoScene(Loader.LoadedStatics.get(data.name), data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
-        }
-        else {
-            Loader._loadStatic(data.name, scene, (loadedMeshes) => {
-                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ, callback);
-            });
-        }
+    static AddStaticIntoScene(data, scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (Loader.LoadedStatics.get(data.name)) {
+                Loader._cloneStaticIntoScene(Loader.LoadedStatics.get(data.name), data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
+            }
+            else {
+                let loadedMeshes = yield Loader._loadStatic(data.name, scene);
+                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
+            }
+        });
     }
     static UnloadScene() {
         Loader.LoadedStatics.forEach((v, index) => {
@@ -1508,6 +1550,43 @@ class RandomGenerator {
         console.log(JSON.stringify(data));
     }
 }
+class MaterialLoader {
+    constructor(scene) {
+        this.scene = scene;
+        this._materials = new Map();
+        MaterialLoader.instance = this;
+    }
+    get(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._materials.get(name)) {
+                return this._materials.get(name);
+            }
+            return new Promise((resolve) => {
+                $.getJSON("./datas/materials/" + name + ".json", (rawData) => {
+                    let material = new BABYLON.PBRSpecularGlossinessMaterial(name, this.scene);
+                    if (rawData.diffuseColor) {
+                        material.diffuseColor = BABYLON.Color3.FromHexString(rawData.diffuseColor);
+                    }
+                    if (rawData.specularColor) {
+                        material.specularColor = BABYLON.Color3.FromHexString(rawData.specularColor);
+                    }
+                    if (rawData.emissiveColor) {
+                        material.emissiveColor = BABYLON.Color3.FromHexString(rawData.emissiveColor);
+                    }
+                    if (rawData.diffuseTexture) {
+                        material.diffuseTexture = new BABYLON.Texture("./datas/textures/" + rawData.diffuseTexture, this.scene);
+                        material.diffuseTexture.hasAlpha = true;
+                    }
+                    if (rawData.emissiveTexture) {
+                        material.emissiveTexture = new BABYLON.Texture("./datas/textures/" + rawData.emissiveTexture, this.scene);
+                    }
+                    this._materials.set(name, material);
+                    resolve(this._materials.get(name));
+                });
+            });
+        });
+    }
+}
 class MeshLoader {
     constructor(scene) {
         this.scene = scene;
@@ -1571,11 +1650,48 @@ class MeshLoader {
         }
     }
 }
+class SpaceshipLoader {
+    constructor(scene) {
+        this.scene = scene;
+        this._spaceshipDatas = new Map();
+        SpaceshipLoader.instance = this;
+    }
+    get(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._spaceshipDatas.get(name)) {
+                return this._spaceshipDatas.get(name);
+            }
+            return new Promise((resolve) => {
+                $.getJSON("./datas/spaceships/" + name + ".json", (data) => {
+                    this._spaceshipDatas.set(name, data);
+                    resolve(this._spaceshipDatas.get(name));
+                });
+            });
+        });
+    }
+}
 class VertexDataLoader {
     constructor(scene) {
         this.scene = scene;
-        this._data = new Map();
+        this._vertexDatas = new Map();
         VertexDataLoader.instance = this;
+    }
+    get(name) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._vertexDatas.get(name)) {
+                return this._vertexDatas.get(name);
+            }
+            return new Promise((resolve) => {
+                $.getJSON("./datas/vertexData/" + name + ".babylon", (rawData) => {
+                    let data = new BABYLON.VertexData();
+                    data.positions = rawData.meshes[0].positions;
+                    data.indices = rawData.meshes[0].indices;
+                    data.uvs = rawData.meshes[0].uvs;
+                    this._vertexDatas.set(name, data);
+                    resolve(this._vertexDatas.get(name));
+                });
+            });
+        });
     }
 }
 class Flash {
@@ -1788,20 +1904,104 @@ class MetroLine {
         v.normalize();
     }
 }
+class Projectile extends BABYLON.Mesh {
+    constructor(direction, shooter) {
+        super("projectile", shooter.getScene());
+        this.speed = 100;
+        this._lifeSpan = 5;
+        this.power = 10;
+        this._update = () => {
+            let dt = this.getEngine().getDeltaTime() / 1000;
+            this._lifeSpan -= dt;
+            if (this._lifeSpan < 0) {
+                return this.destroy();
+            }
+            let hitSpaceship = this._collide(dt);
+            if (hitSpaceship) {
+                hitSpaceship.wound(this);
+                return this.destroy();
+            }
+            this.position.addInPlace(this._direction.scale(this.speed * dt));
+            let zAxis = this._direction;
+            let yAxis = this.getScene().activeCamera.position.subtract(this.position);
+            let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
+            BABYLON.Vector3.CrossToRef(zAxis, xAxis, yAxis);
+            BABYLON.Quaternion.RotationQuaternionFromAxisToRef(xAxis, yAxis, zAxis, this.rotationQuaternion);
+        };
+        this._direction = direction;
+        this.shooter = shooter;
+        this.position.copyFrom(shooter.position);
+        this.rotationQuaternion = shooter.rotationQuaternion.clone();
+        this._displacementRay = new BABYLON.Ray(this.position, this._direction.clone());
+        this.getScene().onBeforeRenderObservable.add(this._update);
+    }
+    instantiate() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let vertexData = yield VertexDataLoader.instance.get("laser");
+            if (vertexData && !this.isDisposed()) {
+                vertexData.applyToMesh(this);
+            }
+            let material = yield MaterialLoader.instance.get("red-laser");
+            if (material && !this.isDisposed()) {
+                this.material = material;
+            }
+        });
+    }
+    destroy() {
+        this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+        this.dispose();
+    }
+    _collide(dt) {
+        this._displacementRay.length = this.speed * dt;
+        for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
+            let spaceship = SpaceShipControler.Instances[i].spaceShip;
+            if (spaceship.controler.team !== this.shooter.controler.team) {
+                let hitInfo = this._displacementRay.intersectsMesh(spaceship.shield, false);
+                if (hitInfo.hit) {
+                    return spaceship;
+                }
+            }
+        }
+        return undefined;
+    }
+}
 class SpaceShip extends BABYLON.Mesh {
-    constructor(name, scene) {
+    constructor(data, scene) {
         super(name, scene);
-        this._forwardDrag = 0.01;
-        this._backwardDrag = 1;
+        this._forwardInput = 0;
+        this._enginePower = 15;
+        this._frontDrag = 0.01;
+        this._backDrag = 1;
         this._forward = 0;
+        this._rollInput = 0;
+        this._rollPower = 2;
         this._rollDrag = 0.9;
         this._roll = 0;
+        this._yawInput = 0;
+        this._yawPower = 2;
         this._yawDrag = 0.9;
         this._yaw = 0;
+        this._pitchInput = 0;
+        this._pitchPower = 2;
         this._pitchDrag = 0.9;
         this._pitch = 0;
         this._dt = 0;
         this._colliders = [];
+        this.isAlive = true;
+        this.stamina = 50;
+        this.cooldown = 0.3;
+        this._cool = 0;
+        this.onWoundObservable = new BABYLON.Observable();
+        this.stamina = data.stamina;
+        this._enginePower = data.enginePower;
+        this._rollPower = data.rollPower;
+        this._yawPower = data.yawPower;
+        this._pitchPower = data.pitchPower;
+        this._frontDrag = data.frontDrag;
+        this._backDrag = data.backDrag;
+        this._rollDrag = data.rollDrag;
+        this._yawDrag = data.yawDrag;
+        this._pitchDrag = data.pitchDrag;
         this._localX = new BABYLON.Vector3(1, 0, 0);
         this._localY = new BABYLON.Vector3(0, 1, 0);
         this._localZ = new BABYLON.Vector3(0, 0, 1);
@@ -1810,8 +2010,8 @@ class SpaceShip extends BABYLON.Mesh {
         this._rX = BABYLON.Quaternion.Identity();
         this._rY = BABYLON.Quaternion.Identity();
         this._rZ = BABYLON.Quaternion.Identity();
-        this._shield = new Shield(this);
-        this._shield.initialize();
+        this.shield = new Shield(this);
+        this.shield.initialize();
         this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
         this.wingTipLeft.parent = this;
         this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
@@ -1820,40 +2020,55 @@ class SpaceShip extends BABYLON.Mesh {
         this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
         new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
         new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
+        this.hitPoint = this.stamina;
         this.createColliders();
         scene.registerBeforeRender(() => {
             this._move();
         });
     }
+    get forwardInput() {
+        return this._forwardInput;
+    }
+    set forwardInput(v) {
+        if (isFinite(v)) {
+            this._forwardInput = BABYLON.Scalar.Clamp(v, -1, 1);
+        }
+    }
     get forward() {
         return this._forward;
     }
-    set forward(v) {
-        this._forward = v;
+    get rollInput() {
+        return this._rollInput;
+    }
+    set rollInput(v) {
+        if (isFinite(v)) {
+            this._rollInput = BABYLON.Scalar.Clamp(v, -1, 1);
+        }
     }
     get roll() {
         return this._roll;
     }
-    set roll(v) {
-        if (!isNaN(v)) {
-            this._roll = v;
+    get yawInput() {
+        return this._yawInput;
+    }
+    set yawInput(v) {
+        if (isFinite(v)) {
+            this._yawInput = BABYLON.Scalar.Clamp(v, -1, 1);
         }
     }
     get yaw() {
         return this._yaw;
     }
-    set yaw(v) {
-        if (!isNaN(v)) {
-            this._yaw = v;
+    get pitchInput() {
+        return this._pitchInput;
+    }
+    set pitchInput(v) {
+        if (isFinite(v)) {
+            this._pitchInput = BABYLON.Scalar.Clamp(v, -1, 1);
         }
     }
     get pitch() {
         return this._pitch;
-    }
-    set pitch(v) {
-        if (!isNaN(v)) {
-            this._pitch = v;
-        }
     }
     get localX() {
         return this._localX;
@@ -1870,7 +2085,7 @@ class SpaceShip extends BABYLON.Mesh {
             if (spaceship instanceof BABYLON.Mesh) {
                 spaceship.parent = this;
                 this._mesh = spaceship;
-                this._shield.parent = this._mesh;
+                this.shield.parent = this._mesh;
                 this.wingTipLeft.parent = this._mesh;
                 this.wingTipRight.parent = this._mesh;
                 let spaceshipMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
@@ -1878,6 +2093,7 @@ class SpaceShip extends BABYLON.Mesh {
                 spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
                 spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
                 spaceshipMaterial.ambientTexture.level = 2;
+                spaceshipMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
                 spaceship.material = spaceshipMaterial;
                 if (callback) {
                     callback();
@@ -1890,7 +2106,7 @@ class SpaceShip extends BABYLON.Mesh {
         this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
     }
     attachControler(controler) {
-        this._controler = controler;
+        this.controler = controler;
     }
     static CenterRadiusBoundingSphere(center, radius) {
         return new BABYLON.BoundingSphere(new BABYLON.Vector3(center.x, center.y - radius, center.z), new BABYLON.Vector3(center.x, center.y + radius, center.z));
@@ -1900,11 +2116,19 @@ class SpaceShip extends BABYLON.Mesh {
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
         BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
+        this._cool -= this._dt;
+        this._cool = Math.max(0, this._cool);
         if (!(Main.State === State.Game)) {
             return;
         }
-        if (this._controler) {
-            this._controler.checkInputs(this._dt);
+        if (this.controler) {
+            this.controler.checkInputs(this._dt);
+        }
+        if (this.isAlive) {
+            this._forward += this.forwardInput * this._enginePower * this._dt;
+            this._yaw += this.yawInput * this._yawPower * this._dt;
+            this._pitch += this.pitchInput * this._pitchPower * this._dt;
+            this._roll += this.rollInput * this._rollPower * this._dt;
         }
         this._drag();
         let dZ = BABYLON.Vector3.Zero();
@@ -1922,15 +2146,15 @@ class SpaceShip extends BABYLON.Mesh {
         this._collide();
     }
     _drag() {
-        this.roll = this.roll * (1 - this._rollDrag * this._dt);
-        this.yaw = this.yaw * (1 - this._yawDrag * this._dt);
-        this.pitch = this.pitch * (1 - this._pitchDrag * this._dt);
+        this._roll = this.roll * (1 - this._rollDrag * this._dt);
+        this._yaw = this.yaw * (1 - this._yawDrag * this._dt);
+        this._pitch = this.pitch * (1 - this._pitchDrag * this._dt);
         let sqrForward = this.forward * this.forward;
         if (this.forward > 0) {
-            this.forward -= this._forwardDrag * sqrForward * this._dt;
+            this._forward -= this._frontDrag * sqrForward * this._dt;
         }
         else if (this.forward < 0) {
-            this.forward += this._backwardDrag * sqrForward * this._dt;
+            this._forward += this._backDrag * sqrForward * this._dt;
         }
     }
     _updateColliders() {
@@ -1945,12 +2169,12 @@ class SpaceShip extends BABYLON.Mesh {
             let spheres = Obstacle.SphereInstancesFromPosition(this.position);
             for (let i = 0; i < spheres.length; i++) {
                 let sphere = spheres[i];
-                let intersection = Intersection.MeshSphere(this._shield, sphere);
+                let intersection = Intersection.MeshSphere(this.shield, sphere);
                 if (intersection.intersect) {
                     let forcedDisplacement = intersection.direction.multiplyByFloats(-1, -1, -1);
                     forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(intersection.depth, intersection.depth, intersection.depth));
                     this.position.addInPlace(forcedDisplacement);
-                    this._shield.flashAt(intersection.point, BABYLON.Space.WORLD);
+                    this.shield.flashAt(intersection.point, BABYLON.Space.WORLD);
                     return;
                 }
             }
@@ -1969,6 +2193,29 @@ class SpaceShip extends BABYLON.Mesh {
                     }
                 }
             }
+        }
+    }
+    shoot(direction) {
+        if (this._cool > 0) {
+            return;
+        }
+        this._cool = this.cooldown;
+        let dir = direction.clone();
+        if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
+            let n = BABYLON.Vector3.Cross(this.localZ, dir);
+            let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
+            BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
+        }
+        let bullet = new Projectile(dir, this);
+        bullet.instantiate();
+    }
+    wound(projectile) {
+        this.hitPoint -= projectile.power;
+        this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
+        this.onWoundObservable.notifyObservers(projectile);
+        if (this.hitPoint <= 0) {
+            this.hitPoint = 0;
+            this.isAlive = false;
         }
     }
 }
@@ -1997,21 +2244,20 @@ var ISquadRole;
 (function (ISquadRole) {
     ISquadRole[ISquadRole["Leader"] = 0] = "Leader";
     ISquadRole[ISquadRole["WingMan"] = 1] = "WingMan";
+    ISquadRole[ISquadRole["Default"] = 2] = "Default";
 })(ISquadRole || (ISquadRole = {}));
 class SpaceShipFactory {
-    static AddSpaceShipToScene(data, scene, callback) {
-        let spaceShip = new SpaceShip(data.name, Main.Scene);
-        spaceShip.initialize(data.url, () => {
-            let spaceshipAI;
-            if (data.role === ISquadRole.WingMan) {
-                spaceshipAI = new WingManAI(spaceShip, new BABYLON.Vector3(30, -10, 15), data.role, data.team, Main.Scene);
-            }
-            spaceShip.attachControler(spaceshipAI);
-            if (callback) {
-                callback(spaceShip);
-            }
+    static AddSpaceShipToScene(data, scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let spaceshipData = yield SpaceshipLoader.instance.get(data.url);
+            let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
+            spaceShip.initialize(spaceshipData.model, () => {
+                let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
+                spaceShip.attachControler(spaceshipAI);
+            });
+            spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+            return spaceShip;
         });
-        spaceShip.position.copyFromFloats(data.x, data.y, data.z);
     }
 }
 class SpaceShipInputs extends SpaceShipControler {
@@ -2020,9 +2266,6 @@ class SpaceShipInputs extends SpaceShipControler {
         this._active = false;
         this._forwardPow = Config.tmpPlayerSpeed;
         this._backwardPow = 10;
-        this._rollPow = 2.5;
-        this._yawPow = 1.5;
-        this._pitchPow = 1.5;
         this.wingMen = [];
         SpaceShipInputs.SSIInstances.push(this);
         this._spaceShip = spaceShip;
@@ -2086,35 +2329,41 @@ class SpaceShipInputs extends SpaceShipControler {
     attachControl(canvas) {
         this._canvas = canvas;
         canvas.addEventListener("keydown", (e) => {
-            if (e.keyCode === 87) {
+            if (e.key === "z") {
                 this._forward = true;
             }
-            if (e.keyCode === 83) {
+            if (e.key === "s") {
                 this._backward = true;
             }
-            if (e.keyCode === 68) {
+            if (e.key === "d") {
                 this._right = true;
             }
-            if (e.keyCode === 65) {
+            if (e.key === "q") {
                 this._left = true;
             }
         });
         canvas.addEventListener("keyup", (e) => {
-            if (e.keyCode === 87) {
+            if (e.key === "z") {
                 this._forward = false;
             }
-            if (e.keyCode === 83) {
+            if (e.key === "s") {
                 this._backward = false;
             }
-            if (e.keyCode === 68) {
+            if (e.key === "d") {
                 this._right = false;
             }
-            if (e.keyCode === 65) {
+            if (e.key === "q") {
                 this._left = false;
             }
             if (e.keyCode === 69) {
                 this.commandWingManGoTo();
             }
+        });
+        canvas.addEventListener("pointerdown", (e) => {
+            this._shoot = true;
+        });
+        canvas.addEventListener("pointerup", (e) => {
+            this._shoot = false;
         });
         canvas.addEventListener("mouseover", (e) => {
             this._active = true;
@@ -2151,17 +2400,29 @@ class SpaceShipInputs extends SpaceShipControler {
             this.updateUI(new BABYLON.Vector2(0, 0));
             return;
         }
+        this.spaceShip.forwardInput = 0;
         if (this._forward) {
-            this._spaceShip.forward += this._forwardPow * dt;
+            this._spaceShip.forwardInput = 1;
         }
         if (this._backward) {
-            this._spaceShip.forward -= this._backwardPow * dt;
+            this._spaceShip.forwardInput = -1;
         }
+        this._spaceShip.rollInput = 0;
         if (this._right) {
-            this._spaceShip.roll += this._rollPow * dt;
+            this._spaceShip.rollInput = 1;
         }
         if (this._left) {
-            this._spaceShip.roll -= this._rollPow * dt;
+            this._spaceShip.rollInput = -1;
+        }
+        if (this._shoot) {
+            console.log("shoot");
+            let pick = this._scene.pick(this._scene.pointerX, this._scene.pointerY, (m) => {
+                return m === this._spaceShip.focalPlane;
+            });
+            if (pick.pickedPoint) {
+                let dir = pick.pickedPoint.subtract(this.spaceShip.position).normalize();
+                this.spaceShip.shoot(dir);
+            }
         }
         let w = this._canvas.width;
         let h = this._canvas.height;
@@ -2176,10 +2437,10 @@ class SpaceShipInputs extends SpaceShipControler {
             mouseInput.x = mouseInput.x / power;
             mouseInput.y = mouseInput.y / power;
         }
-        mouseInput.x = BABYLON.MathTools.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
-        mouseInput.y = BABYLON.MathTools.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
-        this._spaceShip.yaw += this._yawPow * mouseInput.x * dt;
-        this._spaceShip.pitch += this._pitchPow * mouseInput.y * dt;
+        mouseInput.x = BABYLON.Scalar.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
+        mouseInput.y = BABYLON.Scalar.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
+        this._spaceShip.yawInput = mouseInput.x;
+        this._spaceShip.pitchInput = mouseInput.y;
     }
     updateUI(mouseInput) {
         let w = this._canvas.width;
@@ -2225,12 +2486,172 @@ var IIABehaviour;
 class SpaceShipAI extends SpaceShipControler {
     constructor(spaceShip, role, team, scene) {
         super(spaceShip, role, team);
-        this._forwardPow = 10;
-        // private _backwardPow: number = 10;
-        this._rollPow = 2.5;
-        this._yawPow = 3;
-        this._pitchPow = 3;
+        this._forwardPow = 15;
         this._scene = scene;
+    }
+    static FuturePosition(spaceship, delay) {
+        let futurePosition = spaceship.localZ.clone();
+        futurePosition.scaleInPlace(spaceship.forward * delay);
+        futurePosition.addInPlace(spaceship.position);
+        return futurePosition;
+    }
+}
+/// <reference path="./SpaceShipAI.ts"/>
+class AggroTableCell {
+    constructor(spaceShipControler, aggro = 0) {
+        this.spaceShipControler = spaceShipControler;
+        this.aggro = aggro;
+    }
+}
+class AggroTable {
+    constructor() {
+        this.cells = [];
+    }
+    get length() {
+        return this.cells.length;
+    }
+    push(spaceShipControler, aggro = 0) {
+        this.cells.push(new AggroTableCell(spaceShipControler, aggro));
+    }
+    get(spaceShipControler) {
+        for (let i = 0; i < this.cells.length; i++) {
+            if (this.cells[i].spaceShipControler === spaceShipControler) {
+                return this.cells[i];
+            }
+        }
+    }
+    getAt(i) {
+        return this.cells[i];
+    }
+    remove(spaceShipControler) {
+        let index = this.indexOf(spaceShipControler);
+        if (index !== -1) {
+            this.removeAt(index);
+        }
+    }
+    removeAt(i) {
+        this.cells.splice(i, 1);
+    }
+    indexOf(spaceShipControler) {
+        for (let i = 0; i < this.cells.length; i++) {
+            if (this.cells[i].spaceShipControler === spaceShipControler) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    sortStep() {
+        for (let i = 0; i < this.cells.length - 1; i++) {
+            let c0 = this.cells[i];
+            let c1 = this.cells[i + 1];
+            if (c1.aggro > c0.aggro * 1.1) {
+                this.cells[i + 1] = c0;
+                this.cells[i] = c1;
+            }
+        }
+    }
+}
+class DefaultAI extends SpaceShipAI {
+    constructor(spaceShip, role, team, scene) {
+        super(spaceShip, role, team, scene);
+        this._updateAggroTable = () => {
+            SpaceShipControler.Instances.forEach((spaceShipControler) => {
+                if (spaceShipControler.team !== this.team) {
+                    if (this._aggroTable.indexOf(spaceShipControler) === -1) {
+                        if (spaceShipControler instanceof SpaceShipInputs) {
+                            this._aggroTable.push(spaceShipControler, 0);
+                        }
+                        else {
+                            this._aggroTable.push(spaceShipControler, 10);
+                        }
+                    }
+                }
+            });
+            let i = 0;
+            while (i < this._aggroTable.length) {
+                if (!this._aggroTable.getAt(i).spaceShipControler.spaceShip.isAlive) {
+                    this._aggroTable.removeAt(i);
+                }
+                else {
+                    i++;
+                }
+            }
+            this._aggroTable.sortStep();
+        };
+        this.escapeDistance = 150;
+        this._tmpEscapeDistance = 150;
+        this._onWound = (projectile) => {
+            let aggroCell = this._aggroTable.get(projectile.shooter.controler);
+            if (aggroCell) {
+                aggroCell.aggro += projectile.power;
+            }
+        };
+        this._mode = IIABehaviour.Follow;
+        this._aggroTable = new AggroTable();
+        spaceShip.onWoundObservable.add(this._onWound);
+    }
+    findTarget() {
+        this._updateAggroTable();
+        let cell = this._aggroTable.getAt(0);
+        if (cell) {
+            return cell.spaceShipControler;
+        }
+    }
+    projectileDuration(spaceship) {
+        let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
+        return dist / 150;
+    }
+    checkInputs(dt) {
+        let target = this.findTarget();
+        if (target) {
+            let futureTargetPosition = DefaultAI.FuturePosition(target.spaceShip, this.projectileDuration(target.spaceShip));
+            let distanceToTarget = BABYLON.Vector3.Distance(this.spaceShip.position, futureTargetPosition);
+            let directionToTarget = futureTargetPosition.subtract(this.spaceShip.position).normalize();
+            let angleToTarget = Math.acos(BABYLON.Vector3.Dot(directionToTarget, this.spaceShip.localZ));
+            // Cas "Face à la cible"
+            if (angleToTarget < Math.PI * 0.5) {
+                this._tmpEscapeDistance = this.escapeDistance;
+                if (angleToTarget < Math.PI / 16) {
+                    this.spaceShip.shoot(directionToTarget);
+                }
+                if (distanceToTarget > 20) {
+                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._inputToPosition(target.position, dt);
+                }
+                else {
+                    directionToTarget.scaleInPlace(-1);
+                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._fullThrust(dt);
+                }
+            }
+            else {
+                this._tmpEscapeDistance -= this.escapeDistance / 5 * dt;
+                if (distanceToTarget > this._tmpEscapeDistance) {
+                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._inputToPosition(target.position, dt);
+                }
+                else {
+                    directionToTarget.scaleInPlace(-1);
+                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._fullThrust(dt);
+                }
+            }
+        }
+    }
+    _inputToPosition(position, dt) {
+        let distance = BABYLON.Vector3.Distance(this._spaceShip.position, position);
+        this._spaceShip.forwardInput = distance / 50;
+    }
+    _fullThrust(dt) {
+        this._spaceShip.forwardInput = 1;
+    }
+    _inputToDirection(direction, up, dt) {
+        let angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
+        this._spaceShip.yawInput = (angleAroundY - this._spaceShip.yaw * 0.25) / Math.PI * 20;
+        let angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
+        this._spaceShip.pitchInput = (angleAroundX - this.spaceShip.pitch * 0.25) / Math.PI * 20;
+        let angleAroundZ = SpaceMath.AngleFromToAround(up, this._spaceShip.localY, this._spaceShip.localZ);
+        this._spaceShip.rollInput = (angleAroundZ - this.spaceShip.roll * 0.25) / Math.PI;
     }
 }
 class WingManAI extends SpaceShipAI {
@@ -2282,17 +2703,14 @@ class WingManAI extends SpaceShipAI {
     }
     _goTo(dt) {
         if (this._distance > 2 * this._spaceShip.forward) {
-            this._spaceShip.forward += this._forwardPow * dt;
+            this._spaceShip.forwardInput = 1;
         }
         let angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
-        let yawInput = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-        this._spaceShip.yaw += this._yawPow * yawInput * dt;
+        this._spaceShip.yawInput = angleAroundY / Math.PI;
         let angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
-        let pitchInput = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-        this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+        this._spaceShip.pitchInput = angleAroundX / Math.PI;
         let angleAroundZ = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
-        let rollInput = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-        this._spaceShip.roll += this._rollPow * rollInput * dt;
+        this._spaceShip.rollInput = angleAroundZ / Math.PI;
     }
     _findLeader() {
         for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
@@ -3022,5 +3440,50 @@ class StationSection {
                 callback();
             }
         }
+    }
+}
+class SSMeshBuilder {
+    static CreateZCircleMesh(radius, scene, color, updatable, instance) {
+        let points = [];
+        let colors = [];
+        if (!color) {
+            color = new BABYLON.Color4(1, 1, 1, 1);
+        }
+        for (let i = 0; i <= 32; i++) {
+            points.push(new BABYLON.Vector3(radius * Math.cos(i / 32 * Math.PI * 2), radius * Math.sin(i / 32 * Math.PI * 2), 0));
+            colors.push(color);
+        }
+        return BABYLON.MeshBuilder.CreateLines("zcircle", {
+            points: points,
+            colors: colors,
+            updatable: updatable,
+            instance: instance
+        }, scene);
+    }
+    static CreateZRailMesh(radiusIn, radiusOut, alphaMin, alphaMax, tesselation, scene, color, updatable, instance) {
+        let alphaLength = alphaMax - alphaMin;
+        let count = Math.round(alphaLength * 64 / (Math.PI * 2));
+        let step = alphaLength / count;
+        let points = [];
+        let colors = [];
+        if (!color) {
+            color = new BABYLON.Color4(1, 1, 1, 1);
+        }
+        for (let i = 0; i <= count; i++) {
+            points.push(new BABYLON.Vector3(radiusIn * Math.cos(alphaMin + i * step), radiusIn * Math.sin(alphaMin + i * step), 0));
+            colors.push(color);
+        }
+        for (let i = count; i >= 0; i--) {
+            points.push(new BABYLON.Vector3(radiusOut * Math.cos(alphaMin + i * step), radiusOut * Math.sin(alphaMin + i * step), 0));
+            colors.push(color);
+        }
+        points.push(points[0]);
+        colors.push(colors[0]);
+        return BABYLON.MeshBuilder.CreateLines("zcircle", {
+            points: points,
+            colors: colors,
+            updatable: updatable,
+            instance: instance
+        }, scene);
     }
 }

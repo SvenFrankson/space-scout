@@ -53,20 +53,17 @@ class WingManAI extends SpaceShipAI {
 
   private _goTo(dt: number): void {
     if (this._distance > 2 * this._spaceShip.forward) {
-      this._spaceShip.forward += this._forwardPow * dt;
+      this._spaceShip.forwardInput = 1;
     }
 
     let angleAroundY: number = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);
-    let yawInput: number = BABYLON.MathTools.Clamp(angleAroundY / Math.PI, -1, 1);
-    this._spaceShip.yaw += this._yawPow * yawInput * dt;
+    this._spaceShip.yawInput = angleAroundY / Math.PI;
 
     let angleAroundX: number = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localX);
-    let pitchInput: number = BABYLON.MathTools.Clamp(angleAroundX / Math.PI, -1, 1);
-    this._spaceShip.pitch += this._pitchPow * pitchInput * dt;
+    this._spaceShip.pitchInput = angleAroundX / Math.PI;
 
     let angleAroundZ: number = SpaceMath.AngleFromToAround(this._leader.spaceShip.localY, this._spaceShip.localY, this._spaceShip.localZ);
-    let rollInput: number = BABYLON.MathTools.Clamp(angleAroundZ / Math.PI, -1, 1);
-    this._spaceShip.roll += this._rollPow * rollInput * dt;
+    this._spaceShip.rollInput = angleAroundZ / Math.PI;
   }
 
   private _findLeader(): void {

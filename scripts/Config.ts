@@ -11,8 +11,8 @@ class Config {
 
   public static DevConfig(): void {
     Config.tmpPlayerSpeed = 20;
-    Config.activationSqrRange = 100000;
-    Config.sceneLoaderDelay = 1;
+    Config.activationSqrRange = 100;
+    Config.sceneLoaderDelay = 0;
   }
 }
 

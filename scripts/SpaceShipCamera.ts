@@ -11,7 +11,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     return this._focalLength;
   }
   public set focalLength(v: number) {
-    this._focalLength = BABYLON.MathTools.Clamp(v, 10, 1000);
+    this._focalLength = BABYLON.Scalar.Clamp(v, 10, 1000);
     if (this._spaceShip.focalPlane) {
       this._spaceShip.focalPlane.position.z = this._focalLength;
     }
@@ -81,7 +81,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
 
   public attachSpaceShipControl(canvas: HTMLCanvasElement): void {
     canvas.addEventListener("wheel", (event: MouseWheelEvent) => {
-      this.focalLength *= 1 + BABYLON.MathTools.Sign(event.wheelDeltaY) * 0.05;
+      this.focalLength *= 1 + BABYLON.Scalar.Sign(event.wheelDeltaY) * 0.05;
     });
   }
 }

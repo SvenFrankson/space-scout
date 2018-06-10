@@ -1,236 +1,317 @@
 class SpaceShip extends BABYLON.Mesh {
 
-  private _forwardDrag: number = 0.01;
-  private _backwardDrag: number = 1;
-  private _forward: number = 0;
-  public get forward(): number {
-    return this._forward;
-  }
-  public set forward(v: number) {
-    this._forward = v;
-  }
-  private _rollDrag: number = 0.9;
-  private _roll: number = 0;
-  public get roll(): number {
-    return this._roll;
-  }
-  public set roll(v: number) {
-    if (!isNaN(v)) {
-      this._roll = v;
-    }
-  }
-  private _yawDrag: number = 0.9;
-  private _yaw: number = 0;
-  public get yaw(): number {
-    return this._yaw;
-  }
-  public set yaw(v: number) {
-    if (!isNaN(v)) {
-      this._yaw = v;
-    }
-  }
-  private _pitchDrag: number = 0.9;
-  private _pitch: number = 0;
-  public get pitch(): number {
-    return this._pitch;
-  }
-  public set pitch(v: number) {
-    if (!isNaN(v)) {
-      this._pitch = v;
-    }
-  }
-  private _mesh: BABYLON.Mesh;
-  private _dt: number = 0;
-  private _rX: BABYLON.Quaternion;
-  private _rY: BABYLON.Quaternion;
-  private _rZ: BABYLON.Quaternion;
-  private _localX: BABYLON.Vector3;
-  public get localX(): BABYLON.Vector3 {
-    return this._localX;
-  }
-  private _localY: BABYLON.Vector3;
-  public get localY(): BABYLON.Vector3 {
-    return this._localY;
-  }
-  private _localZ: BABYLON.Vector3;
-  public get localZ(): BABYLON.Vector3 {
-    return this._localZ;
-  }
-  private _controler: SpaceShipControler;
-  private _colliders: Array<BABYLON.BoundingSphere> = [];
-  private _shield: Shield;
-  public wingTipRight: BABYLON.Mesh;
-  public wingTipLeft: BABYLON.Mesh;
-  public focalPlane: BABYLON.Mesh;
+	private _forwardInput: number = 0;
+	public get forwardInput(): number {
+		return this._forwardInput;
+	}
+	public set forwardInput(v: number) {
+		if (isFinite(v)) {
+			this._forwardInput = BABYLON.Scalar.Clamp(v, -1, 1);
+		}
+	}
+	private _enginePower: number = 15;
+	private _frontDrag: number = 0.01;
+	private _backDrag: number = 1;
+	private _forward: number = 0;
+	public get forward(): number {
+		return this._forward;
+	}
+	
+	private _rollInput: number = 0;
+	public get rollInput(): number {
+		return this._rollInput;
+	}
+	public set rollInput(v: number) {
+		if (isFinite(v)) {
+			this._rollInput = BABYLON.Scalar.Clamp(v, -1, 1);
+		}
+	}
+	private _rollPower: number = 2
+	private _rollDrag: number = 0.9;
+	private _roll: number = 0;
+	public get roll(): number {
+		return this._roll;
+	}
 
-  constructor(name: string, scene: BABYLON.Scene) {
-    super(name, scene);
-    this._localX = new BABYLON.Vector3(1, 0, 0);
-    this._localY = new BABYLON.Vector3(0, 1, 0);
-    this._localZ = new BABYLON.Vector3(0, 0, 1);
-    this.rotation.copyFromFloats(0, 0, 0);
-    this.rotationQuaternion = BABYLON.Quaternion.Identity();
-    this._rX = BABYLON.Quaternion.Identity();
-    this._rY = BABYLON.Quaternion.Identity();
-    this._rZ = BABYLON.Quaternion.Identity();
-    this._shield = new Shield(this);
-    this._shield.initialize();
-    this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
-    this.wingTipLeft.parent = this;
-    this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
-    this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
-    this.wingTipRight.parent = this;
-    this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
-    new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
-    new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
-    this.createColliders();
-    scene.registerBeforeRender(
-      () => {
-        this._move();
-      }
-    );
-  }
+	private _yawInput: number = 0;
+	public get yawInput(): number {
+		return this._yawInput;
+	}
+	public set yawInput(v: number) {
+		if (isFinite(v)) {
+			this._yawInput = BABYLON.Scalar.Clamp(v, -1, 1);
+		}
+	}
+	private _yawPower: number = 2
+	private _yawDrag: number = 0.9;
+	private _yaw: number = 0;
+	public get yaw(): number {
+		return this._yaw;
+	}
 
-  public initialize(
-    url: string,
-    callback?: () => void
-  ): void {
-    BABYLON.SceneLoader.ImportMesh(
-      "",
-      "./datas/" + url + ".babylon",
-      "",
-      Main.Scene,
-      (
-        meshes: Array<BABYLON.AbstractMesh>,
-        particleSystems: Array<BABYLON.ParticleSystem>,
-        skeletons: Array<BABYLON.Skeleton>
-      ) => {
-        let spaceship: BABYLON.AbstractMesh = meshes[0];
-        if (spaceship instanceof BABYLON.Mesh) {
-          spaceship.parent = this;
-          this._mesh = spaceship;
-          this._shield.parent = this._mesh;
-          this.wingTipLeft.parent = this._mesh;
-          this.wingTipRight.parent = this._mesh;
-          let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
-          spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/" + url + "-diffuse.png", Main.Scene);
-          spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
-          spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
-          spaceshipMaterial.ambientTexture.level = 2;
-          spaceship.material = spaceshipMaterial;
-          if (callback) {
-            callback();
-          }
-        }
-      }
-    );
-  }
+	private _pitchInput: number = 0;
+	public get pitchInput(): number {
+		return this._pitchInput;
+	}
+	public set pitchInput(v: number) {
+		if (isFinite(v)) {
+			this._pitchInput = BABYLON.Scalar.Clamp(v, -1, 1);
+		}
+	}
+	private _pitchPower: number = 2
+	private _pitchDrag: number = 0.9;
+	private _pitch: number = 0;
+	public get pitch(): number {
+		return this._pitch;
+	}
 
-  private createColliders(): void {
-    this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
-    this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
-  }
+	private _mesh: BABYLON.Mesh;
+	private _dt: number = 0;
+	private _rX: BABYLON.Quaternion;
+	private _rY: BABYLON.Quaternion;
+	private _rZ: BABYLON.Quaternion;
+	private _localX: BABYLON.Vector3;
+	public get localX(): BABYLON.Vector3 {
+		return this._localX;
+	}
+	private _localY: BABYLON.Vector3;
+	public get localY(): BABYLON.Vector3 {
+		return this._localY;
+	}
+	private _localZ: BABYLON.Vector3;
+	public get localZ(): BABYLON.Vector3 {
+		return this._localZ;
+	}
+	public controler: SpaceShipControler;
+	private _colliders: Array<BABYLON.BoundingSphere> = [];
+	public shield: Shield;
+	public wingTipRight: BABYLON.Mesh;
+	public wingTipLeft: BABYLON.Mesh;
+	public focalPlane: BABYLON.Mesh;
+	
+	public isAlive: boolean = true;
+	public hitPoint: number;
+	public stamina: number = 50;
+	public cooldown: number = 0.3;
+	public _cool: number = 0;
 
-  public attachControler(controler: SpaceShipControler): void {
-    this._controler = controler;
-  }
+	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
+		super(name, scene);
+		
+		this.stamina = data.stamina;
+		this._enginePower = data.enginePower;
+		this._rollPower = data.rollPower;
+		this._yawPower = data.yawPower;
+		this._pitchPower = data.pitchPower;
+		this._frontDrag = data.frontDrag;
+		this._backDrag = data.backDrag;
+		this._rollDrag = data.rollDrag;
+		this._yawDrag = data.yawDrag;
+		this._pitchDrag = data.pitchDrag;
 
-  public static CenterRadiusBoundingSphere(center: BABYLON.Vector3, radius: number): BABYLON.BoundingSphere {
-    return new BABYLON.BoundingSphere(
-      new BABYLON.Vector3(center.x, center.y - radius, center.z),
-      new BABYLON.Vector3(center.x, center.y + radius, center.z)
-    );
-  }
+		this._localX = new BABYLON.Vector3(1, 0, 0);
+		this._localY = new BABYLON.Vector3(0, 1, 0);
+		this._localZ = new BABYLON.Vector3(0, 0, 1);
+		this.rotation.copyFromFloats(0, 0, 0);
+		this.rotationQuaternion = BABYLON.Quaternion.Identity();
+		this._rX = BABYLON.Quaternion.Identity();
+		this._rY = BABYLON.Quaternion.Identity();
+		this._rZ = BABYLON.Quaternion.Identity();
+		this.shield = new Shield(this);
+		this.shield.initialize();
+		this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
+		this.wingTipLeft.parent = this;
+		this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
+		this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
+		this.wingTipRight.parent = this;
+		this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
+		new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
+		new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
+		this.hitPoint = this.stamina;
+		this.createColliders();
+		scene.registerBeforeRender(
+			() => {
+				this._move();
+			}
+		);
+	}
 
-  private _move(): void {
-    this._dt = this.getEngine().getDeltaTime() / 1000;
-    BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
-    BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
-    BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
+	public initialize(
+		url: string,
+		callback?: () => void
+	): void {
+		BABYLON.SceneLoader.ImportMesh(
+			"",
+			"./datas/" + url + ".babylon",
+			"",
+			Main.Scene,
+			(
+				meshes: Array<BABYLON.AbstractMesh>,
+				particleSystems: Array<BABYLON.ParticleSystem>,
+				skeletons: Array<BABYLON.Skeleton>
+			) => {
+				let spaceship: BABYLON.AbstractMesh = meshes[0];
+				if (spaceship instanceof BABYLON.Mesh) {
+					spaceship.parent = this;
+					this._mesh = spaceship;
+					this.shield.parent = this._mesh;
+					this.wingTipLeft.parent = this._mesh;
+					this.wingTipRight.parent = this._mesh;
+					let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
+					spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/" + url + "-diffuse.png", Main.Scene);
+					spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
+					spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
+					spaceshipMaterial.ambientTexture.level = 2;
+					spaceshipMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
+					spaceship.material = spaceshipMaterial;
+					if (callback) {
+						callback();
+					}
+				}
+			}
+		);
+	}
 
-    if (!(Main.State === State.Game)) {
-      return;
-    }
+	private createColliders(): void {
+		this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
+		this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
+	}
 
-    if (this._controler) {
-      this._controler.checkInputs(this._dt);
-    }
-    this._drag();
+	public attachControler(controler: SpaceShipControler): void {
+		this.controler = controler;
+	}
 
-    let dZ: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-    dZ.copyFromFloats(
-      this._localZ.x * this._forward * this._dt,
-      this._localZ.y * this._forward * this._dt,
-      this._localZ.z * this._forward * this._dt
-    );
-    this.position.addInPlace(dZ);
+	public static CenterRadiusBoundingSphere(center: BABYLON.Vector3, radius: number): BABYLON.BoundingSphere {
+		return new BABYLON.BoundingSphere(
+			new BABYLON.Vector3(center.x, center.y - radius, center.z),
+			new BABYLON.Vector3(center.x, center.y + radius, center.z)
+		);
+	}
 
-    BABYLON.Quaternion.RotationAxisToRef(this._localZ, - this.roll * this._dt, this._rZ);
-    this._rZ.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
+	private _move(): void {
+		this._dt = this.getEngine().getDeltaTime() / 1000;
+		BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.X, this.getWorldMatrix(), this._localX);
+		BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Y, this.getWorldMatrix(), this._localY);
+		BABYLON.Vector3.TransformNormalToRef(BABYLON.Axis.Z, this.getWorldMatrix(), this._localZ);
 
-    BABYLON.Quaternion.RotationAxisToRef(this._localY, this.yaw * this._dt, this._rY);
-    this._rY.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
+		this._cool -= this._dt;
+		this._cool = Math.max(0, this._cool);
 
-    BABYLON.Quaternion.RotationAxisToRef(this._localX, this.pitch * this._dt, this._rX);
-    this._rX.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
+		if (!(Main.State === State.Game)) {
+			return;
+		}
 
-    if (this._mesh) {
-      this._mesh.rotation.z = (-this.yaw + this._mesh.rotation.z) / 2;
-    }
+		if (this.controler) {
+			this.controler.checkInputs(this._dt);
+		}
+		if (this.isAlive) {
+			this._forward += this.forwardInput * this._enginePower * this._dt;
+			this._yaw += this.yawInput * this._yawPower * this._dt;
+			this._pitch += this.pitchInput * this._pitchPower * this._dt;
+			this._roll += this.rollInput * this._rollPower * this._dt;
+		}
+		this._drag();
 
-    this._collide();
-  }
+		let dZ: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+		dZ.copyFromFloats(
+			this._localZ.x * this._forward * this._dt,
+			this._localZ.y * this._forward * this._dt,
+			this._localZ.z * this._forward * this._dt
+		);
+		this.position.addInPlace(dZ);
 
-  private _drag(): void {
-    this.roll = this.roll * (1 - this._rollDrag * this._dt);
-    this.yaw = this.yaw * (1 - this._yawDrag * this._dt);
-    this.pitch = this.pitch * (1 - this._pitchDrag * this._dt);
+		BABYLON.Quaternion.RotationAxisToRef(this._localZ, - this.roll * this._dt, this._rZ);
+		this._rZ.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
 
-    let sqrForward: number = this.forward * this.forward;
-    if (this.forward > 0) {
-      this.forward -= this._forwardDrag * sqrForward * this._dt;
-    } else if (this.forward < 0) {
-      this.forward += this._backwardDrag * sqrForward * this._dt;
-    }
-  }
+		BABYLON.Quaternion.RotationAxisToRef(this._localY, this.yaw * this._dt, this._rY);
+		this._rY.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
 
-  private _updateColliders(): void {
-    for (let i: number = 0; i < this._colliders.length; i++) {
-      this._colliders[i]._update(this.getWorldMatrix());
-    }
-  }
+		BABYLON.Quaternion.RotationAxisToRef(this._localX, this.pitch * this._dt, this._rX);
+		this._rX.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
 
-  private _collide(): void {
-    if (this._mesh) {
-      let tmpAxis: BABYLON.Vector3 = BABYLON.Vector3.Zero();
-      let thisSphere: BABYLON.BoundingSphere = this._mesh.getBoundingInfo().boundingSphere;
-      let spheres: BABYLON.BoundingSphere[] = Obstacle.SphereInstancesFromPosition(this.position);
-      for (let i: number = 0; i < spheres.length; i++) {
-        let sphere: BABYLON.BoundingSphere = spheres[i];
-        let intersection: IIntersectionInfo = Intersection.MeshSphere(this._shield, sphere);
-        if (intersection.intersect) {
-          let forcedDisplacement: BABYLON.Vector3 = intersection.direction.multiplyByFloats(-1, -1, -1);
-          forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(intersection.depth, intersection.depth, intersection.depth));
-          this.position.addInPlace(forcedDisplacement);
-          this._shield.flashAt(intersection.point, BABYLON.Space.WORLD);
-          return;
-        }
-      }
-      for (let i: number = 0; i < Obstacle.BoxInstances.length; i++) {
-        let box: BABYLON.BoundingBox = Obstacle.BoxInstances[i][0][0][0];
-        if (Intersection.BoxSphere(box, thisSphere, tmpAxis) > 0) {
-          for (let j: number = 0; j < this._colliders.length; j++) {
-            this._updateColliders();
-            let collisionDepth: number = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
-            if (collisionDepth > 0) {
-              let forcedDisplacement: BABYLON.Vector3 = tmpAxis.normalize();
-              forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
-              this.position.addInPlace(forcedDisplacement);
-              return;
-            }
-          }
-        }
-      }
-    }
-  }
+		if (this._mesh) {
+			this._mesh.rotation.z = (-this.yaw + this._mesh.rotation.z) / 2;
+		}
+
+		this._collide();
+	}
+
+	private _drag(): void {
+		this._roll = this.roll * (1 - this._rollDrag * this._dt);
+		this._yaw = this.yaw * (1 - this._yawDrag * this._dt);
+		this._pitch = this.pitch * (1 - this._pitchDrag * this._dt);
+
+		let sqrForward: number = this.forward * this.forward;
+		if (this.forward > 0) {
+			this._forward -= this._frontDrag * sqrForward * this._dt;
+		} else if (this.forward < 0) {
+			this._forward += this._backDrag * sqrForward * this._dt;
+		}
+	}
+
+	private _updateColliders(): void {
+		for (let i: number = 0; i < this._colliders.length; i++) {
+			this._colliders[i]._update(this.getWorldMatrix());
+		}
+	}
+
+	private _collide(): void {
+		if (this._mesh) {
+			let tmpAxis: BABYLON.Vector3 = BABYLON.Vector3.Zero();
+			let thisSphere: BABYLON.BoundingSphere = this._mesh.getBoundingInfo().boundingSphere;
+			let spheres: BABYLON.BoundingSphere[] = Obstacle.SphereInstancesFromPosition(this.position);
+			for (let i: number = 0; i < spheres.length; i++) {
+				let sphere: BABYLON.BoundingSphere = spheres[i];
+				let intersection: IIntersectionInfo = Intersection.MeshSphere(this.shield, sphere);
+				if (intersection.intersect) {
+					let forcedDisplacement: BABYLON.Vector3 = intersection.direction.multiplyByFloats(-1, -1, -1);
+					forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(intersection.depth, intersection.depth, intersection.depth));
+					this.position.addInPlace(forcedDisplacement);
+					this.shield.flashAt(intersection.point, BABYLON.Space.WORLD);
+					return;
+				}
+			}
+			for (let i: number = 0; i < Obstacle.BoxInstances.length; i++) {
+				let box: BABYLON.BoundingBox = Obstacle.BoxInstances[i][0][0][0];
+				if (Intersection.BoxSphere(box, thisSphere, tmpAxis) > 0) {
+					for (let j: number = 0; j < this._colliders.length; j++) {
+						this._updateColliders();
+						let collisionDepth: number = Intersection.BoxSphere(box, this._colliders[j], tmpAxis);
+						if (collisionDepth > 0) {
+							let forcedDisplacement: BABYLON.Vector3 = tmpAxis.normalize();
+							forcedDisplacement.multiplyInPlace(new BABYLON.Vector3(collisionDepth, collisionDepth, collisionDepth));
+							this.position.addInPlace(forcedDisplacement);
+							return;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public shoot(direction: BABYLON.Vector3): void {
+		if (this._cool > 0) {
+			return;
+		}
+		this._cool = this.cooldown;
+		let dir = direction.clone();
+		if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
+			let n = BABYLON.Vector3.Cross(this.localZ, dir);
+			let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
+			BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
+		}
+		let bullet = new Projectile(dir, this);
+		bullet.instantiate();
+	}
+
+	public onWoundObservable: BABYLON.Observable<Projectile> = new BABYLON.Observable<Projectile>();
+	public wound(projectile: Projectile): void {
+		this.hitPoint -= projectile.power;
+		this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
+		this.onWoundObservable.notifyObservers(projectile);
+		if (this.hitPoint <= 0) {
+			this.hitPoint = 0;
+			this.isAlive = false;
+		}
+	}
 }

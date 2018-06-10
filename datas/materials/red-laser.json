@@ -1,0 +1,7 @@
+{
+    "diffuseColor": "#000000",
+    "specularColor": "#000000",
+    "emissiveColor": "#ffffff",
+    "diffuseTexture": "laser-red.png",
+    "emissiveTexture": "laser-red.png"
+}

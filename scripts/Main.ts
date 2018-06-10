@@ -21,9 +21,10 @@ class Main {
 	public static Engine: BABYLON.Engine;
 	public static Scene: BABYLON.Scene;
 	public static Light: BABYLON.HemisphericLight;
-	public static MenuCamera: BABYLON.FreeCamera;
+	public static MenuCamera: BABYLON.ArcRotateCamera;
 	public static GameCamera: SpaceShipCamera;
-	public static Level: ILevel;
+	public static Level: ILevel
+	public static GuiTexture: BABYLON.GUI.AdvancedDynamicTexture;
 
 	constructor(canvasElement: string) {
 		Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -33,42 +34,12 @@ class Main {
 		Main.Engine = new BABYLON.Engine(Main.Canvas, true);
 		BABYLON.Engine.ShadersRepository = "./shaders/";
 	}
-	
-	createSceneSimple(): void {
-		Main.Scene = new BABYLON.Scene(Main.Engine);
-		this.resize();
-
-		// let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-		// sun.intensity = 0.8;
-		// let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-		// cloud.intensity = 0.3;
-		// cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
-		// cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-
-		let light = new BABYLON.HemisphericLight("Light", BABYLON.Vector3.Up(), Main.Scene);
-		light.intensity = 0.7;
-
-		//Main.MenuCamera = new BABYLON.FreeCamera("MenuCamera", BABYLON.Vector3.Zero(), Main.Scene);
-		//Main.Scene.activeCamera = Main.MenuCamera;
-
-		let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
-		skybox.rotation.y = Math.PI / 2;
-		skybox.infiniteDistance = true;
-		let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
-		skyboxMaterial.backFaceCulling = false;
-		skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
-			"./datas/skyboxes/green-nebulae",
-			Main.Scene,
-			["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
-		skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-		skybox.material = skyboxMaterial;
-	}
 
 	createScene(): void {
 		Main.Scene = new BABYLON.Scene(Main.Engine);
 		this.resize();
+
+		Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
 
 		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
 		sun.intensity = 0.8;
@@ -77,9 +48,9 @@ class Main {
 		cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
 		cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
 
-		// Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
-		// Main.Scene.activeCamera = Main.MenuCamera;
-		// Main.MenuCamera.setPosition(new BABYLON.Vector3(- 160, 80, -160));
+		Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
+		Main.Scene.activeCamera = Main.MenuCamera;
+		Main.MenuCamera.setPosition(new BABYLON.Vector3(- 160, 80, -160));
 
 		let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
 		skybox.rotation.y = Math.PI / 2;
@@ -94,6 +65,10 @@ class Main {
 		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
 		skybox.material = skyboxMaterial;
+
+		new VertexDataLoader(Main.Scene);
+		new MaterialLoader(Main.Scene);
+		new SpaceshipLoader(Main.Scene);
 	}
 
 	public animate(): void {
@@ -146,8 +121,9 @@ class Main {
 	}
 
 	private static _tmpPlayer: SpaceShip;
-	public static TMPCreatePlayer(): void {
-		Main._tmpPlayer = new SpaceShip("Player", Main.Scene);
+	public static async TMPCreatePlayer(): Promise<void> {
+		let spaceshipData = await SpaceshipLoader.instance.get("scout-2");
+		Main._tmpPlayer = new SpaceShip(spaceshipData, Main.Scene);
 		Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
 		Main.GameCamera.attachSpaceShipControl(Main.Canvas);
 		Main.GameCamera.setEnabled(false);
@@ -159,6 +135,7 @@ class Main {
 				playerControl.attachControl(Main.Canvas);
 			}
 		);
+		new HUD(Main.Scene);
 	}
 	public static TMPResetPlayer(): void {
 		Main._tmpPlayer.position.copyFromFloats(0, 0, 0);
@@ -166,19 +143,16 @@ class Main {
 	}
 
 	private static _tmpWingMan: SpaceShip;
-	public static TMPCreateWingMan(): void {
-		SpaceShipFactory.AddSpaceShipToScene(
+	public static async TMPCreateWingMan(): Promise<SpaceShip> {
+		return SpaceShipFactory.AddSpaceShipToScene(
 			{
 				name: "Voyoslov",
-				url: "spaceship",
-				x: 0, y: 0, z: 30,
+				url: "scout-1",
+				x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
 				team: 0,
-				role: ISquadRole.WingMan
+				role: ISquadRole.Default
 			},
-			Main.Scene,
-			(spaceShip: SpaceShip) => {
-				Main._tmpWingMan = spaceShip;
-			}
+			Main.Scene
 		);
 	}
 	public static TMPResetWingMan(): void {
@@ -186,114 +160,40 @@ class Main {
 		Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
 	}
 
-
-	public static LogPath(): void {
-		BABYLON.SceneLoader.ImportMesh(
-			"",
-			"./work/babylon/metro-line-2.babylon",
-			"",
-			Main.Scene,
-			(meshes) => {
-				let positionsPool = [];
-				let positions = [];
-				meshes.forEach(
-					(m) => {
-						if (m.name === "001") {
-							positions[0] = m.position;
-						} else if (m.name === "002") {
-							positions[1] = m.position;
-						}
-						if (m instanceof BABYLON.Mesh) {
-							m.instances.forEach(
-								(inst) => {
-									if (inst.name === "001") {
-										positions[0] = inst.position;
-									} else if (inst.name === "002") {
-										positions[1] = inst.position;
-									}
-								}
-							)
-						}
-					}
-				)
-				meshes.forEach(
-					(m) => {
-						positionsPool.push(m.position);
-						if (m instanceof BABYLON.Mesh) {
-							m.instances.forEach(
-								(inst) => {
-									positionsPool.push(inst.position);
-								}
-							)
-						}
-					}
-				)
-				console.log("Path Length = " + positionsPool.length);
-				positionsPool.splice(positionsPool.indexOf(positions[0]), 1);
-				positionsPool.splice(positionsPool.indexOf(positions[1]), 1);
-
-				while (positionsPool.length > 0) {
-					let last = positions[positions.length - 1];
-					positionsPool.sort(
-						(a, b) => {
-							return BABYLON.Vector3.DistanceSquared(a, last) - BABYLON.Vector3.DistanceSquared(b, last);
-						}
-					)
-					positions.push(positionsPool[0]);
-					positionsPool.splice(0, 1);
-				}
-				let out = "";
-				positions.forEach(
-					(p) => {
-						out += "new BABYLON.Vector3(" + p.x + ", " + p.y + ", " + p.z + "),\n"
-					}
-				)
-				console.log(out);
-			}
-		)
+	private static _tmpRogue: SpaceShip;
+	public static async TMPCreateRogue(): Promise<SpaceShip> {
+		return SpaceShipFactory.AddSpaceShipToScene(
+			{
+				name: "Rogue",
+				url: "arrow-1",
+				x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
+				team: 1,
+				role: ISquadRole.Default
+			},
+			Main.Scene
+		);
+	}
+	public static TMPResetRogue(): void {
+		Main._tmpRogue.position.copyFromFloats(0, 0, 100);
+		Main._tmpRogue.rotationQuaternion = BABYLON.Quaternion.Identity();
 	}
 }
 
-
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
 	let game: Main = new Main("render-canvas");
-	game.createSceneSimple();
+	game.createScene();
 	game.animate();
 
-	new MeshLoader(Main.Scene);
-
-	let data: StationData = Test.TestDataTwo();
-	console.log(data);
-	let station: Station = new Station();
-	station.load(data);
-	let playerCharacter: Character = new Character(station);
-	playerCharacter.name = "character";
-	let playerCamera: PlayerCamera = new PlayerCamera(playerCharacter, Main.Scene);
-	station.instantiate(
-		Main.Scene,
-		() => {
-			station.sections[0].instantiate(
-				0,
-				() => {
-					playerCharacter.setXYH(4, 4, 2);
-					playerCharacter.instantiate();
-					playerCharacter.setSection(station.sections[0]);
-
-					let playerControl: PlayerControler = new PlayerControler(playerCamera);
-					playerControl.attachControl(Main.Canvas);
-				
-					let stationLoadManager: StationLoadManager = new StationLoadManager(playerCharacter);
-
-					
-				}
-			);
-		}
-	);
-
-	/*
 	Menu.RegisterToUI();
-	Intro.RunIntro();
-	Main.TMPCreatePlayer();
-	Main.TMPCreateWingMan();
-	*/
+	//Intro.RunIntro();
+	await Main.TMPCreatePlayer();
+	await Main.TMPCreateWingMan();
+	await Main.TMPCreateWingMan();
+	await Main.TMPCreateWingMan();
+	await Main.TMPCreateWingMan();
+	await Main.TMPCreateRogue();
+	await Main.TMPCreateRogue();
+	await Main.TMPCreateRogue();
+	await Main.TMPCreateRogue();
+    Loader.LoadScene("level-0", Main.Scene);
 });

@@ -1,0 +1,13 @@
+{
+    "model": "spaceship",
+    "stamina": 50,
+    "enginePower": 15,
+    "rollPower": 2.5,
+    "yawPower": 2.5,
+    "pitchPower": 2.5,
+    "frontDrag": 0.01,
+    "backDrag": 1,
+    "rollDrag": 2,
+    "yawDrag": 2,
+    "pitchDrag": 2
+}
