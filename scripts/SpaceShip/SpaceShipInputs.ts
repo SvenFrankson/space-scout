@@ -156,7 +156,10 @@ class SpaceShipInputs extends SpaceShipControler {
 				if (e.key === "q") {
 					this._left = false;
 				}
-				if (e.keyCode === 69) {
+				if (e.key === "e") {
+					this.lockTarget();
+				}
+				if (e.key === "a") {
 					this.commandWingManGoTo();
 				}
 			}
@@ -211,6 +214,26 @@ class SpaceShipInputs extends SpaceShipControler {
 			this._pointerCursor.rotationQuaternion.copyFrom(this._spaceShip.rotationQuaternion);
 			this._scene.beginAnimation(this._pointerDisc, 0, 60);
 			this._scene.beginAnimation(this._pointerCursor, 0, 60);
+		}
+	}
+
+	public lockTarget(): void {
+		let ray = this.spaceShip.getScene().createPickingRay(Main.Scene.pointerX, Main.Scene.pointerY, BABYLON.Matrix.Identity(), Main.Scene.activeCamera);
+		let target: SpaceShip = undefined;
+		let minSqrDist: number = Infinity;
+		for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
+			if (SpaceShipControler.Instances[i] !== this) {
+				let sqrDist: number = BABYLON.Vector3.Cross(ray.direction, SpaceShipControler.Instances[i].spaceShip.position.subtract(ray.origin)).length();
+				console.log(sqrDist);
+				if (sqrDist < minSqrDist) {
+					target = SpaceShipControler.Instances[i].spaceShip;
+					minSqrDist = sqrDist;
+				} 
+			}
+		}
+		if (target) {
+			console.log(target.name);
+			this.hud.lockedTarget = target;
 		}
 	}
 

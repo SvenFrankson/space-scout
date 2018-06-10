@@ -1,12 +1,32 @@
 class HUD {
 
+    public input: SpaceShipInputs;
     public scene: BABYLON.Scene;
     private spaceshipInfos: HUDSpaceshipInfo[] = [];
     public target0: BABYLON.GUI.Image;
     public target1: BABYLON.GUI.Image;
     public target2: BABYLON.GUI.Image;
+    private _lockedTarget: SpaceShip;
+    public get lockedTarget(): SpaceShip {
+        return this._lockedTarget;
+    }
+    public set lockedTarget(t: SpaceShip) {
+        if (t === this._lockedTarget) {
+            return;
+        }
+        if (this._lockedTarget) {
+            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; })
+            spaceshipInfo.locked = false;
+        }
+        this._lockedTarget = t;
+        if (this._lockedTarget) {
+            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; })
+            spaceshipInfo.locked = true;
+        }
+    }
 
     constructor(input: SpaceShipInputs, scene: BABYLON.Scene) {
+        this.input = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._updateSpaceshipInfos);
         let w: number = Main.Canvas.width;
@@ -18,11 +38,11 @@ class HUD {
         this.target0.width = size + "px";
         this.target0.height = size + "px";
         Main.GuiTexture.addControl(this.target0);
-        this.target1 = new BABYLON.GUI.Image("target0", "./datas/textures/hud/target2.png");
+        this.target1 = new BABYLON.GUI.Image("target1", "./datas/textures/hud/target2.png");
         this.target1.width = size / 2 + "px";
         this.target1.height = size / 2 + "px";
         Main.GuiTexture.addControl(this.target1);
-        this.target2 = new BABYLON.GUI.Image("target0", "./datas/textures/hud/target3.png");
+        this.target2 = new BABYLON.GUI.Image("target2", "./datas/textures/hud/target3.png");
         this.target2.width = size / 4 + "px";
         this.target2.height = size / 4 + "px";
         Main.GuiTexture.addControl(this.target2);
@@ -48,7 +68,7 @@ class HUD {
                     let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === spaceship; })
                     if (!spaceshipInfo) {
                         this.spaceshipInfos.push(
-                            new HUDSpaceshipInfo(spaceship)
+                            new HUDSpaceshipInfo(spaceship, this)
                         );
                     }
                 }

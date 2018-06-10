@@ -1,13 +1,25 @@
 class HUDSpaceshipInfo extends BABYLON.TransformNode {
 
+    public hud: HUD;
     public spaceship: SpaceShip;
+    private _locked: boolean = false;
+    public get locked(): boolean {
+        return this._locked;
+    }
+    public set locked(l: boolean) {
+        this._locked = l;
+        this._updateLock();
+    }
     private circle: BABYLON.LinesMesh;
+    private lockCircle: BABYLON.LinesMesh;
+    private circleNextPos: BABYLON.LinesMesh;
     private hitpointInfo: BABYLON.LinesMesh;
     private distanceInfo: BABYLON.GUI.TextBlock;
 
-    constructor(spaceship: SpaceShip) {
+    constructor(spaceship: SpaceShip, hud: HUD) {
         super("hudSpaceshipInfo", spaceship.getScene());
         this.spaceship = spaceship;
+        this.hud = hud;
         this.position = spaceship.position;
 
         this.circle = SSMeshBuilder.CreateZCircleMesh(6, spaceship.getScene());
@@ -40,6 +52,9 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
 
     public destroy(): void {
         this.dispose();
+        if (this.lockCircle) {
+            this.lockCircle.dispose();
+        }
         this.distanceInfo.dispose();
         this.spaceship.onWoundObservable.removeCallback(this.onWound);
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
@@ -48,6 +63,35 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
     private _update = () => {
         this.lookAt(this.getScene().activeCamera.position);
         this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
+        if (this.circleNextPos && this.circleNextPos.isVisible) {
+            this.circleNextPos.position = DefaultAI.FuturePosition(
+                this.spaceship,
+                this.hud.input.spaceShip.projectileDurationTo(this.spaceship)
+            );
+            this.circleNextPos.lookAt(this.getScene().activeCamera.position);
+        }
+    }
+
+    private _updateLock(): void {
+        if (this.locked) {
+            if (!this.lockCircle) {
+                this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
+                this.lockCircle.parent = this;
+            }
+            if (!this.circleNextPos) {
+                this.circleNextPos = SSMeshBuilder.CreateZCircleMesh(2, this.spaceship.getScene());
+            }
+            this.lockCircle.isVisible = true;
+            this.circleNextPos.isVisible = true;
+        }
+        else {
+            if (this.lockCircle) {
+                this.lockCircle.isVisible = false;
+            }
+            if (this.circleNextPos) {
+                this.circleNextPos.isVisible = false;
+            }
+        }
     }
 
     private onWound = () => {

@@ -97,7 +97,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public _cool: number = 0;
 
 	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
-		super(name, scene);
+		super(data.model, scene);
 		
 		this.stamina = data.stamina;
 		this._enginePower = data.enginePower;
@@ -317,6 +317,11 @@ class SpaceShip extends BABYLON.Mesh {
 		let bullet = new Projectile(dir, this);
 		bullet.instantiate();
 	}
+
+    public projectileDurationTo(spaceship: SpaceShip): number {
+        let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
+        return dist / 150;
+    }
 
 	public onWoundObservable: BABYLON.Observable<Projectile> = new BABYLON.Observable<Projectile>();
 	public wound(projectile: Projectile): void {

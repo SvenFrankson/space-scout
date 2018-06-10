@@ -116,17 +116,12 @@ class DefaultAI extends SpaceShipAI {
         }
     }
 
-    public projectileDuration(spaceship: SpaceShip): number {
-        let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
-        return dist / 150;
-    }
-
     public escapeDistance: number = 150;
     private _tmpEscapeDistance: number = 150;
     public checkInputs(dt: number): void {
         let target = this.findTarget();
         if (target) {
-            let futureTargetPosition = DefaultAI.FuturePosition(target.spaceShip, this.projectileDuration(target.spaceShip));
+            let futureTargetPosition = DefaultAI.FuturePosition(target.spaceShip, this.spaceShip.projectileDurationTo(target.spaceShip));
             let distanceToTarget = BABYLON.Vector3.Distance(this.spaceShip.position, futureTargetPosition);
             let directionToTarget = futureTargetPosition.subtract(this.spaceShip.position).normalize();
             let angleToTarget = Math.acos(BABYLON.Vector3.Dot(directionToTarget, this.spaceShip.localZ));
