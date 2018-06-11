@@ -43,8 +43,8 @@ class HUD {
         this.target1.height = size / 2 + "px";
         Main.GuiTexture.addControl(this.target1);
         this.target2 = new BABYLON.GUI.Image("target2", "./datas/textures/hud/target3.png");
-        this.target2.width = size / 4 + "px";
-        this.target2.height = size / 4 + "px";
+        this.target2.width = size / 6 + "px";
+        this.target2.height = size / 6 + "px";
         Main.GuiTexture.addControl(this.target2);
     }
 

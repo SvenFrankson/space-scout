@@ -286,8 +286,6 @@ class SpaceShipInputs extends SpaceShipControler {
 			mouseInput.y = mouseInput.y / power;
 		}
 		this.updateUI(mouseInput);
-		mouseInput.x = BABYLON.Scalar.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
-		mouseInput.y = BABYLON.Scalar.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
 		this._spaceShip.yawInput = mouseInput.x;
 		this._spaceShip.pitchInput = mouseInput.y;
 	}

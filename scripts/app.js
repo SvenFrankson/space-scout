@@ -959,8 +959,8 @@ class HUD {
         this.target1.height = size / 2 + "px";
         Main.GuiTexture.addControl(this.target1);
         this.target2 = new BABYLON.GUI.Image("target2", "./datas/textures/hud/target3.png");
-        this.target2.width = size / 4 + "px";
-        this.target2.height = size / 4 + "px";
+        this.target2.width = size / 6 + "px";
+        this.target2.height = size / 6 + "px";
         Main.GuiTexture.addControl(this.target2);
     }
     get lockedTarget() {
@@ -1325,7 +1325,7 @@ class Level0 {
                     document.getElementById("page").innerHTML = data;
                     $("#page").fadeIn(500, "linear", () => __awaiter(this, void 0, void 0, function* () {
                         yield Main.TMPCreatePlayer();
-                        yield Main.TMPCreateWingMan();
+                        //await Main.TMPCreateWingMan();
                         yield Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
                     }));
@@ -2272,18 +2272,20 @@ class SpaceShip extends BABYLON.Mesh {
         }
     }
     shoot(direction) {
-        if (this._shootCool > 0) {
-            return;
+        if (this.isAlive) {
+            if (this._shootCool > 0) {
+                return;
+            }
+            this._shootCool = this.shootCoolDown;
+            let dir = direction.clone();
+            if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
+                let n = BABYLON.Vector3.Cross(this.localZ, dir);
+                let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
+                BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
+            }
+            let bullet = new Projectile(dir, this);
+            bullet.instantiate();
         }
-        this._shootCool = this.shootCoolDown;
-        let dir = direction.clone();
-        if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
-            let n = BABYLON.Vector3.Cross(this.localZ, dir);
-            let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
-            BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
-        }
-        let bullet = new Projectile(dir, this);
-        bullet.instantiate();
     }
     projectileDurationTo(spaceship) {
         let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
@@ -2299,6 +2301,16 @@ class SpaceShip extends BABYLON.Mesh {
         if (this.hitPoint <= 0) {
             this.hitPoint = 0;
             this.isAlive = false;
+            this.impactParticle.emitter = this.position;
+            this.impactParticle.minLifeTime = 0.1;
+            this.impactParticle.maxLifeTime = 0.5;
+            this.impactParticle.manualEmitCount = 100;
+            this.impactParticle.minSize = 0.3;
+            this.impactParticle.maxSize = 0.6;
+            this.impactParticle.manualEmitCount = 4000;
+            this.impactParticle.start();
+            this.isVisible = false;
+            this._mesh.isVisible = false;
         }
     }
 }
@@ -2548,8 +2560,6 @@ class SpaceShipInputs extends SpaceShipControler {
             mouseInput.y = mouseInput.y / power;
         }
         this.updateUI(mouseInput);
-        mouseInput.x = BABYLON.Scalar.Sign(mouseInput.x) * mouseInput.x * mouseInput.x;
-        mouseInput.y = BABYLON.Scalar.Sign(mouseInput.y) * mouseInput.y * mouseInput.y;
         this._spaceShip.yawInput = mouseInput.x;
         this._spaceShip.pitchInput = mouseInput.y;
     }

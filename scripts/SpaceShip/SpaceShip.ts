@@ -310,18 +310,20 @@ class SpaceShip extends BABYLON.Mesh {
 	}
 
 	public shoot(direction: BABYLON.Vector3): void {
-		if (this._shootCool > 0) {
-			return;
+		if (this.isAlive) {
+			if (this._shootCool > 0) {
+				return;
+			}
+			this._shootCool = this.shootCoolDown;
+			let dir = direction.clone();
+			if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
+				let n = BABYLON.Vector3.Cross(this.localZ, dir);
+				let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
+				BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
+			}
+			let bullet = new Projectile(dir, this);
+			bullet.instantiate();
 		}
-		this._shootCool = this.shootCoolDown;
-		let dir = direction.clone();
-		if (SpaceMath.Angle(dir, this.localZ) > Math.PI / 16) {
-			let n = BABYLON.Vector3.Cross(this.localZ, dir);
-			let m = BABYLON.Matrix.RotationAxis(n, Math.PI / 16);
-			BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
-		}
-		let bullet = new Projectile(dir, this);
-		bullet.instantiate();
 	}
 
     public projectileDurationTo(spaceship: SpaceShip): number {
@@ -343,6 +345,16 @@ class SpaceShip extends BABYLON.Mesh {
 		if (this.hitPoint <= 0) {
 			this.hitPoint = 0;
 			this.isAlive = false;
+			this.impactParticle.emitter = this.position;
+			this.impactParticle.minLifeTime = 0.1;
+			this.impactParticle.maxLifeTime = 0.5;
+			this.impactParticle.manualEmitCount = 100;
+			this.impactParticle.minSize = 0.3;
+			this.impactParticle.maxSize = 0.6;
+			this.impactParticle.manualEmitCount = 4000;
+			this.impactParticle.start();
+			this.isVisible = false;
+			this._mesh.isVisible = false;
 		}
 	}
 }
