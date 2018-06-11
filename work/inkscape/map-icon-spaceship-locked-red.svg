@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="64"
+   height="64"
+   viewBox="0 0 16.933333 16.933334"
+   version="1.1"
+   id="svg8"
+   inkscape:version="0.92.0 r15299"
+   sodipodi:docname="map-icon-spaceship-locked-red.svg"
+   inkscape:export-filename="C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\textures\hud\map-icon-spaceship-locked-red.png"
+   inkscape:export-xdpi="96.000008"
+   inkscape:export-ydpi="96.000008">
+  <defs
+     id="defs2" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="9.3957357"
+     inkscape:cx="18.040757"
+     inkscape:cy="29.178921"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     units="px"
+     inkscape:pagecheckerboard="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1017"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-280.06665)">
+    <path
+       style="fill:#ce6454;fill-opacity:1;stroke:#ffffff;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 32 1.453125 L 24.875 27.886719 L 5.5449219 47.273438 L 32 40.226562 L 58.455078 47.273438 L 39.125 27.886719 L 32 1.453125 z M 38.5625 10.748047 L 39.998047 16.150391 A 17.774019 17.774019 0 0 1 49.773438 32 A 17.774019 17.774019 0 0 1 49.724609 32.994141 L 53.671875 36.925781 A 22.244134 22.244134 0 0 0 54.244141 32 A 22.244134 22.244134 0 0 0 38.5625 10.748047 z M 25.429688 10.771484 A 22.244134 22.244134 0 0 0 9.7558594 32 A 22.244134 22.244134 0 0 0 10.335938 36.919922 L 14.261719 33.009766 A 17.774019 17.774019 0 0 1 14.226562 32 A 17.774019 17.774019 0 0 1 24.005859 16.128906 L 25.429688 10.771484 z M 22.267578 46.855469 L 16.90625 48.302734 A 22.244134 22.244134 0 0 0 32 54.244141 A 22.244134 22.244134 0 0 0 47.101562 48.304688 L 41.742188 46.857422 A 17.774019 17.774019 0 0 1 32 49.773438 A 17.774019 17.774019 0 0 1 22.267578 46.855469 z "
+       transform="matrix(0.26458333,0,0,0.26458333,0,280.06665)"
+       id="path4557" />
+  </g>
+</svg>

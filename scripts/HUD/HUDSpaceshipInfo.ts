@@ -45,9 +45,10 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         Main.GuiTexture.addControl(this.distanceInfo);
         this.distanceInfo.linkWithMesh(distanceInfoPosition);
         this.distanceInfo.linkOffsetY = "9px";
-        this.getScene().onBeforeRenderObservable.add(this._update);
 
+        this.getScene().onBeforeRenderObservable.add(this._update);
         this.spaceship.onWoundObservable.add(this.onWound);
+        this.hud.onLockedTargetChangedObservable.add(this._updateLock);
     }
 
     public destroy(): void {
@@ -56,8 +57,9 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
-        this.spaceship.onWoundObservable.removeCallback(this.onWound);
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+        this.spaceship.onWoundObservable.removeCallback(this.onWound);
+        this.hud.onLockedTargetChangedObservable.removeCallback(this._updateLock);
     }
 
     private _update = () => {
@@ -66,14 +68,14 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         if (this.circleNextPos && this.circleNextPos.isVisible) {
             this.circleNextPos.position = DefaultAI.FuturePosition(
                 this.spaceship,
-                this.hud.input.spaceShip.projectileDurationTo(this.spaceship)
+                this.hud.player.spaceShip.projectileDurationTo(this.spaceship)
             );
             this.circleNextPos.lookAt(this.getScene().activeCamera.position);
         }
     }
 
-    private _updateLock(): void {
-        if (this.locked) {
+    private _updateLock = () => {
+        if (this.hud.lockedTarget === this.spaceship) {
             if (!this.lockCircle) {
                 this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
                 this.lockCircle.parent = this;

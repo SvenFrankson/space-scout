@@ -935,15 +935,16 @@ class PlayerControler {
 class HUD {
     constructor(input, scene) {
         this.spaceshipInfos = [];
+        this.onLockedTargetChangedObservable = new BABYLON.Observable();
         this._update = () => {
             this._updateSpaceshipInfos();
             if (this.lockedTarget) {
-                if (this.input.spaceShip.focalPlane) {
-                    this.input.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.input.spaceShip.position, this.lockedTarget.position);
+                if (this.player.spaceShip.focalPlane) {
+                    this.player.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.player.spaceShip.position, this.lockedTarget.position);
                 }
             }
         };
-        this.input = input;
+        this.player = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._update);
         let w = Main.Canvas.width;
@@ -971,15 +972,8 @@ class HUD {
         if (t === this._lockedTarget) {
             return;
         }
-        if (this._lockedTarget) {
-            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; });
-            spaceshipInfo.locked = false;
-        }
         this._lockedTarget = t;
-        if (this._lockedTarget) {
-            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; });
-            spaceshipInfo.locked = true;
-        }
+        this.onLockedTargetChangedObservable.notifyObservers(this._lockedTarget);
     }
     destroy() {
         this.scene.onBeforeRenderObservable.removeCallback(this._update);
@@ -1073,8 +1067,29 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.lookAt(this.getScene().activeCamera.position);
             this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
             if (this.circleNextPos && this.circleNextPos.isVisible) {
-                this.circleNextPos.position = DefaultAI.FuturePosition(this.spaceship, this.hud.input.spaceShip.projectileDurationTo(this.spaceship));
+                this.circleNextPos.position = DefaultAI.FuturePosition(this.spaceship, this.hud.player.spaceShip.projectileDurationTo(this.spaceship));
                 this.circleNextPos.lookAt(this.getScene().activeCamera.position);
+            }
+        };
+        this._updateLock = () => {
+            if (this.hud.lockedTarget === this.spaceship) {
+                if (!this.lockCircle) {
+                    this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
+                    this.lockCircle.parent = this;
+                }
+                if (!this.circleNextPos) {
+                    this.circleNextPos = SSMeshBuilder.CreateZCircleMesh(2, this.spaceship.getScene());
+                }
+                this.lockCircle.isVisible = true;
+                this.circleNextPos.isVisible = true;
+            }
+            else {
+                if (this.lockCircle) {
+                    this.lockCircle.isVisible = false;
+                }
+                if (this.circleNextPos) {
+                    this.circleNextPos.isVisible = false;
+                }
             }
         };
         this.onWound = () => {
@@ -1112,6 +1127,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this.distanceInfo.linkOffsetY = "9px";
         this.getScene().onBeforeRenderObservable.add(this._update);
         this.spaceship.onWoundObservable.add(this.onWound);
+        this.hud.onLockedTargetChangedObservable.add(this._updateLock);
     }
     get locked() {
         return this._locked;
@@ -1126,40 +1142,20 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
-        this.spaceship.onWoundObservable.removeCallback(this.onWound);
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
-    }
-    _updateLock() {
-        if (this.locked) {
-            if (!this.lockCircle) {
-                this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
-                this.lockCircle.parent = this;
-            }
-            if (!this.circleNextPos) {
-                this.circleNextPos = SSMeshBuilder.CreateZCircleMesh(2, this.spaceship.getScene());
-            }
-            this.lockCircle.isVisible = true;
-            this.circleNextPos.isVisible = true;
-        }
-        else {
-            if (this.lockCircle) {
-                this.lockCircle.isVisible = false;
-            }
-            if (this.circleNextPos) {
-                this.circleNextPos.isVisible = false;
-            }
-        }
+        this.spaceship.onWoundObservable.removeCallback(this.onWound);
+        this.hud.onLockedTargetChangedObservable.removeCallback(this._updateLock);
     }
 }
 class MapIcon extends BABYLON.GUI.Image {
     constructor(object, map) {
-        super("mapIcon-" + object.name, MapIcon.MapIconURLFromObject(object));
+        super("mapIcon-" + object.name, "./datas/textures/hud/map-icon-blue.png");
         this.object = object;
         this.map = map;
         this._update = () => {
-            let relPos = this.object.position.subtract(this.hud.input.spaceShip.position);
-            let angularPos = SpaceMath.Angle(relPos, this.hud.input.spaceShip.localZ) / Math.PI;
-            let rollPos = SpaceMath.AngleFromToAround(this.hud.input.spaceShip.localY, relPos, this.hud.input.spaceShip.localZ);
+            let relPos = this.object.position.subtract(this.hud.player.spaceShip.position);
+            let angularPos = SpaceMath.Angle(relPos, this.hud.player.spaceShip.localZ) / Math.PI;
+            let rollPos = SpaceMath.AngleFromToAround(this.hud.player.spaceShip.localY, relPos, this.hud.player.spaceShip.localZ);
             let iconPos = new BABYLON.Vector2(-Math.sin(rollPos) * angularPos, -Math.cos(rollPos) * angularPos);
             iconPos.scaleInPlace(2);
             let l = iconPos.length();
@@ -1169,21 +1165,44 @@ class MapIcon extends BABYLON.GUI.Image {
             this.left = Math.round(32 + 128 + iconPos.x * 128 * 0.8 - 16) + "px";
             this.top = Math.round(32 + 128 + iconPos.y * 128 * 0.8 - 16) + "px";
         };
+        this._updateIcon = () => {
+            if (this.object instanceof SpaceShip) {
+                if (this.object.controler.team === this.player.team) {
+                    if (this.object === this.hud.lockedTarget) {
+                        this.source = "./datas/textures/hud/map-icon-spaceship-locked-green.png";
+                    }
+                    else {
+                        this.source = "./datas/textures/hud/map-icon-spaceship-green.png";
+                    }
+                }
+                else {
+                    if (this.object === this.hud.lockedTarget) {
+                        this.source = "./datas/textures/hud/map-icon-spaceship-locked-red.png";
+                    }
+                    else {
+                        this.source = "./datas/textures/hud/map-icon-spaceship-red.png";
+                    }
+                }
+            }
+        };
+        this._updateIcon();
         this.width = "32px";
         this.height = "32px";
         this.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
         this.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
         Main.GuiTexture.addControl(this);
+        this.hud.onLockedTargetChangedObservable.add(this._updateIcon);
         this.object.getScene().onBeforeRenderObservable.add(this._update);
     }
     get hud() {
         return this.map.hud;
     }
-    static MapIconURLFromObject(object) {
-        return "./datas/textures/hud/map-icon-blue.png";
+    get player() {
+        return this.hud.player;
     }
     destroy() {
         this.dispose();
+        this.hud.onLockedTargetChangedObservable.removeCallback(this._updateIcon);
         this.object.getScene().onBeforeRenderObservable.removeCallback(this._update);
     }
 }
@@ -1412,7 +1431,9 @@ class Level0 {
                     document.getElementById("page").innerHTML = data;
                     $("#page").fadeIn(500, "linear", () => __awaiter(this, void 0, void 0, function* () {
                         yield Main.TMPCreatePlayer();
-                        //await Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
                     }));

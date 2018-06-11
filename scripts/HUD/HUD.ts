@@ -1,6 +1,6 @@
 class HUD {
 
-    public input: SpaceShipInputs;
+    public player: SpaceShipInputs;
     public scene: BABYLON.Scene;
 
     private spaceshipInfos: HUDSpaceshipInfo[] = [];
@@ -9,6 +9,7 @@ class HUD {
     public target0: BABYLON.GUI.Image;
     public target1: BABYLON.GUI.Image;
     public target2: BABYLON.GUI.Image;
+
     private _lockedTarget: SpaceShip;
     public get lockedTarget(): SpaceShip {
         return this._lockedTarget;
@@ -17,19 +18,13 @@ class HUD {
         if (t === this._lockedTarget) {
             return;
         }
-        if (this._lockedTarget) {
-            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; })
-            spaceshipInfo.locked = false;
-        }
         this._lockedTarget = t;
-        if (this._lockedTarget) {
-            let spaceshipInfo = this.spaceshipInfos.find(ssInfo => { return ssInfo.spaceship === this._lockedTarget; })
-            spaceshipInfo.locked = true;
-        }
+        this.onLockedTargetChangedObservable.notifyObservers(this._lockedTarget);
     }
+    public onLockedTargetChangedObservable: BABYLON.Observable<SpaceShip> = new BABYLON.Observable<SpaceShip>();
 
     constructor(input: SpaceShipInputs, scene: BABYLON.Scene) {
-        this.input = input;
+        this.player = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._update);
 
@@ -70,8 +65,8 @@ class HUD {
     private _update = () => {
         this._updateSpaceshipInfos();
         if (this.lockedTarget) {
-            if (this.input.spaceShip.focalPlane) {
-                this.input.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.input.spaceShip.position, this.lockedTarget.position);
+            if (this.player.spaceShip.focalPlane) {
+                this.player.spaceShip.focalPlane.position.z = BABYLON.Vector3.Distance(this.player.spaceShip.position, this.lockedTarget.position);
             }
         }
     }
