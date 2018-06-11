@@ -2,7 +2,10 @@ class HUD {
 
     public input: SpaceShipInputs;
     public scene: BABYLON.Scene;
+
     private spaceshipInfos: HUDSpaceshipInfo[] = [];
+    private map: HUDMap;
+
     public target0: BABYLON.GUI.Image;
     public target1: BABYLON.GUI.Image;
     public target2: BABYLON.GUI.Image;
@@ -29,6 +32,7 @@ class HUD {
         this.input = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._update);
+
         let w: number = Main.Canvas.width;
 		let h: number = Main.Canvas.height;
 		let r: number = Math.min(w, h);
@@ -46,6 +50,8 @@ class HUD {
         this.target2.width = size / 6 + "px";
         this.target2.height = size / 6 + "px";
         Main.GuiTexture.addControl(this.target2);
+
+        this.map = new HUDMap(this);
     }
 
     public destroy(): void {
@@ -58,6 +64,7 @@ class HUD {
         this.target0.dispose();
         this.target1.dispose();
         this.target2.dispose();
+        this.map.destroy();
     }
 
     private _update = () => {

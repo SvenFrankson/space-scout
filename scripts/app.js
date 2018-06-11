@@ -962,6 +962,7 @@ class HUD {
         this.target2.width = size / 6 + "px";
         this.target2.height = size / 6 + "px";
         Main.GuiTexture.addControl(this.target2);
+        this.map = new HUDMap(this);
     }
     get lockedTarget() {
         return this._lockedTarget;
@@ -990,6 +991,7 @@ class HUD {
         this.target0.dispose();
         this.target1.dispose();
         this.target2.dispose();
+        this.map.destroy();
     }
     _updateSpaceshipInfos() {
         SpaceShipControler.Instances.forEach((spaceShipControler) => {
@@ -1007,6 +1009,55 @@ class HUD {
             if (!spaceshipInfo.spaceship.isAlive) {
                 spaceshipInfo.destroy();
                 this.spaceshipInfos.splice(i, 1);
+            }
+            else {
+                i++;
+            }
+        }
+    }
+}
+class HUDMap extends BABYLON.GUI.Image {
+    constructor(hud) {
+        super("hudMap", "./datas/textures/hud/map.png");
+        this.hud = hud;
+        this.icons = [];
+        this._update = () => {
+            this._updateIcons();
+        };
+        this.width = "256px";
+        this.height = "256px";
+        this.left = "32px";
+        this.top = "32px";
+        this.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        Main.GuiTexture.addControl(this);
+        this.hud.scene.onBeforeRenderObservable.add(this._update);
+    }
+    destroy() {
+        this.dispose();
+        this.hud.scene.onBeforeRenderObservable.removeCallback(this._update);
+    }
+    _updateIcons() {
+        SpaceShipControler.Instances.forEach((spaceShipControler) => {
+            if (!(spaceShipControler instanceof SpaceShipInputs)) {
+                let spaceship = spaceShipControler.spaceShip;
+                let icon = this.icons.find(icon => { return icon.object === spaceship; });
+                if (!icon) {
+                    this.icons.push(new MapIcon(spaceship, this));
+                }
+            }
+        });
+        let i = 0;
+        while (i < this.icons.length) {
+            let icon = this.icons[i];
+            if (icon.object instanceof SpaceShip) {
+                if (!icon.object.isAlive) {
+                    icon.destroy();
+                    this.icons.splice(i, 1);
+                }
+                else {
+                    i++;
+                }
             }
             else {
                 i++;
@@ -1098,6 +1149,42 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
                 this.circleNextPos.isVisible = false;
             }
         }
+    }
+}
+class MapIcon extends BABYLON.GUI.Image {
+    constructor(object, map) {
+        super("mapIcon-" + object.name, MapIcon.MapIconURLFromObject(object));
+        this.object = object;
+        this.map = map;
+        this._update = () => {
+            let relPos = this.object.position.subtract(this.hud.input.spaceShip.position);
+            let angularPos = SpaceMath.Angle(relPos, this.hud.input.spaceShip.localZ) / Math.PI;
+            let rollPos = SpaceMath.AngleFromToAround(this.hud.input.spaceShip.localY, relPos, this.hud.input.spaceShip.localZ);
+            let iconPos = new BABYLON.Vector2(-Math.sin(rollPos) * angularPos, -Math.cos(rollPos) * angularPos);
+            iconPos.scaleInPlace(2);
+            let l = iconPos.length();
+            if (l > 1) {
+                iconPos.scaleInPlace(1 / l);
+            }
+            this.left = Math.round(32 + 128 + iconPos.x * 128 * 0.8 - 16) + "px";
+            this.top = Math.round(32 + 128 + iconPos.y * 128 * 0.8 - 16) + "px";
+        };
+        this.width = "32px";
+        this.height = "32px";
+        this.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        this.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        Main.GuiTexture.addControl(this);
+        this.object.getScene().onBeforeRenderObservable.add(this._update);
+    }
+    get hud() {
+        return this.map.hud;
+    }
+    static MapIconURLFromObject(object) {
+        return "./datas/textures/hud/map-icon-blue.png";
+    }
+    destroy() {
+        this.dispose();
+        this.object.getScene().onBeforeRenderObservable.removeCallback(this._update);
     }
 }
 class Layout {
