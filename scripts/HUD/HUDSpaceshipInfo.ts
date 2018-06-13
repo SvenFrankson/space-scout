@@ -47,7 +47,6 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this.distanceInfo.linkWithMesh(distanceInfoPosition);
         this.distanceInfo.linkOffsetY = "9px";
 
-        /*
         let aiBehaviourInfoPosition = new BABYLON.Mesh("aiBehaviourInfoPosition", this.getScene());
         aiBehaviourInfoPosition.parent = this;
         aiBehaviourInfoPosition.position.x = - 6;
@@ -57,8 +56,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this.aiBehaviourInfo.color = "white";
         Main.GuiTexture.addControl(this.aiBehaviourInfo);
         this.aiBehaviourInfo.linkWithMesh(aiBehaviourInfoPosition);
-        this.aiBehaviourInfo.linkOffsetY = "9px";
-        */
+        this.aiBehaviourInfo.linkOffsetX = "-60px";
 
         this.getScene().onBeforeRenderObservable.add(this._update);
         this.spaceship.onWoundObservable.add(this.onWound);
@@ -71,6 +69,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
+        this.aiBehaviourInfo.dispose();
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
         this.spaceship.onWoundObservable.removeCallback(this.onWound);
         this.hud.onLockedTargetChangedObservable.removeCallback(this._updateLock);
@@ -80,7 +79,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this.lookAt(this.getScene().activeCamera.position);
         this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
         if (this.spaceship.controler instanceof DefaultAI) {
-            //this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
+            this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
         }
         if (this.circleNextPos && this.circleNextPos.isVisible) {
             this.circleNextPos.position = DefaultAI.FuturePosition(

@@ -1067,7 +1067,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.lookAt(this.getScene().activeCamera.position);
             this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
             if (this.spaceship.controler instanceof DefaultAI) {
-                //this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
+                this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
             }
             if (this.circleNextPos && this.circleNextPos.isVisible) {
                 this.circleNextPos.position = DefaultAI.FuturePosition(this.spaceship, this.hud.player.spaceShip.projectileDurationTo(this.spaceship));
@@ -1128,18 +1128,16 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         Main.GuiTexture.addControl(this.distanceInfo);
         this.distanceInfo.linkWithMesh(distanceInfoPosition);
         this.distanceInfo.linkOffsetY = "9px";
-        /*
         let aiBehaviourInfoPosition = new BABYLON.Mesh("aiBehaviourInfoPosition", this.getScene());
         aiBehaviourInfoPosition.parent = this;
-        aiBehaviourInfoPosition.position.x = - 6;
+        aiBehaviourInfoPosition.position.x = -6;
         this.aiBehaviourInfo = new BABYLON.GUI.TextBlock("aiBehaviourInfo", "-");
         this.aiBehaviourInfo.fontFamily = "consolas";
         this.aiBehaviourInfo.fontSize = "12px";
         this.aiBehaviourInfo.color = "white";
         Main.GuiTexture.addControl(this.aiBehaviourInfo);
         this.aiBehaviourInfo.linkWithMesh(aiBehaviourInfoPosition);
-        this.aiBehaviourInfo.linkOffsetY = "9px";
-        */
+        this.aiBehaviourInfo.linkOffsetX = "-60px";
         this.getScene().onBeforeRenderObservable.add(this._update);
         this.spaceship.onWoundObservable.add(this.onWound);
         this.hud.onLockedTargetChangedObservable.add(this._updateLock);
@@ -1157,6 +1155,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             this.circleNextPos.dispose();
         }
         this.distanceInfo.dispose();
+        this.aiBehaviourInfo.dispose();
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
         this.spaceship.onWoundObservable.removeCallback(this.onWound);
         this.hud.onLockedTargetChangedObservable.removeCallback(this._updateLock);
@@ -2802,6 +2801,7 @@ class AggroTable {
 class DefaultAI extends SpaceShipAI {
     constructor(spaceShip, role, team, scene) {
         super(spaceShip, role, team, scene);
+        this._idlePosition = BABYLON.Vector3.Zero();
         this._updateAggroTable = () => {
             SpaceShipControler.Instances.forEach((spaceShipControler) => {
                 if (spaceShipControler.team !== this.team) {
@@ -2826,8 +2826,10 @@ class DefaultAI extends SpaceShipAI {
             }
             this._aggroTable.sortStep();
         };
+        this.idleRange = 50;
         this.escapeDistance = 150;
         this._tmpEscapeDistance = 150;
+        this._tmpDirection = BABYLON.Vector3.Zero();
         this._onWound = (projectile) => {
             let aggroCell = this._aggroTable.get(projectile.shooter.controler);
             if (aggroCell) {
@@ -2857,101 +2859,99 @@ class DefaultAI extends SpaceShipAI {
         }
         return undefined;
     }
+    throttledFindNewIdlePosition(leader) {
+        RuntimeUtils.Throttle(() => {
+            this.findNewIdlePosition(leader);
+        }, "findNewIdlePosition-" + SpaceShipControler.Instances.indexOf(this), 3000);
+    }
     findNewIdlePosition(leader) {
         if (leader) {
-            this._idlePosition = leader.position.add(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
+            this._idlePosition.copyFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).scaleInPlace(2 * this.idleRange).addInPlace(leader.position);
         }
         else {
-            this._idlePosition = this._initialPosition.add(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
+            this._idlePosition.copyFromFloats(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).scaleInPlace(2 * this.idleRange).addInPlace(this._initialPosition);
         }
     }
     checkInputs(dt) {
         let target = this.findTarget();
         if (target) {
             let futureTargetPosition = DefaultAI.FuturePosition(target.spaceShip, this.spaceShip.projectileDurationTo(target.spaceShip));
-            let distanceToTarget = BABYLON.Vector3.Distance(this.spaceShip.position, futureTargetPosition);
-            let directionToTarget = futureTargetPosition.subtract(this.spaceShip.position).normalize();
-            let angleToTarget = Math.acos(BABYLON.Vector3.Dot(directionToTarget, this.spaceShip.localZ));
+            let sqrDistanceToTarget = BABYLON.Vector3.DistanceSquared(this.spaceShip.position, futureTargetPosition);
+            this._tmpDirection.copyFrom(futureTargetPosition).subtractInPlace(this.spaceShip.position).normalize();
+            let angleToTarget = Math.acos(BABYLON.Vector3.Dot(this._tmpDirection, this.spaceShip.localZ));
             // Cas "Face à la cible"
             if (angleToTarget < Math.PI * 0.5) {
                 this._tmpEscapeDistance = this.escapeDistance;
                 if (angleToTarget < Math.PI / 16) {
-                    this.spaceShip.shoot(directionToTarget);
+                    this.spaceShip.shoot(this._tmpDirection);
                 }
-                if (distanceToTarget > 20) {
+                if (sqrDistanceToTarget > 20 * 20) {
                     this.behaviour = "Track";
-                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
                     this._inputToPosition(target.position);
                 }
                 else {
                     this.behaviour = "Escape";
-                    directionToTarget.scaleInPlace(-1);
-                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._fullThrust(dt);
+                    this._tmpDirection.scaleInPlace(-1);
+                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._fullThrust();
                 }
             }
             else {
                 this._tmpEscapeDistance -= this.escapeDistance / 5 * dt;
-                if (distanceToTarget > this._tmpEscapeDistance) {
+                if (sqrDistanceToTarget > this._tmpEscapeDistance * this._tmpEscapeDistance) {
                     this.behaviour = "Track";
-                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
+                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
                     this._inputToPosition(target.position);
                 }
                 else {
-                    directionToTarget.scaleInPlace(-1);
+                    this._tmpDirection.scaleInPlace(-1);
                     this.behaviour = "Escape";
-                    this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._fullThrust(dt);
+                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._fullThrust();
                 }
             }
         }
         else {
             let leader = this.findLeader();
             if (leader) {
-                let distanceToLeader = BABYLON.Vector3.Distance(this.position, leader.position);
-                let directionToLeader = leader.position.subtract(this.position).normalize();
-                if (distanceToLeader > 20) {
+                let sqrDistanceToLeader = BABYLON.Vector3.DistanceSquared(this.position, leader.position);
+                this._tmpDirection.copyFrom(leader.position).subtractInPlace(this.position).normalize();
+                if (sqrDistanceToLeader > this.idleRange * this.idleRange) {
                     this.behaviour = "GoTo Leader";
                     this._inputToPosition(leader.position);
-                    this._inputToDirection(directionToLeader, leader.spaceShip.localY, dt);
+                    this._inputToDirection(this._tmpDirection, leader.spaceShip.localY);
                 }
                 else {
-                    if (!this._idlePosition) {
-                        this.findNewIdlePosition(leader);
-                    }
-                    let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
-                    let directionToIdle = this._idlePosition.subtract(this.position).normalize();
-                    if (distanceToIdle < 20) {
-                        this.findNewIdlePosition(leader);
-                    }
-                    this.behaviour = "GoTo Idle";
-                    this._inputToPosition(this._idlePosition);
-                    this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+                    this._goIdle(leader);
                 }
             }
             else {
-                if (!this._idlePosition) {
-                    this.findNewIdlePosition(leader);
-                }
-                let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
-                let directionToIdle = this._idlePosition.subtract(this.position).normalize();
-                if (distanceToIdle < 20) {
-                    this.findNewIdlePosition(leader);
-                }
-                this.behaviour = "GoTo Idle";
-                this._inputToPosition(this._idlePosition);
-                this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+                this._goIdle(leader);
             }
         }
     }
+    _goIdle(leader) {
+        if (!this._idlePosition) {
+            this.findNewIdlePosition(leader);
+        }
+        let sqrDistanceToIdle = BABYLON.Vector3.DistanceSquared(this.position, this._idlePosition);
+        let directionToIdle = this._idlePosition.subtract(this.position).normalize();
+        if (sqrDistanceToIdle < this.idleRange * this.idleRange) {
+            this.throttledFindNewIdlePosition(leader);
+        }
+        this.behaviour = "GoTo Idle";
+        this._inputToPosition(this._idlePosition);
+        this._inputToDirection(directionToIdle, BABYLON.Axis.Y);
+    }
     _inputToPosition(position) {
         let distance = BABYLON.Vector3.Distance(this._spaceShip.position, position);
-        this._spaceShip.forwardInput = distance / 50;
+        this._spaceShip.forwardInput = distance / 100;
     }
-    _fullThrust(dt) {
+    _fullThrust() {
         this._spaceShip.forwardInput = 1;
     }
-    _inputToDirection(direction, up, dt) {
+    _inputToDirection(direction, up) {
         let angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localY);
         this._spaceShip.yawInput = (angleAroundY - this._spaceShip.yaw * 0.25) / Math.PI * 20;
         let angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
@@ -3748,6 +3748,38 @@ class StationSection {
         }
     }
 }
+class RuntimeUtils {
+    static NextFrame(scene, callback) {
+        let todoNextFrame = () => {
+            callback();
+            scene.unregisterAfterRender(todoNextFrame);
+        };
+        scene.registerAfterRender(todoNextFrame);
+    }
+    static Throttle(f, group, timeout = 1000) {
+        let now = (new Date()).getTime();
+        clearTimeout(RuntimeUtils.throttleTimeout);
+        if (!RuntimeUtils.throttleGroups.has(group)) {
+            f();
+            RuntimeUtils.throttleGroups.set(group, now);
+        }
+        else {
+            let lastCall = RuntimeUtils.throttleGroups.get(group);
+            if (now - lastCall > timeout) {
+                f();
+                RuntimeUtils.throttleGroups.set(group, now);
+            }
+            else {
+                RuntimeUtils.throttleTimeout = setTimeout(() => {
+                    f();
+                    RuntimeUtils.throttleGroups.set(group, (new Date()).getTime());
+                }, timeout - (now - lastCall));
+            }
+        }
+    }
+}
+RuntimeUtils.throttleTimeout = 0;
+RuntimeUtils.throttleGroups = new Map();
 class SSMeshBuilder {
     static CreateZCircleMesh(radius, scene, color, updatable, instance) {
         let points = [];
