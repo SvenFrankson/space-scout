@@ -16,8 +16,8 @@ class Level0 implements ILevel {
 								async () => {
 									await Main.TMPCreatePlayer();
 									await Main.TMPCreateWingMan();
-									await Main.TMPCreateRogue();
-									await Main.TMPCreateRogue();
+									await Main.TMPCreateWingMan();
+									await Main.TMPCreateWingMan();
 									await Main.TMPCreateRogue();
 									Loader.LoadScene("level-0", Main.Scene);
 								}

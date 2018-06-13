@@ -36,6 +36,18 @@ class SSMeshBuilder {
     ): BABYLON.LinesMesh {
         let alphaLength = alphaMax - alphaMin;
         let count = Math.round(alphaLength * 64 / (Math.PI * 2));
+        if (count < 1) {
+            return BABYLON.MeshBuilder.CreateLines(
+                "zcircle",
+                {
+                    points: [],
+                    colors: [],
+                    updatable: updatable,
+                    instance: instance
+                },
+                scene
+            ); 
+        }
         let step = alphaLength / count;
         let points: BABYLON.Vector3[] = [];
         let colors: BABYLON.Color4[] = [];

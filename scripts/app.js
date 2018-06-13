@@ -1066,6 +1066,9 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this._update = () => {
             this.lookAt(this.getScene().activeCamera.position);
             this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
+            if (this.spaceship.controler instanceof DefaultAI) {
+                //this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
+            }
             if (this.circleNextPos && this.circleNextPos.isVisible) {
                 this.circleNextPos.position = DefaultAI.FuturePosition(this.spaceship, this.hud.player.spaceShip.projectileDurationTo(this.spaceship));
                 this.circleNextPos.lookAt(this.getScene().activeCamera.position);
@@ -1125,6 +1128,18 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         Main.GuiTexture.addControl(this.distanceInfo);
         this.distanceInfo.linkWithMesh(distanceInfoPosition);
         this.distanceInfo.linkOffsetY = "9px";
+        /*
+        let aiBehaviourInfoPosition = new BABYLON.Mesh("aiBehaviourInfoPosition", this.getScene());
+        aiBehaviourInfoPosition.parent = this;
+        aiBehaviourInfoPosition.position.x = - 6;
+        this.aiBehaviourInfo = new BABYLON.GUI.TextBlock("aiBehaviourInfo", "-");
+        this.aiBehaviourInfo.fontFamily = "consolas";
+        this.aiBehaviourInfo.fontSize = "12px";
+        this.aiBehaviourInfo.color = "white";
+        Main.GuiTexture.addControl(this.aiBehaviourInfo);
+        this.aiBehaviourInfo.linkWithMesh(aiBehaviourInfoPosition);
+        this.aiBehaviourInfo.linkOffsetY = "9px";
+        */
         this.getScene().onBeforeRenderObservable.add(this._update);
         this.spaceship.onWoundObservable.add(this.onWound);
         this.hud.onLockedTargetChangedObservable.add(this._updateLock);
@@ -1432,8 +1447,8 @@ class Level0 {
                     $("#page").fadeIn(500, "linear", () => __awaiter(this, void 0, void 0, function* () {
                         yield Main.TMPCreatePlayer();
                         yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
                         yield Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
                     }));
@@ -2819,6 +2834,7 @@ class DefaultAI extends SpaceShipAI {
                 aggroCell.aggro += projectile.power;
             }
         };
+        this._initialPosition = spaceShip.position.clone();
         this._mode = IIABehaviour.Follow;
         this._aggroTable = new AggroTable();
         spaceShip.onWoundObservable.add(this._onWound);
@@ -2828,6 +2844,25 @@ class DefaultAI extends SpaceShipAI {
         let cell = this._aggroTable.getAt(0);
         if (cell) {
             return cell.spaceShipControler;
+        }
+    }
+    findLeader() {
+        for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
+            let spaceshipControler = SpaceShipControler.Instances[i];
+            if (spaceshipControler !== this) {
+                if (spaceshipControler.team === this.team) {
+                    return spaceshipControler;
+                }
+            }
+        }
+        return undefined;
+    }
+    findNewIdlePosition(leader) {
+        if (leader) {
+            this._idlePosition = leader.position.add(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
+        }
+        else {
+            this._idlePosition = this._initialPosition.add(new BABYLON.Vector3(Math.random() * 30 - 15, Math.random() * 30 - 15, Math.random() * 30 - 15));
         }
     }
     checkInputs(dt) {
@@ -2844,10 +2879,12 @@ class DefaultAI extends SpaceShipAI {
                     this.spaceShip.shoot(directionToTarget);
                 }
                 if (distanceToTarget > 20) {
+                    this.behaviour = "Track";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._inputToPosition(target.position, dt);
+                    this._inputToPosition(target.position);
                 }
                 else {
+                    this.behaviour = "Escape";
                     directionToTarget.scaleInPlace(-1);
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
                     this._fullThrust(dt);
@@ -2856,18 +2893,58 @@ class DefaultAI extends SpaceShipAI {
             else {
                 this._tmpEscapeDistance -= this.escapeDistance / 5 * dt;
                 if (distanceToTarget > this._tmpEscapeDistance) {
+                    this.behaviour = "Track";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._inputToPosition(target.position, dt);
+                    this._inputToPosition(target.position);
                 }
                 else {
                     directionToTarget.scaleInPlace(-1);
+                    this.behaviour = "Escape";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
                     this._fullThrust(dt);
                 }
             }
         }
+        else {
+            let leader = this.findLeader();
+            if (leader) {
+                let distanceToLeader = BABYLON.Vector3.Distance(this.position, leader.position);
+                let directionToLeader = leader.position.subtract(this.position).normalize();
+                if (distanceToLeader > 20) {
+                    this.behaviour = "GoTo Leader";
+                    this._inputToPosition(leader.position);
+                    this._inputToDirection(directionToLeader, leader.spaceShip.localY, dt);
+                }
+                else {
+                    if (!this._idlePosition) {
+                        this.findNewIdlePosition(leader);
+                    }
+                    let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
+                    let directionToIdle = this._idlePosition.subtract(this.position).normalize();
+                    if (distanceToIdle < 20) {
+                        this.findNewIdlePosition(leader);
+                    }
+                    this.behaviour = "GoTo Idle";
+                    this._inputToPosition(this._idlePosition);
+                    this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+                }
+            }
+            else {
+                if (!this._idlePosition) {
+                    this.findNewIdlePosition(leader);
+                }
+                let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
+                let directionToIdle = this._idlePosition.subtract(this.position).normalize();
+                if (distanceToIdle < 20) {
+                    this.findNewIdlePosition(leader);
+                }
+                this.behaviour = "GoTo Idle";
+                this._inputToPosition(this._idlePosition);
+                this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+            }
+        }
     }
-    _inputToPosition(position, dt) {
+    _inputToPosition(position) {
         let distance = BABYLON.Vector3.Distance(this._spaceShip.position, position);
         this._spaceShip.forwardInput = distance / 50;
     }
@@ -3692,6 +3769,14 @@ class SSMeshBuilder {
     static CreateZRailMesh(radiusIn, radiusOut, alphaMin, alphaMax, tesselation, scene, color, updatable, instance) {
         let alphaLength = alphaMax - alphaMin;
         let count = Math.round(alphaLength * 64 / (Math.PI * 2));
+        if (count < 1) {
+            return BABYLON.MeshBuilder.CreateLines("zcircle", {
+                points: [],
+                colors: [],
+                updatable: updatable,
+                instance: instance
+            }, scene);
+        }
         let step = alphaLength / count;
         let points = [];
         let colors = [];

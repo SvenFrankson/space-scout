@@ -16,7 +16,7 @@
    id="svg8"
    inkscape:version="0.92.0 r15299"
    sodipodi:docname="map-icon-spaceship-green.svg"
-   inkscape:export-filename="C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\textures\hud\map-icon-spaceship-red.png"
+   inkscape:export-filename="C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\textures\hud\map-icon-spaceship-green.png"
    inkscape:export-xdpi="96.000008"
    inkscape:export-ydpi="96.000008">
   <defs
@@ -60,7 +60,7 @@
      transform="translate(0,-280.06665)">
     <path
        sodipodi:type="star"
-       style="fill:#ce6454;fill-opacity:1;stroke:#ffffff;stroke-width:0.43701139;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       style="fill:#5fce54;fill-opacity:1;stroke:#ffffff;stroke-width:0.43701139;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="path4493"
        sodipodi:sides="3"
        sodipodi:cx="8.6169405"

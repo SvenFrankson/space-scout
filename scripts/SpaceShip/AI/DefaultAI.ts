@@ -73,9 +73,13 @@ class AggroTable {
 class DefaultAI extends SpaceShipAI {
 
     private _aggroTable: AggroTable;
+    private _initialPosition: BABYLON.Vector3;
+    private _idlePosition: BABYLON.Vector3;
+    public behaviour: string;
 
     constructor(spaceShip: SpaceShip, role: ISquadRole, team: number, scene: BABYLON.Scene) {
         super(spaceShip, role, team, scene);
+        this._initialPosition = spaceShip.position.clone();
         this._mode = IIABehaviour.Follow;
         this._aggroTable = new AggroTable();
         spaceShip.onWoundObservable.add(this._onWound);
@@ -116,6 +120,39 @@ class DefaultAI extends SpaceShipAI {
         }
     }
 
+    public findLeader(): SpaceShipControler {
+        for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
+            let spaceshipControler = SpaceShipControler.Instances[i];
+            if (spaceshipControler !== this) {
+                if (spaceshipControler.team === this.team) {
+                    return spaceshipControler;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    public findNewIdlePosition(leader: SpaceShipControler): void {
+        if (leader) {
+            this._idlePosition = leader.position.add(
+                new BABYLON.Vector3(
+                    Math.random() * 30 - 15,
+                    Math.random() * 30 - 15,
+                    Math.random() * 30 - 15
+                )
+            )
+        }
+        else {
+            this._idlePosition = this._initialPosition.add(
+                new BABYLON.Vector3(
+                    Math.random() * 30 - 15,
+                    Math.random() * 30 - 15,
+                    Math.random() * 30 - 15
+                )
+            )
+        }
+    }
+
     public escapeDistance: number = 150;
     private _tmpEscapeDistance: number = 150;
     public checkInputs(dt: number): void {
@@ -132,10 +169,12 @@ class DefaultAI extends SpaceShipAI {
                     this.spaceShip.shoot(directionToTarget);
                 }
                 if (distanceToTarget > 20) {
+                    this.behaviour = "Track";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._inputToPosition(target.position, dt);
+                    this._inputToPosition(target.position);
                 }
                 else {
+                    this.behaviour = "Escape";
                     directionToTarget.scaleInPlace(-1);
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
                     this._fullThrust(dt);
@@ -145,19 +184,59 @@ class DefaultAI extends SpaceShipAI {
             else {
                 this._tmpEscapeDistance -= this.escapeDistance / 5 * dt;
                 if (distanceToTarget > this._tmpEscapeDistance) {
+                    this.behaviour = "Track";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
-                    this._inputToPosition(target.position, dt);
+                    this._inputToPosition(target.position);
                 }
                 else {
                     directionToTarget.scaleInPlace(-1);
+                    this.behaviour = "Escape";
                     this._inputToDirection(directionToTarget, target.spaceShip.localY, dt);
                     this._fullThrust(dt);
                 }
             }
         }
+        else {
+            let leader = this.findLeader();
+            if (leader) {
+                let distanceToLeader = BABYLON.Vector3.Distance(this.position, leader.position);
+                let directionToLeader = leader.position.subtract(this.position).normalize();
+                if (distanceToLeader > 20) {
+                    this.behaviour = "GoTo Leader";
+                    this._inputToPosition(leader.position);
+                    this._inputToDirection(directionToLeader, leader.spaceShip.localY, dt);
+                }
+                else {
+                    if (!this._idlePosition) {
+                        this.findNewIdlePosition(leader);
+                    }
+                    let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
+                    let directionToIdle = this._idlePosition.subtract(this.position).normalize();
+                    if (distanceToIdle < 20) {
+                        this.findNewIdlePosition(leader);
+                    }
+                    this.behaviour = "GoTo Idle";
+                    this._inputToPosition(this._idlePosition);
+                    this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+                }
+            }
+            else {
+                if (!this._idlePosition) {
+                    this.findNewIdlePosition(leader);
+                }
+                let distanceToIdle = BABYLON.Vector3.Distance(this.position, this._idlePosition);
+                let directionToIdle = this._idlePosition.subtract(this.position).normalize();
+                if (distanceToIdle < 20) {
+                    this.findNewIdlePosition(leader);
+                }
+                this.behaviour = "GoTo Idle";
+                this._inputToPosition(this._idlePosition);
+                this._inputToDirection(directionToIdle, BABYLON.Vector3.Up(), dt);
+            }
+        }
     }
 
-    private _inputToPosition(position: BABYLON.Vector3, dt: number): void {
+    private _inputToPosition(position: BABYLON.Vector3): void {
         let distance = BABYLON.Vector3.Distance(this._spaceShip.position, position);
         this._spaceShip.forwardInput = distance / 50;
     }
