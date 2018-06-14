@@ -207,6 +207,7 @@ class Main {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
         Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
+        Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
         let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
         sun.intensity = 0.8;
         let cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
@@ -287,7 +288,7 @@ class Main {
     static TMPCreateWingMan() {
         return __awaiter(this, void 0, void 0, function* () {
             return SpaceShipFactory.AddSpaceShipToScene({
-                name: "Voyoslov",
+                name: "Wingman",
                 url: "scout-1",
                 x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
                 team: 0,
@@ -1448,6 +1449,26 @@ class Level0 {
                         yield Main.TMPCreateWingMan();
                         yield Main.TMPCreateWingMan();
                         yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateWingMan();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
+                        yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
                     }));
@@ -2149,7 +2170,7 @@ class Projectile extends BABYLON.Mesh {
 }
 class SpaceShip extends BABYLON.Mesh {
     constructor(data, scene) {
-        super(data.model, scene);
+        super("spaceship", scene);
         this._forwardInput = 0;
         this._enginePower = 15;
         this._frontDrag = 0.01;
@@ -2414,25 +2435,28 @@ class SpaceShip extends BABYLON.Mesh {
         return dist / this.shootSpeed;
     }
     wound(projectile) {
-        this.hitPoint -= projectile.power;
-        this.impactParticle.emitter = projectile.position.clone();
-        this.impactParticle.manualEmitCount = 100;
-        this.impactParticle.start();
-        this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
-        this.onWoundObservable.notifyObservers(projectile);
-        if (this.hitPoint <= 0) {
-            this.hitPoint = 0;
-            this.isAlive = false;
-            this.impactParticle.emitter = this.position;
-            this.impactParticle.minLifeTime = 0.1;
-            this.impactParticle.maxLifeTime = 0.5;
+        if (this.isAlive) {
+            this.hitPoint -= projectile.power;
+            this.impactParticle.emitter = projectile.position.clone();
             this.impactParticle.manualEmitCount = 100;
-            this.impactParticle.minSize = 0.3;
-            this.impactParticle.maxSize = 0.6;
-            this.impactParticle.manualEmitCount = 4000;
             this.impactParticle.start();
-            this.isVisible = false;
-            this._mesh.isVisible = false;
+            this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
+            this.onWoundObservable.notifyObservers(projectile);
+            if (this.hitPoint <= 0) {
+                Main.Loger.log(projectile.shooter.name + " killed " + this.name);
+                this.hitPoint = 0;
+                this.isAlive = false;
+                this.impactParticle.emitter = this.position;
+                this.impactParticle.minLifeTime = 0.1;
+                this.impactParticle.maxLifeTime = 0.5;
+                this.impactParticle.manualEmitCount = 100;
+                this.impactParticle.minSize = 0.3;
+                this.impactParticle.maxSize = 0.6;
+                this.impactParticle.manualEmitCount = 4000;
+                this.impactParticle.start();
+                this.isVisible = false;
+                this._mesh.isVisible = false;
+            }
         }
     }
 }
@@ -2468,6 +2492,7 @@ class SpaceShipFactory {
         return __awaiter(this, void 0, void 0, function* () {
             let spaceshipData = yield SpaceshipLoader.instance.get(data.url);
             let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
+            spaceShip.name = data.name;
             spaceShip.initialize(spaceshipData.model, () => {
                 let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
                 spaceShip.attachControler(spaceshipAI);
@@ -3780,6 +3805,85 @@ class RuntimeUtils {
 }
 RuntimeUtils.throttleTimeout = 0;
 RuntimeUtils.throttleGroups = new Map();
+class ScreenLogerLine extends BABYLON.GUI.TextBlock {
+    constructor(text, duration = 30, screenLogger) {
+        super("text-line", "\t" + text);
+        this.duration = duration;
+        this.lifetime = 0;
+        this.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.height = "0px";
+        this.top = "0px";
+        this.paddingLeft = screenLogger.lineHeight + "px";
+        this.fontSize = Math.floor(this.heightInPixels * 0.8) + "px";
+        this.fontFamily = "Courier New";
+        this.color = screenLogger.color;
+        //this.outlineColor = screenLogger.outlineColor;
+        //this.outlineWidth = 3;
+        screenLogger.guiTexture.addControl(this);
+    }
+}
+class ScreenLoger {
+    constructor(scene, guiTexture) {
+        this.scene = scene;
+        this.guiTexture = guiTexture;
+        this.maxLines = 10;
+        this.lines = [];
+        this.lineHeight = 18;
+        this.color = "white";
+        this.outlineColor = "black";
+        this.slideDuration = 0.2;
+        this._update = () => {
+            let dt = this.scene.getEngine().getDeltaTime() / 1000;
+            for (let i = 0; i < this.lines.length; i++) {
+                this.lines[i].lifetime += dt;
+            }
+            let i = 0;
+            while (i < this.lines.length) {
+                let line = this.lines[i];
+                if (line.lifetime > line.duration) {
+                    this.lines.splice(i, 1);
+                    line.dispose();
+                }
+                else {
+                    i++;
+                }
+            }
+            while (this.lines.length > this.maxLines) {
+                let line = this.lines.pop();
+                if (line) {
+                    line.dispose();
+                }
+            }
+            let y = -this.lineHeight;
+            for (let i = 0; i < this.lines.length; i++) {
+                let line = this.lines[i];
+                if (line.lifetime < this.slideDuration) {
+                    line.height = Math.round(this.lineHeight * line.lifetime / this.slideDuration) + "px";
+                    line.fontSize = Math.floor(line.heightInPixels * 0.8) + "px";
+                }
+                else if (line.lifetime > line.duration - this.slideDuration) {
+                    line.height = Math.round(this.lineHeight * (line.duration - line.lifetime) / this.slideDuration) + "px";
+                    line.fontSize = Math.floor(line.heightInPixels * 0.8) + "px";
+                }
+                else if (line.heightInPixels !== this.lineHeight) {
+                    line.height = this.lineHeight + "px";
+                    line.fontSize = Math.floor(line.heightInPixels * 0.8) + "px";
+                }
+                line.top = y + "px";
+                y -= line.heightInPixels;
+            }
+        };
+        ScreenLoger.instance = this;
+        scene.onBeforeRenderObservable.add(this._update);
+        this.maxLines = Math.floor(guiTexture.getSize().height / this.lineHeight * 0.6 - 2);
+        this.log("Max lines = " + this.maxLines);
+    }
+    log(text, duration) {
+        this.lines.splice(0, 0, new ScreenLogerLine(text, duration, this));
+    }
+}
 class SSMeshBuilder {
     static CreateZCircleMesh(radius, scene, color, updatable, instance) {
         let points = [];

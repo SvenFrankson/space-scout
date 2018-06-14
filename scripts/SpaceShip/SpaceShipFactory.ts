@@ -21,6 +21,7 @@ class SpaceShipFactory {
 	): Promise<SpaceShip> {
 		let spaceshipData = await SpaceshipLoader.instance.get(data.url);
 		let spaceShip: SpaceShip = new SpaceShip(spaceshipData, Main.Scene);
+		spaceShip.name = data.name;
 		spaceShip.initialize(
 			spaceshipData.model,
 			() => {

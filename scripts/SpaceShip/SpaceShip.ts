@@ -100,7 +100,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public _shootCool: number = 0;
 
 	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
-		super(data.model, scene);
+		super("spaceship", scene);
 		
 		this.stamina = data.stamina;
 		this._enginePower = data.enginePower;
@@ -333,28 +333,31 @@ class SpaceShip extends BABYLON.Mesh {
 
 	public onWoundObservable: BABYLON.Observable<Projectile> = new BABYLON.Observable<Projectile>();
 	public wound(projectile: Projectile): void {
-		this.hitPoint -= projectile.power;
-		
-		this.impactParticle.emitter = projectile.position.clone();
-		this.impactParticle.manualEmitCount = 100;
-		this.impactParticle.start();
-
-		this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
-
-		this.onWoundObservable.notifyObservers(projectile);
-		if (this.hitPoint <= 0) {
-			this.hitPoint = 0;
-			this.isAlive = false;
-			this.impactParticle.emitter = this.position;
-			this.impactParticle.minLifeTime = 0.1;
-			this.impactParticle.maxLifeTime = 0.5;
+		if (this.isAlive) {
+			this.hitPoint -= projectile.power;
+			
+			this.impactParticle.emitter = projectile.position.clone();
 			this.impactParticle.manualEmitCount = 100;
-			this.impactParticle.minSize = 0.3;
-			this.impactParticle.maxSize = 0.6;
-			this.impactParticle.manualEmitCount = 4000;
 			this.impactParticle.start();
-			this.isVisible = false;
-			this._mesh.isVisible = false;
+	
+			this.shield.flashAt(projectile.position, BABYLON.Space.WORLD);
+	
+			this.onWoundObservable.notifyObservers(projectile);
+			if (this.hitPoint <= 0) {
+				Main.Loger.log(projectile.shooter.name + " killed " + this.name);
+				this.hitPoint = 0;
+				this.isAlive = false;
+				this.impactParticle.emitter = this.position;
+				this.impactParticle.minLifeTime = 0.1;
+				this.impactParticle.maxLifeTime = 0.5;
+				this.impactParticle.manualEmitCount = 100;
+				this.impactParticle.minSize = 0.3;
+				this.impactParticle.maxSize = 0.6;
+				this.impactParticle.manualEmitCount = 4000;
+				this.impactParticle.start();
+				this.isVisible = false;
+				this._mesh.isVisible = false;
+			}
 		}
 	}
 }

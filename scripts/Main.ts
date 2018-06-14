@@ -25,6 +25,7 @@ class Main {
 	public static GameCamera: SpaceShipCamera;
 	public static Level: ILevel
 	public static GuiTexture: BABYLON.GUI.AdvancedDynamicTexture;
+	public static Loger: ScreenLoger;
 
 	constructor(canvasElement: string) {
 		Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -37,6 +38,8 @@ class Main {
 		this.resize();
 
 		Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
+
+		Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
 
 		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
 		sun.intensity = 0.8;
@@ -136,7 +139,7 @@ class Main {
 	public static async TMPCreateWingMan(): Promise<SpaceShip> {
 		return SpaceShipFactory.AddSpaceShipToScene(
 			{
-				name: "Voyoslov",
+				name: "Wingman",
 				url: "scout-1",
 				x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
 				team: 0,
