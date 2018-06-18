@@ -27,6 +27,7 @@ class Route {
             )
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
             let body = await SpaceShipFactory.LoadSpaceshipPart("body-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            body.parent = test;
             let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-1", Main.Scene, "#ffffff", detailColor.toHexString());
             wingL.parent = body;
             wingL.position.copyFromFloats(- 0.55, 0, -0.4);
@@ -34,6 +35,15 @@ class Route {
             wingR.parent = body;
             wingR.position.copyFromFloats(0.55, 0, -0.4);
             wingR.scaling.x = -1;
+            let canonL = await SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            canonL.parent = wingL;
+            canonL.position.copyFromFloats(- 0.94, 0.06, - 0.1);
+            let canonR = await SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            canonR.parent = wingR;
+            canonR.position.copyFromFloats(- 0.94, 0.06, - 0.1);
+            let engine = await SpaceShipFactory.LoadSpaceshipPart("engine-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            engine.parent = body;
+            engine.position.copyFromFloats(0, 0, -1);
             $("#page").hide();
         }
     }
