@@ -74,10 +74,8 @@ class Level0 implements ILevel {
 							if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < Config.activationSqrRange) {
 								emit.activate();
 								scene.unregisterBeforeRender(beaconCheck);
-								Comlink.Display(
-									"MotherShip",
-									this.dialogs[BeaconEmiter.activatedCount - 1],
-									"aff9ff"
+								HUDComlink.display(
+									this.dialogs[BeaconEmiter.activatedCount - 1]
 								);
 								if (BeaconEmiter.activatedCount === 4) {
 									this.Win();
@@ -101,7 +99,7 @@ class Level0 implements ILevel {
 		for (let i: number = 0; i < this.introDialogs.length; i++) {
 			setTimeout(
 				() => {
-					Comlink.Display("MotherShip", this.introDialogs[i], "aff9ff");
+					HUDComlink.display(this.introDialogs[i]);
 				},
 				delay
 			);
@@ -110,7 +108,7 @@ class Level0 implements ILevel {
 		for (let i: number = 0; i < this.tipDialogs.length; i++) {
 			setTimeout(
 				() => {
-					Comlink.Display("Voyoslov", this.tipDialogs[i], "ffffff");
+					HUDComlink.display(this.tipDialogs[i]);
 				},
 				delay
 			);
@@ -122,11 +120,7 @@ class Level0 implements ILevel {
 		let time: number = (new Date()).getTime() - Main.playStart;
 		setTimeout(
 			() => {
-				Comlink.Display(
-					"MotherShip",
-					this.dialogs[4],
-					"aff9ff"
-				);
+				HUDComlink.display(this.dialogs[4]);
 				setTimeout(
 					() => {
 						$("#game-over-time-value").text((time / 1000).toFixed(0) + " sec");

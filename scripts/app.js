@@ -86,24 +86,6 @@ class BeaconEmiter extends BABYLON.Mesh {
 }
 BeaconEmiter.Instances = [];
 BeaconEmiter.activatedCount = 0;
-class Comlink {
-    static Display(sender, line, hexColor = "ffffff", delay = 10000) {
-        let id = "com-link-line-" + Comlink._lineCount;
-        Comlink._lineCount++;
-        $("#com-link").append("<div id='" + id + "' class='row'>" +
-            "<div class='col-xs-2 no-click'>[" + sender + "]</div>" +
-            "<div class='col-xs-10 no-click'>" + line + "</div>" +
-            "</div>");
-        $("#" + id).css("color", "#" + hexColor);
-        setTimeout(() => {
-            $("#" + id).remove();
-        }, delay);
-        while ($("#com-link").children().length > 4) {
-            $("#com-link").children().get(0).remove();
-        }
-    }
-}
-Comlink._lineCount = 0;
 class Config {
     static ProdConfig() {
         Config.tmpPlayerSpeed = 10;
@@ -207,22 +189,82 @@ class Main {
         Main.Scene = new BABYLON.Scene(Main.Engine);
         this.resize();
         Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
+        Main.GuiTexture.layer.layerMask = 2;
         Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
-        let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-        sun.intensity = 0.8;
-        let cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
+        let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.4, -0.4, -0.4), Main.Scene);
+        sun.intensity = 1;
+        /*
+        let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
         cloud.intensity = 0.3;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+        */
         Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Scene.activeCamera = Main.MenuCamera;
-        Main.MenuCamera.setPosition(new BABYLON.Vector3(-160, 80, -160));
+        Main.MenuCamera.setPosition(new BABYLON.Vector3(-3, 3, -3));
+        Main.MenuCamera.attachControl(Main.Canvas);
+        Main.GUICamera = new BABYLON.Camera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
+        Main.GUICamera.layerMask = 2;
+        BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
+			#ifdef GL_ES
+			precision highp float;
+			#endif
+			varying vec2 vUV;
+			uniform sampler2D textureSampler;
+
+			uniform float 		width;
+			uniform float 		height;
+
+			void make_kernel(inout vec4 n[9], sampler2D tex, vec2 coord)
+			{
+				float w = 1.0 / width;
+				float h = 1.0 / height;
+
+				n[0] = texture2D(tex, coord + vec2( -w, -h));
+				n[1] = texture2D(tex, coord + vec2(0.0, -h));
+				n[2] = texture2D(tex, coord + vec2(  w, -h));
+				n[3] = texture2D(tex, coord + vec2( -w, 0.0));
+				n[4] = texture2D(tex, coord);
+				n[5] = texture2D(tex, coord + vec2(  w, 0.0));
+				n[6] = texture2D(tex, coord + vec2( -w, h));
+				n[7] = texture2D(tex, coord + vec2(0.0, h));
+				n[8] = texture2D(tex, coord + vec2(  w, h));
+			}
+
+			void main(void) 
+			{
+				vec4 n[9];
+				make_kernel( n, textureSampler, vUV );
+
+				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
+				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
+				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
+
+				if (max (max (sobel.r, sobel.g), sobel.b) < 0.2) {
+					gl_FragColor = n[4];
+				} else {
+					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+				}
+			}
+		`;
+        /*
+        let testLight = new BABYLON.PointLight("testLight", BABYLON.Vector3.One().scale(0.5), Main.Scene);
+        testLight.intensity = 5;
+        testLight.range = 100;
+        Main.Scene.registerBeforeRender(
+            () => {
+                testLight.position.copyFrom(Main.MenuCamera.position);
+            }
+        )
+        */
         let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+        skybox.layerMask = 1;
         skybox.rotation.y = Math.PI / 2;
         skybox.infiniteDistance = true;
         let skyboxMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
         skyboxMaterial.backFaceCulling = false;
-        skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("./datas/skyboxes/green-nebulae", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+        Main.EnvironmentTexture = new BABYLON.CubeTexture("./datas/skyboxes/green-nebulae", Main.Scene, ["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+        skyboxMaterial.reflectionTexture = Main.EnvironmentTexture;
         skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
         skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
         skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
@@ -274,11 +316,11 @@ class Main {
             Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
             Main.GameCamera.attachSpaceShipControl(Main.Canvas);
             Main.GameCamera.setEnabled(false);
-            Main._tmpPlayer.initialize("spaceship", () => {
-                let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
-                Main._tmpPlayer.attachControler(playerControl);
-                playerControl.attachControl(Main.Canvas);
-            });
+            Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
+            Main.PlayerMesh = yield Main._tmpPlayer.initialize("spaceship");
+            let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
+            Main._tmpPlayer.attachControler(playerControl);
+            playerControl.attachControl(Main.Canvas);
         });
     }
     static TMPResetPlayer() {
@@ -456,7 +498,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
         this._focalLength = 100;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
-        this._offset = new BABYLON.Vector3(0, 4, -15);
+        this._offset = new BABYLON.Vector3(0, 3, -12);
         this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / this._focalLength);
         this.rotation.copyFromFloats(0, 0, 0);
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
@@ -501,9 +543,11 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
         BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, this._targetRotation, 1 / this._smoothnessRotation, this.rotationQuaternion);
     }
     attachSpaceShipControl(canvas) {
-        canvas.addEventListener("wheel", (event) => {
-            this.focalLength *= 1 + BABYLON.Scalar.Sign(event.wheelDeltaY) * 0.05;
+        /*
+        canvas.addEventListener("wheel", (event: MouseWheelEvent) => {
+          this.focalLength *= 1 + BABYLON.Scalar.Sign(event.wheelDeltaY) * 0.05;
         });
+        */
     }
 }
 class TrailMesh extends BABYLON.Mesh {
@@ -965,6 +1009,7 @@ class HUD {
         this.target2.height = size / 6 + "px";
         Main.GuiTexture.addControl(this.target2);
         this.map = new HUDMap(this);
+        this.comlink = new HUDComlink(this.scene, Main.GuiTexture);
     }
     get lockedTarget() {
         return this._lockedTarget;
@@ -1009,6 +1054,129 @@ class HUD {
                 i++;
             }
         }
+    }
+}
+class HUDComlinkLine {
+    constructor(text, duration = 30, hudComLink) {
+        this.duration = duration;
+        this.hudComLink = hudComLink;
+        this.lifetime = 0;
+        this.avatarIconBlock = new BABYLON.GUI.Image("avatarIconBlock", "./datas/textures/hud/avatars/avatar-red.png");
+        this.avatarIconBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.avatarIconBlock.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.avatarIconBlock.top = "0px";
+        this.avatarIconBlock.left = this.hudComLink.left + "px";
+        this.avatarIconBlock.width = "0px";
+        this.avatarIconBlock.height = "0px";
+        this.imageBlock = new BABYLON.GUI.Image("imageBlock", "./datas/textures/hud/avatars/disrupter-" + Math.floor(Math.random() * 2 + 1) + ".png");
+        this.imageBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.imageBlock.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.imageBlock.top = "0px";
+        this.imageBlock.left = this.hudComLink.left + "px";
+        this.imageBlock.width = "0px";
+        this.imageBlock.height = "0px";
+        this.textBlock = new BABYLON.GUI.TextBlock("textBlock", text);
+        this.textBlock.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+        this.textBlock.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.textBlock.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        this.textBlock.top = "0px";
+        this.textBlock.height = "0px";
+        this.textBlock.fontSize = "1px";
+        this.textBlock.fontFamily = "Helvetica";
+        this.textBlock.color = hudComLink.color;
+        //this.outlineColor = screenLogger.outlineColor;
+        //this.outlineWidth = 3;
+        hudComLink.guiTexture.addControl(this.avatarIconBlock);
+        hudComLink.guiTexture.addControl(this.imageBlock);
+        hudComLink.guiTexture.addControl(this.textBlock);
+    }
+    get height() {
+        return this.imageBlock.heightInPixels;
+    }
+    set height(v) {
+        if (this.height == v) {
+            return;
+        }
+        let trueV = BABYLON.Scalar.Clamp(v, this.height - 5, this.height + 5);
+        this.avatarIconBlock.width = trueV + "px";
+        this.avatarIconBlock.height = trueV + "px";
+        this.avatarIconBlock.left = (this.hudComLink.left - trueV - this.hudComLink.lineHeight / 8) + "px";
+        this.imageBlock.width = trueV + "px";
+        this.imageBlock.height = trueV + "px";
+        this.imageBlock.left = (this.hudComLink.left - trueV - this.hudComLink.lineHeight / 8) + "px";
+        this.textBlock.height = Math.round(trueV / 2) + "px";
+        this.textBlock.fontSize = Math.round(trueV / 2 * 0.8) + "px";
+        this.textBlock.left = this.hudComLink.left + "px";
+    }
+    get top() {
+        return this.imageBlock.topInPixels;
+    }
+    set top(v) {
+        this.avatarIconBlock.top = v + "px";
+        this.imageBlock.top = v + "px";
+        this.textBlock.top = Math.round(v - this.height / 4) + "px";
+    }
+    dispose() {
+        this.avatarIconBlock.dispose();
+        this.imageBlock.dispose();
+        this.textBlock.dispose();
+    }
+}
+class HUDComlink {
+    constructor(scene, guiTexture) {
+        this.scene = scene;
+        this.guiTexture = guiTexture;
+        this.maxLines = 5;
+        this.lines = [];
+        this.lineHeight = 100;
+        this.color = "white";
+        this.outlineColor = "black";
+        this.slideDuration = 0.2;
+        this.left = 450;
+        this._update = () => {
+            let dt = this.scene.getEngine().getDeltaTime() / 1000;
+            for (let i = 0; i < this.lines.length; i++) {
+                this.lines[i].lifetime += dt;
+            }
+            let i = 0;
+            while (i < this.lines.length) {
+                let line = this.lines[i];
+                if (line.lifetime > line.duration) {
+                    this.lines.splice(i, 1);
+                    line.dispose();
+                }
+                else {
+                    i++;
+                }
+            }
+            while (this.lines.length > this.maxLines) {
+                let line = this.lines.pop();
+                if (line) {
+                    line.dispose();
+                }
+            }
+            let y = -this.lineHeight / 8;
+            for (let i = 0; i < this.lines.length; i++) {
+                let line = this.lines[i];
+                let currentLineHeight = this.lineHeight;
+                if (i > 0) {
+                    currentLineHeight /= 2;
+                }
+                line.height = currentLineHeight;
+                line.top = y;
+                y -= Math.floor(line.height + this.lineHeight / 10);
+            }
+        };
+        HUDComlink.instance = this;
+        scene.onBeforeRenderObservable.add(this._update);
+    }
+    static display(text, duration) {
+        if (HUDComlink.instance) {
+            HUDComlink.instance.display(text, duration);
+        }
+    }
+    display(text, duration) {
+        this.lines.splice(0, 0, new HUDComlinkLine(text, duration, this));
     }
 }
 class HUDMap extends BABYLON.GUI.Image {
@@ -1449,24 +1617,6 @@ class Level0 {
                         yield Main.TMPCreateWingMan();
                         yield Main.TMPCreateWingMan();
                         yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
@@ -1494,7 +1644,7 @@ class Level0 {
                             if (BABYLON.Vector3.DistanceSquared(spaceShip.position, b.position) < Config.activationSqrRange) {
                                 emit.activate();
                                 scene.unregisterBeforeRender(beaconCheck);
-                                Comlink.Display("MotherShip", this.dialogs[BeaconEmiter.activatedCount - 1], "aff9ff");
+                                HUDComlink.display(this.dialogs[BeaconEmiter.activatedCount - 1]);
                                 if (BeaconEmiter.activatedCount === 4) {
                                     this.Win();
                                 }
@@ -1513,13 +1663,13 @@ class Level0 {
         let delay = 1000;
         for (let i = 0; i < this.introDialogs.length; i++) {
             setTimeout(() => {
-                Comlink.Display("MotherShip", this.introDialogs[i], "aff9ff");
+                HUDComlink.display(this.introDialogs[i]);
             }, delay);
             delay += 6000;
         }
         for (let i = 0; i < this.tipDialogs.length; i++) {
             setTimeout(() => {
-                Comlink.Display("Voyoslov", this.tipDialogs[i], "ffffff");
+                HUDComlink.display(this.tipDialogs[i]);
             }, delay);
             delay += 3000;
         }
@@ -1527,7 +1677,7 @@ class Level0 {
     Win() {
         let time = (new Date()).getTime() - Main.playStart;
         setTimeout(() => {
-            Comlink.Display("MotherShip", this.dialogs[4], "aff9ff");
+            HUDComlink.display(this.dialogs[4]);
             setTimeout(() => {
                 $("#game-over-time-value").text((time / 1000).toFixed(0) + " sec");
                 Main.GameOver();
@@ -1602,6 +1752,7 @@ class Loader {
                     for (let i = 0; i < meshes.length; i++) {
                         if (meshes[i] instanceof BABYLON.Mesh) {
                             let mesh = meshes[i];
+                            mesh.layerMask = 1;
                             Loader.LoadedStatics.get(name).push(mesh);
                             Loader._loadMaterial(mesh.material, name, scene);
                             for (let j = 0; j < mesh.instances.length; j++) {
@@ -1630,6 +1781,7 @@ class Loader {
             if (sources[i] instanceof BABYLON.Mesh) {
                 let source = sources[i];
                 instance = source.createInstance(source.name);
+                instance.layerMask = 1;
                 instance.position.copyFromFloats(x, y, z);
                 instance.rotation.copyFromFloats(rX, rY, rZ);
                 instance.scaling.copyFromFloats(s, s, s);
@@ -1645,6 +1797,7 @@ class Loader {
             else if (sources[i] instanceof BABYLON.InstancedMesh) {
                 let source = sources[i];
                 instance = source.sourceMesh.createInstance(source.name);
+                instance.layerMask = 1;
                 instance.position.copyFromFloats(x, y, z);
                 instance.rotation.copyFromFloats(rX, rY, rZ);
                 instance.computeWorldMatrix();
@@ -1742,13 +1895,39 @@ class RandomGenerator {
 }
 class Route {
     static route() {
-        let hash = window.location.hash.slice(1) || "home";
-        if (hash === "home") {
-            Home.Start();
-        }
-        if (hash === "level-0") {
-            Level0.Start();
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            let hash = window.location.hash.slice(1) || "home";
+            if (hash === "home") {
+                Home.Start();
+            }
+            if (hash === "level-0") {
+                Level0.Start();
+            }
+            if (hash === "test") {
+                let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 5, BABYLON.Vector3.Zero(), Main.Scene);
+                testCam.attachControl(Main.Canvas);
+                var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], null, 1, testCam);
+                postProcess.onApply = (effect) => {
+                    effect.setFloat("width", Main.Engine.getRenderWidth());
+                    effect.setFloat("height", Main.Engine.getRenderHeight());
+                };
+                Main.Scene.activeCamera = testCam;
+                let test = new BABYLON.TransformNode("test", Main.Scene);
+                Main.Scene.onBeforeRenderObservable.add(() => {
+                    test.rotation.y += 0.01;
+                });
+                let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                let body = yield SpaceShipFactory.LoadSpaceshipPart("body-1", Main.Scene, "#ffffff", detailColor.toHexString());
+                let wingL = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", Main.Scene, "#ffffff", detailColor.toHexString());
+                wingL.parent = body;
+                wingL.position.copyFromFloats(-0.55, 0, -0.4);
+                let wingR = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", Main.Scene, "#ffffff", detailColor.toHexString());
+                wingR.parent = body;
+                wingR.position.copyFromFloats(0.55, 0, -0.4);
+                wingR.scaling.x = -1;
+                $("#page").hide();
+            }
+        });
     }
 }
 class MaterialLoader {
@@ -1877,6 +2056,19 @@ class VertexDataLoader {
         this._vertexDatas = new Map();
         VertexDataLoader.instance = this;
     }
+    static clone(data) {
+        let clonedData = new BABYLON.VertexData();
+        clonedData.positions = [...data.positions];
+        clonedData.indices = [...data.indices];
+        clonedData.normals = [...data.normals];
+        if (data.uvs) {
+            clonedData.uvs = [...data.uvs];
+        }
+        if (data.colors) {
+            clonedData.colors = [...data.colors];
+        }
+        return clonedData;
+    }
     get(name) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this._vertexDatas.get(name)) {
@@ -1887,7 +2079,9 @@ class VertexDataLoader {
                     let data = new BABYLON.VertexData();
                     data.positions = rawData.meshes[0].positions;
                     data.indices = rawData.meshes[0].indices;
+                    data.normals = rawData.meshes[0].normals;
                     data.uvs = rawData.meshes[0].uvs;
+                    data.colors = rawData.meshes[0].colors;
                     this._vertexDatas.set(name, data);
                     resolve(this._vertexDatas.get(name));
                 });
@@ -2108,7 +2302,7 @@ class MetroLine {
 class Projectile extends BABYLON.Mesh {
     constructor(direction, shooter) {
         super("projectile", shooter.getScene());
-        this.speed = 150;
+        this.shotSpeed = 150;
         this._lifeSpan = 3;
         this.power = 2;
         this._update = () => {
@@ -2122,7 +2316,7 @@ class Projectile extends BABYLON.Mesh {
                 hitSpaceship.wound(this);
                 return this.destroy();
             }
-            this.position.addInPlace(this._direction.scale(this.speed * dt));
+            this.position.addInPlace(this._direction.scale(this.shotSpeed * dt));
             let zAxis = this._direction;
             let yAxis = this.getScene().activeCamera.position.subtract(this.position);
             let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
@@ -2131,7 +2325,7 @@ class Projectile extends BABYLON.Mesh {
         };
         this._direction = direction;
         this.shooter = shooter;
-        this.speed = this.shooter.shootSpeed;
+        this.shotSpeed = this.shooter.shootSpeed;
         this.power = this.shooter.shootPower;
         this.position.copyFrom(shooter.position);
         this.rotationQuaternion = shooter.rotationQuaternion.clone();
@@ -2155,7 +2349,7 @@ class Projectile extends BABYLON.Mesh {
         this.dispose();
     }
     _collide(dt) {
-        this._displacementRay.length = this.speed * dt;
+        this._displacementRay.length = this.shotSpeed * dt;
         for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
             let spaceship = SpaceShipControler.Instances[i].spaceShip;
             if (spaceship.controler.team !== this.shooter.controler.team) {
@@ -2175,7 +2369,7 @@ class SpaceShip extends BABYLON.Mesh {
         this._enginePower = 15;
         this._frontDrag = 0.01;
         this._backDrag = 1;
-        this._forward = 0;
+        this._speed = 0;
         this._rollInput = 0;
         this._rollPower = 2;
         this._rollDrag = 0.9;
@@ -2192,10 +2386,12 @@ class SpaceShip extends BABYLON.Mesh {
         this._colliders = [];
         this.isAlive = true;
         this.stamina = 50;
+        this.canons = [];
         this.shootPower = 1;
         this.shootSpeed = 100;
         this.shootCoolDown = 0.3;
         this._shootCool = 0;
+        this._lastCanonIndex = 0;
         this.onWoundObservable = new BABYLON.Observable();
         this.stamina = data.stamina;
         this._enginePower = data.enginePower;
@@ -2220,6 +2416,7 @@ class SpaceShip extends BABYLON.Mesh {
         this._rZ = BABYLON.Quaternion.Identity();
         this.shield = new Shield(this);
         this.shield.initialize();
+        this.shield.parent = this;
         this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
         this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
         this.impactParticle.emitter = this;
@@ -2254,7 +2451,7 @@ class SpaceShip extends BABYLON.Mesh {
         }
     }
     get forward() {
-        return this._forward;
+        return this._speed;
     }
     get rollInput() {
         return this._rollInput;
@@ -2298,26 +2495,26 @@ class SpaceShip extends BABYLON.Mesh {
     get localZ() {
         return this._localZ;
     }
-    initialize(url, callback) {
-        BABYLON.SceneLoader.ImportMesh("", "./datas/" + url + ".babylon", "", Main.Scene, (meshes, particleSystems, skeletons) => {
-            let spaceship = meshes[0];
-            if (spaceship instanceof BABYLON.Mesh) {
-                spaceship.parent = this;
-                this._mesh = spaceship;
-                this.shield.parent = this._mesh;
-                this.wingTipLeft.parent = this._mesh;
-                this.wingTipRight.parent = this._mesh;
-                let spaceshipMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
-                spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/" + url + "-diffuse.png", Main.Scene);
-                spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
-                spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
-                spaceshipMaterial.ambientTexture.level = 2;
-                spaceshipMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-                spaceship.material = spaceshipMaterial;
-                if (callback) {
-                    callback();
-                }
-            }
+    initialize(url) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let body = yield SpaceShipFactory.LoadSpaceshipPart("body-1", this.getScene(), "", "");
+            body.parent = this;
+            let wingL = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
+            wingL.parent = body;
+            wingL.position.copyFromFloats(-0.55, 0, -0.4);
+            let canonL = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
+            canonL.parent = wingL;
+            canonL.position.copyFromFloats(-0.94, 0.06, -0.1);
+            let wingR = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
+            wingR.parent = body;
+            wingR.position.copyFromFloats(0.55, 0, -0.4);
+            wingR.scaling.x = -1;
+            let canonR = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
+            canonR.parent = wingR;
+            canonR.position.copyFromFloats(-0.94, 0.06, -0.1);
+            this.canons = [canonL, canonR];
+            this._mesh = body;
+            return body;
         });
     }
     createColliders() {
@@ -2344,14 +2541,14 @@ class SpaceShip extends BABYLON.Mesh {
             this.controler.checkInputs(this._dt);
         }
         if (this.isAlive) {
-            this._forward += this.forwardInput * this._enginePower * this._dt;
+            this._speed += this.forwardInput * this._enginePower * this._dt;
             this._yaw += this.yawInput * this._yawPower * this._dt;
             this._pitch += this.pitchInput * this._pitchPower * this._dt;
             this._roll += this.rollInput * this._rollPower * this._dt;
         }
         this._drag();
         let dZ = BABYLON.Vector3.Zero();
-        dZ.copyFromFloats(this._localZ.x * this._forward * this._dt, this._localZ.y * this._forward * this._dt, this._localZ.z * this._forward * this._dt);
+        dZ.copyFromFloats(this._localZ.x * this._speed * this._dt, this._localZ.y * this._speed * this._dt, this._localZ.z * this._speed * this._dt);
         this.position.addInPlace(dZ);
         BABYLON.Quaternion.RotationAxisToRef(this._localZ, -this.roll * this._dt, this._rZ);
         this._rZ.multiplyToRef(this.rotationQuaternion, this.rotationQuaternion);
@@ -2370,10 +2567,10 @@ class SpaceShip extends BABYLON.Mesh {
         this._pitch = this.pitch * (1 - this._pitchDrag * this._dt);
         let sqrForward = this.forward * this.forward;
         if (this.forward > 0) {
-            this._forward -= this._frontDrag * sqrForward * this._dt;
+            this._speed -= this._frontDrag * sqrForward * this._dt;
         }
         else if (this.forward < 0) {
-            this._forward += this._backDrag * sqrForward * this._dt;
+            this._speed += this._backDrag * sqrForward * this._dt;
         }
     }
     _updateColliders() {
@@ -2427,6 +2624,9 @@ class SpaceShip extends BABYLON.Mesh {
                 BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
             }
             let bullet = new Projectile(dir, this);
+            this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
+            let canon = this.canons[this._lastCanonIndex];
+            bullet.position.copyFrom(canon.absolutePosition);
             bullet.instantiate();
         }
     }
@@ -2493,12 +2693,36 @@ class SpaceShipFactory {
             let spaceshipData = yield SpaceshipLoader.instance.get(data.url);
             let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
             spaceShip.name = data.name;
-            spaceShip.initialize(spaceshipData.model, () => {
-                let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
-                spaceShip.attachControler(spaceshipAI);
-            });
+            yield spaceShip.initialize(spaceshipData.model);
+            let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
+            spaceShip.attachControler(spaceshipAI);
             spaceShip.position.copyFromFloats(data.x, data.y, data.z);
             return spaceShip;
+        });
+    }
+    static LoadSpaceshipPart(part, scene, baseColor, detailColor) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+            let data = VertexDataLoader.clone(yield VertexDataLoader.instance.get(part));
+            if (data.colors) {
+                for (let i = 0; i < data.colors.length / 4; i++) {
+                    let r = data.colors[4 * i];
+                    let g = data.colors[4 * i + 1];
+                    let b = data.colors[4 * i + 2];
+                    if (r === 1 && g === 0 && b === 0) {
+                        data.colors[4 * i] = detailColor3.r;
+                        data.colors[4 * i + 1] = detailColor3.g;
+                        data.colors[4 * i + 2] = detailColor3.b;
+                    }
+                }
+            }
+            let m = new BABYLON.Mesh(part, Main.Scene);
+            data.applyToMesh(m);
+            let cellMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+            cellMaterial.computeHighLevel = true;
+            m.material = cellMaterial;
+            return m;
         });
     }
 }
@@ -2730,7 +2954,7 @@ class SpaceShipInputs extends SpaceShipControler {
         $("#target3").css("left", Main.Canvas.width / 2 - size / 2 + r * mouseInput.x / 2);
         let wSDisplay = parseInt($("#speed-display").css("width"), 10);
         let hSDisplay = parseInt($("#speed-display").css("height"), 10);
-        let clip = 0.72 * hSDisplay - (this._spaceShip.forward) / 40 * 0.38 * hSDisplay;
+        let clip = 0.72 * hSDisplay - (this._spaceShip.shootSpeed) / 40 * 0.38 * hSDisplay;
         clip = Math.floor(clip);
         $("#speed-display").css("clip", "rect(" + clip + "px, " + wSDisplay + "px, " + hSDisplay + "px, 0px)");
     }
@@ -3001,7 +3225,7 @@ class WingManAI extends SpaceShipAI {
     commandPosition(newPosition) {
         this._targetPosition.copyFrom(newPosition);
         this._mode = IIABehaviour.GoTo;
-        Comlink.Display(this.spaceShip.name, Dialogs.randomNeutralCommand());
+        HUDComlink.instance.display(Dialogs.randomNeutralCommand());
     }
     _checkMode(dt) {
         this._findLeader();

@@ -313,7 +313,7 @@ class SpaceShipInputs extends SpaceShipControler {
 
 		let wSDisplay: number = parseInt($("#speed-display").css("width"), 10);
 		let hSDisplay: number = parseInt($("#speed-display").css("height"), 10);
-		let clip: number = 0.72 * hSDisplay - (this._spaceShip.forward) / 40 * 0.38 * hSDisplay;
+		let clip: number = 0.72 * hSDisplay - (this._spaceShip.shootSpeed) / 40 * 0.38 * hSDisplay;
 		clip = Math.floor(clip);
 		$("#speed-display").css("clip", "rect(" + clip + "px, " + wSDisplay + "px, " + hSDisplay + "px, 0px)");
 	}

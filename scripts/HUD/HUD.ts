@@ -5,6 +5,7 @@ class HUD {
 
     private spaceshipInfos: HUDSpaceshipInfo[] = [];
     private map: HUDMap;
+    public comlink: HUDComlink;
 
     public target0: BABYLON.GUI.Image;
     public target1: BABYLON.GUI.Image;
@@ -47,6 +48,7 @@ class HUD {
         Main.GuiTexture.addControl(this.target2);
 
         this.map = new HUDMap(this);
+        this.comlink = new HUDComlink(this.scene, Main.GuiTexture);
     }
 
     public destroy(): void {

@@ -1,0 +1,29 @@
+Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
+========= Conversion from Blender to Babylon.js =========
+	Scene settings used:
+		selected layers only:  false
+		flat shading entire scene:  false
+		inline textures:  false
+		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\
+	Python World class constructor completed
+	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
+	processing begun of mesh:  Cube.001
+		processing begun of Standard material:  Material.001
+		num positions      :  31
+		num normals        :  31
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  174
+	processing begun of mesh:  Cube
+		WARNING: No materials have been assigned: 
+		num positions      :  252
+		num normals        :  252
+		num uvs            :  0
+		num uvs2           :  0
+		num colors         :  0
+		num indices        :  1488
+========= Writing of scene file started =========
+========= Writing of scene file completed =========
+========= end of processing =========
+elapsed time:  0 min, 0.1881 secs

@@ -23,9 +23,11 @@ class Main {
 	public static Light: BABYLON.HemisphericLight;
 	public static MenuCamera: BABYLON.ArcRotateCamera;
 	public static GameCamera: SpaceShipCamera;
+	public static GUICamera: BABYLON.Camera;
 	public static Level: ILevel
 	public static GuiTexture: BABYLON.GUI.AdvancedDynamicTexture;
 	public static Loger: ScreenLoger;
+	public static EnvironmentTexture: BABYLON.CubeTexture;
 
 	constructor(canvasElement: string) {
 		Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
@@ -38,29 +40,92 @@ class Main {
 		this.resize();
 
 		Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
+		Main.GuiTexture.layer.layerMask = 2;
 
 		Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
 
-		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.36, 0.06, -0.96), Main.Scene);
-		sun.intensity = 0.8;
+		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.4, - 0.4, -0.4), Main.Scene);
+		sun.intensity = 1;
+		/*
 		let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
 		cloud.intensity = 0.3;
 		cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
 		cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
+		*/
 
 		Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
 		Main.Scene.activeCamera = Main.MenuCamera;
-		Main.MenuCamera.setPosition(new BABYLON.Vector3(- 160, 80, -160));
+		Main.MenuCamera.setPosition(new BABYLON.Vector3(- 3, 3, -3));
+		Main.MenuCamera.attachControl(Main.Canvas);
+
+		Main.GUICamera = new BABYLON.Camera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
+		Main.GUICamera.layerMask = 2;
+
+		BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
+			#ifdef GL_ES
+			precision highp float;
+			#endif
+			varying vec2 vUV;
+			uniform sampler2D textureSampler;
+
+			uniform float 		width;
+			uniform float 		height;
+
+			void make_kernel(inout vec4 n[9], sampler2D tex, vec2 coord)
+			{
+				float w = 1.0 / width;
+				float h = 1.0 / height;
+
+				n[0] = texture2D(tex, coord + vec2( -w, -h));
+				n[1] = texture2D(tex, coord + vec2(0.0, -h));
+				n[2] = texture2D(tex, coord + vec2(  w, -h));
+				n[3] = texture2D(tex, coord + vec2( -w, 0.0));
+				n[4] = texture2D(tex, coord);
+				n[5] = texture2D(tex, coord + vec2(  w, 0.0));
+				n[6] = texture2D(tex, coord + vec2( -w, h));
+				n[7] = texture2D(tex, coord + vec2(0.0, h));
+				n[8] = texture2D(tex, coord + vec2(  w, h));
+			}
+
+			void main(void) 
+			{
+				vec4 n[9];
+				make_kernel( n, textureSampler, vUV );
+
+				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
+				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
+				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
+
+				if (max (max (sobel.r, sobel.g), sobel.b) < 0.2) {
+					gl_FragColor = n[4];
+				} else {
+					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+				}
+			}
+		`;
+
+		/*
+		let testLight = new BABYLON.PointLight("testLight", BABYLON.Vector3.One().scale(0.5), Main.Scene);
+		testLight.intensity = 5;
+		testLight.range = 100;
+		Main.Scene.registerBeforeRender(
+			() => {
+				testLight.position.copyFrom(Main.MenuCamera.position);
+			}
+		)
+		*/
 
 		let skybox: BABYLON.Mesh = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 2000.0 }, Main.Scene);
+		skybox.layerMask = 1;
 		skybox.rotation.y = Math.PI / 2;
 		skybox.infiniteDistance = true;
 		let skyboxMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("skyBox", Main.Scene);
 		skyboxMaterial.backFaceCulling = false;
-		skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(
+		Main.EnvironmentTexture = new BABYLON.CubeTexture(
 			"./datas/skyboxes/green-nebulae",
 			Main.Scene,
 			["-px.png", "-py.png", "-pz.png", "-nx.png", "-ny.png", "-nz.png"]);
+		skyboxMaterial.reflectionTexture = Main.EnvironmentTexture;
 		skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
 		skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 		skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
@@ -114,6 +179,7 @@ class Main {
 		Layout.GameOverLayout();
 	}
 
+	private static PlayerMesh;
 	private static _tmpPlayer: SpaceShip;
 	public static async TMPCreatePlayer(): Promise<void> {
 		let spaceshipData = await SpaceshipLoader.instance.get("scout-2");
@@ -121,14 +187,13 @@ class Main {
 		Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
 		Main.GameCamera.attachSpaceShipControl(Main.Canvas);
 		Main.GameCamera.setEnabled(false);
-		Main._tmpPlayer.initialize(
-			"spaceship",
-			() => {
-				let playerControl: SpaceShipInputs = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
-				Main._tmpPlayer.attachControler(playerControl);
-				playerControl.attachControl(Main.Canvas);
-			}
-		);
+
+		Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
+
+		Main.PlayerMesh = await Main._tmpPlayer.initialize("spaceship");
+		let playerControl: SpaceShipInputs = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
+		Main._tmpPlayer.attachControler(playerControl);
+		playerControl.attachControl(Main.Canvas);
 	}
 	public static TMPResetPlayer(): void {
 		Main._tmpPlayer.position.copyFromFloats(0, 0, 0);

@@ -2,7 +2,7 @@ class Projectile extends BABYLON.Mesh {
 
     private _direction: BABYLON.Vector3;
     public shooter: SpaceShip;
-    public speed: number = 150;
+    public shotSpeed: number = 150;
     private _lifeSpan: number = 3;
     public power: number = 2;
     private _displacementRay: BABYLON.Ray;
@@ -11,7 +11,7 @@ class Projectile extends BABYLON.Mesh {
         super("projectile", shooter.getScene());
         this._direction = direction;
         this.shooter = shooter;
-        this.speed = this.shooter.shootSpeed;
+        this.shotSpeed = this.shooter.shootSpeed;
         this.power = this.shooter.shootPower;
         this.position.copyFrom(shooter.position);
         this.rotationQuaternion = shooter.rotationQuaternion.clone();
@@ -46,7 +46,7 @@ class Projectile extends BABYLON.Mesh {
             hitSpaceship.wound(this);
             return this.destroy();
         }
-        this.position.addInPlace(this._direction.scale(this.speed * dt));
+        this.position.addInPlace(this._direction.scale(this.shotSpeed * dt));
         let zAxis = this._direction;
         let yAxis = this.getScene().activeCamera.position.subtract(this.position);
         let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
@@ -55,7 +55,7 @@ class Projectile extends BABYLON.Mesh {
     }
 
     private _collide(dt: number): SpaceShip {
-        this._displacementRay.length = this.speed * dt;
+        this._displacementRay.length = this.shotSpeed * dt;
         for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
             let spaceship = SpaceShipControler.Instances[i].spaceShip;
             if (spaceship.controler.team !== this.shooter.controler.team) {

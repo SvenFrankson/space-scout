@@ -12,9 +12,9 @@ class SpaceShip extends BABYLON.Mesh {
 	private _enginePower: number = 15;
 	private _frontDrag: number = 0.01;
 	private _backDrag: number = 1;
-	private _forward: number = 0;
+	private _speed: number = 0;
 	public get forward(): number {
-		return this._forward;
+		return this._speed;
 	}
 	
 	private _rollInput: number = 0;
@@ -94,6 +94,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public hitPoint: number;
 	public stamina: number = 50;
 
+	public canons: BABYLON.Mesh[] = [];
 	public shootPower: number = 1;
 	public shootSpeed: number = 100;
 	public shootCoolDown: number = 0.3;
@@ -127,6 +128,7 @@ class SpaceShip extends BABYLON.Mesh {
 
 		this.shield = new Shield(this);
 		this.shield.initialize();
+		this.shield.parent = this;
 		this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
 		this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
 		this.impactParticle.emitter = this;
@@ -156,40 +158,25 @@ class SpaceShip extends BABYLON.Mesh {
 		);
 	}
 
-	public initialize(
-		url: string,
-		callback?: () => void
-	): void {
-		BABYLON.SceneLoader.ImportMesh(
-			"",
-			"./datas/" + url + ".babylon",
-			"",
-			Main.Scene,
-			(
-				meshes: Array<BABYLON.AbstractMesh>,
-				particleSystems: Array<BABYLON.ParticleSystem>,
-				skeletons: Array<BABYLON.Skeleton>
-			) => {
-				let spaceship: BABYLON.AbstractMesh = meshes[0];
-				if (spaceship instanceof BABYLON.Mesh) {
-					spaceship.parent = this;
-					this._mesh = spaceship;
-					this.shield.parent = this._mesh;
-					this.wingTipLeft.parent = this._mesh;
-					this.wingTipRight.parent = this._mesh;
-					let spaceshipMaterial: BABYLON.StandardMaterial = new BABYLON.StandardMaterial("SpaceShipMaterial", this.getScene());
-					spaceshipMaterial.diffuseTexture = new BABYLON.Texture("./datas/" + url + "-diffuse.png", Main.Scene);
-					spaceshipMaterial.bumpTexture = new BABYLON.Texture("./datas/" + url + "-bump.png", Main.Scene);
-					spaceshipMaterial.ambientTexture = new BABYLON.Texture("./datas/" + url + "-ao.png", Main.Scene);
-					spaceshipMaterial.ambientTexture.level = 2;
-					spaceshipMaterial.specularColor.copyFromFloats(0.1, 0.1, 0.1);
-					spaceship.material = spaceshipMaterial;
-					if (callback) {
-						callback();
-					}
-				}
-			}
-		);
+	public async initialize(url: string): Promise<BABYLON.Mesh> {
+		let body = await SpaceShipFactory.LoadSpaceshipPart("body-1", this.getScene(), "", "");
+		body.parent = this;
+		let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
+		wingL.parent = body;
+		wingL.position.copyFromFloats(- 0.55, 0, -0.4);
+		let canonL = await SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
+		canonL.parent = wingL;
+		canonL.position.copyFromFloats(- 0.94, 0.06, - 0.1);
+		let wingR = await SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
+		wingR.parent = body;
+		wingR.position.copyFromFloats(0.55, 0, -0.4);
+		wingR.scaling.x = -1;
+		let canonR = await SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
+		canonR.parent = wingR;
+		canonR.position.copyFromFloats(- 0.94, 0.06, - 0.1);
+		this.canons = [canonL, canonR];
+		this._mesh = body;
+		return body;
 	}
 
 	private createColliders(): void {
@@ -225,7 +212,7 @@ class SpaceShip extends BABYLON.Mesh {
 			this.controler.checkInputs(this._dt);
 		}
 		if (this.isAlive) {
-			this._forward += this.forwardInput * this._enginePower * this._dt;
+			this._speed += this.forwardInput * this._enginePower * this._dt;
 			this._yaw += this.yawInput * this._yawPower * this._dt;
 			this._pitch += this.pitchInput * this._pitchPower * this._dt;
 			this._roll += this.rollInput * this._rollPower * this._dt;
@@ -234,9 +221,9 @@ class SpaceShip extends BABYLON.Mesh {
 
 		let dZ: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 		dZ.copyFromFloats(
-			this._localZ.x * this._forward * this._dt,
-			this._localZ.y * this._forward * this._dt,
-			this._localZ.z * this._forward * this._dt
+			this._localZ.x * this._speed * this._dt,
+			this._localZ.y * this._speed * this._dt,
+			this._localZ.z * this._speed * this._dt
 		);
 		this.position.addInPlace(dZ);
 
@@ -263,9 +250,9 @@ class SpaceShip extends BABYLON.Mesh {
 
 		let sqrForward: number = this.forward * this.forward;
 		if (this.forward > 0) {
-			this._forward -= this._frontDrag * sqrForward * this._dt;
+			this._speed -= this._frontDrag * sqrForward * this._dt;
 		} else if (this.forward < 0) {
-			this._forward += this._backDrag * sqrForward * this._dt;
+			this._speed += this._backDrag * sqrForward * this._dt;
 		}
 	}
 
@@ -309,6 +296,7 @@ class SpaceShip extends BABYLON.Mesh {
 		}
 	}
 
+	private _lastCanonIndex = 0;
 	public shoot(direction: BABYLON.Vector3): void {
 		if (this.isAlive) {
 			if (this._shootCool > 0) {
@@ -322,6 +310,9 @@ class SpaceShip extends BABYLON.Mesh {
 				BABYLON.Vector3.TransformNormalToRef(this.localZ, m, dir);
 			}
 			let bullet = new Projectile(dir, this);
+			this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
+			let canon = this.canons[this._lastCanonIndex];
+			bullet.position.copyFrom(canon.absolutePosition);
 			bullet.instantiate();
 		}
 	}

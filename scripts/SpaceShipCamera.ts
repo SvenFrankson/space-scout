@@ -29,7 +29,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     super("SpaceShipCamera", position, scene);
     this._targetPosition = BABYLON.Vector3.Zero();
     this._targetRotation = BABYLON.Quaternion.Identity();
-    this._offset = new BABYLON.Vector3(0, 4, -15);
+    this._offset = new BABYLON.Vector3(0, 3, -12);
     this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / this._focalLength);
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();
@@ -80,8 +80,10 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
   }
 
   public attachSpaceShipControl(canvas: HTMLCanvasElement): void {
+    /*
     canvas.addEventListener("wheel", (event: MouseWheelEvent) => {
       this.focalLength *= 1 + BABYLON.Scalar.Sign(event.wheelDeltaY) * 0.05;
     });
+    */
   }
 }

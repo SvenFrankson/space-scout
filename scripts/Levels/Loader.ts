@@ -124,6 +124,7 @@ class Loader {
 						for (let i: number = 0; i < meshes.length; i++) {
 							if (meshes[i] instanceof BABYLON.Mesh) {
 								let mesh: BABYLON.Mesh = meshes[i] as BABYLON.Mesh;
+								mesh.layerMask = 1;
 								Loader.LoadedStatics.get(name).push(mesh);
 								Loader._loadMaterial(mesh.material, name, scene);
 								for (let j: number = 0; j < mesh.instances.length; j++) {
@@ -165,6 +166,7 @@ class Loader {
 			if (sources[i] instanceof BABYLON.Mesh) {
 				let source: BABYLON.Mesh = sources[i] as BABYLON.Mesh;
 				instance = source.createInstance(source.name);
+				instance.layerMask = 1;
 				instance.position.copyFromFloats(x, y, z);
 				instance.rotation.copyFromFloats(rX, rY, rZ);
 				instance.scaling.copyFromFloats(s, s, s);
@@ -179,6 +181,7 @@ class Loader {
 			} else if (sources[i] instanceof BABYLON.InstancedMesh) {
 				let source: BABYLON.InstancedMesh = sources[i] as BABYLON.InstancedMesh;
 				instance = source.sourceMesh.createInstance(source.name);
+				instance.layerMask = 1;
 				instance.position.copyFromFloats(x, y, z);
 				instance.rotation.copyFromFloats(rX, rY, rZ);
 				instance.computeWorldMatrix();
