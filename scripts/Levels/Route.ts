@@ -11,9 +11,13 @@ class Route {
         if (hash === "test") {
             let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 5, BABYLON.Vector3.Zero(), Main.Scene);
             testCam.attachControl(Main.Canvas);
-            
-            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], null, 1, testCam);
+            testCam.minZ = 0.5;
+            testCam.maxZ = 2000;
+
+            let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
+            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
             postProcess.onApply = (effect) => {
+                effect.setTexture("depthSampler", depthMap);
                 effect.setFloat("width", Main.Engine.getRenderWidth());
                 effect.setFloat("height", Main.Engine.getRenderHeight());
             };

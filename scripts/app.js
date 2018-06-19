@@ -211,15 +211,13 @@ class Main {
 			#endif
 			varying vec2 vUV;
 			uniform sampler2D textureSampler;
-
+			uniform sampler2D depthSampler;
 			uniform float 		width;
 			uniform float 		height;
-
 			void make_kernel(inout vec4 n[9], sampler2D tex, vec2 coord)
 			{
 				float w = 1.0 / width;
 				float h = 1.0 / height;
-
 				n[0] = texture2D(tex, coord + vec2( -w, -h));
 				n[1] = texture2D(tex, coord + vec2(0.0, -h));
 				n[2] = texture2D(tex, coord + vec2(  w, -h));
@@ -230,20 +228,26 @@ class Main {
 				n[7] = texture2D(tex, coord + vec2(0.0, h));
 				n[8] = texture2D(tex, coord + vec2(  w, h));
 			}
-
 			void main(void) 
 			{
+				vec4 d = texture2D(depthSampler, vUV);
+				float depth = d.r * (2000.0 - 0.5) + 0.5;
 				vec4 n[9];
 				make_kernel( n, textureSampler, vUV );
-
 				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
 				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
 				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-
 				if (max (max (sobel.r, sobel.g), sobel.b) < 0.2) {
 					gl_FragColor = n[4];
 				} else {
-					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+					float outlineWeight = 0.;
+					if (depth < 10.) {
+						outlineWeight = 1.;
+					}
+					else if (depth < 30.) {
+						outlineWeight = 1. - (depth - 10.) / (30. - 10.);
+					}
+					gl_FragColor = n[4] * (1. - outlineWeight) + vec4(0.0, 0.0, 0.0, 1.0) * outlineWeight;
 				}
 			}
 		`;
@@ -1906,8 +1910,12 @@ class Route {
             if (hash === "test") {
                 let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 5, BABYLON.Vector3.Zero(), Main.Scene);
                 testCam.attachControl(Main.Canvas);
-                var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], null, 1, testCam);
+                testCam.minZ = 0.5;
+                testCam.maxZ = 2000;
+                let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
+                var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
                 postProcess.onApply = (effect) => {
+                    effect.setTexture("depthSampler", depthMap);
                     effect.setFloat("width", Main.Engine.getRenderWidth());
                     effect.setFloat("height", Main.Engine.getRenderHeight());
                 };
