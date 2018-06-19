@@ -32,10 +32,11 @@ class Route {
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
             let body = await SpaceShipFactory.LoadSpaceshipPart("body-1", Main.Scene, "#ffffff", detailColor.toHexString());
             body.parent = test;
-            let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            let wingIndex = (Math.random() * 2 + 1).toFixed(0);
+            let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
             wingL.parent = body;
             wingL.position.copyFromFloats(- 0.55, 0, -0.4);
-            let wingR = await SpaceShipFactory.LoadSpaceshipPart("wing-1", Main.Scene, "#ffffff", detailColor.toHexString());
+            let wingR = await SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
             wingR.parent = body;
             wingR.position.copyFromFloats(0.55, 0, -0.4);
             wingR.scaling.x = -1;

@@ -7,15 +7,19 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\vertexData\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
-	processing begun of mesh:  wing-1
-		WARNING: No materials have been assigned: 
-		num positions      :  113
-		num normals        :  113
+	processing begun of mesh:  wing-2
+		processing begun of Standard material:  Lite
+		processing begun of Standard material:  Base
+		processing begun of Standard material:  Dark
+		processing begun of Standard material:  Material.003
+		processing begun of multimaterial:  wing_2.Multimaterial#0
+		num positions      :  304
+		num normals        :  304
 		num uvs            :  0
 		num uvs2           :  0
-		num colors         :  452
-		num indices        :  456
+		num colors         :  1216
+		num indices        :  1215
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.0381 secs
+elapsed time:  0 min, 0.0801 secs
