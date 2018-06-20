@@ -569,6 +569,7 @@ class TrailMesh extends BABYLON.Mesh {
     constructor(name, generator, scene, diameter = 1, length = 60) {
         super(name, scene);
         this._sectionPolygonPointsCount = 4;
+        this.layerMask = 1;
         this._generator = generator;
         this._diameter = diameter;
         this._length = length;
@@ -2574,7 +2575,19 @@ class SpaceShip extends BABYLON.Mesh {
                         }
                         if (spaceship) {
                             if (childData.type === "weapon") {
-                                spaceship.canons.push(child);
+                                let canonTip = MeshUtils.getZMaxVertex(child);
+                                BABYLON.Vector3.TransformCoordinatesToRef(canonTip, child.computeWorldMatrix(true), canonTip);
+                                spaceship.canons.push(canonTip);
+                            }
+                            if (childData.type.startsWith("wing")) {
+                                let wingTip = MeshUtils.getXMinVertex(child);
+                                BABYLON.Vector3.TransformCoordinatesToRef(wingTip, child.computeWorldMatrix(true), wingTip);
+                                if (childData.type === "wingL") {
+                                    spaceship.wingTipLeft.position.copyFrom(wingTip);
+                                }
+                                else if (childData.type === "wingR") {
+                                    spaceship.wingTipRight.position.copyFrom(wingTip);
+                                }
                             }
                         }
                     }
@@ -2692,7 +2705,7 @@ class SpaceShip extends BABYLON.Mesh {
             let bullet = new Projectile(dir, this);
             this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
             let canon = this.canons[this._lastCanonIndex];
-            bullet.position.copyFrom(this.absolutePosition);
+            BABYLON.Vector3.TransformCoordinatesToRef(canon, this.getWorldMatrix(), bullet.position);
             bullet.instantiate();
         }
     }
@@ -4115,6 +4128,34 @@ class StationSection {
                 callback();
             }
         }
+    }
+}
+class MeshUtils {
+    static getXMinVertex(mesh) {
+        let positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        if (positions && positions.length > 3) {
+            let tip = new BABYLON.Vector3(positions[0], positions[1], positions[2]);
+            for (let i = 3; i < positions.length; i += 3) {
+                if (positions[i] < tip.x) {
+                    tip.copyFromFloats(positions[i], positions[i + 1], positions[i + 2]);
+                }
+            }
+            return tip;
+        }
+        return BABYLON.Vector3.Zero();
+    }
+    static getZMaxVertex(mesh) {
+        let positions = mesh.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        if (positions && positions.length > 3) {
+            let tip = new BABYLON.Vector3(positions[0], positions[1], positions[2]);
+            for (let i = 3; i < positions.length; i += 3) {
+                if (positions[i + 2] > tip.z) {
+                    tip.copyFromFloats(positions[i], positions[i + 1], positions[i + 2]);
+                }
+            }
+            return tip;
+        }
+        return BABYLON.Vector3.Zero();
     }
 }
 class RuntimeUtils {

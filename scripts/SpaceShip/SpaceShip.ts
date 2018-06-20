@@ -94,7 +94,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public hitPoint: number;
 	public stamina: number = 50;
 
-	public canons: BABYLON.Mesh[] = [];
+	public canons: BABYLON.Vector3[] = [];
 	public shootPower: number = 1;
 	public shootSpeed: number = 100;
 	public shootCoolDown: number = 0.3;
@@ -196,7 +196,19 @@ class SpaceShip extends BABYLON.Mesh {
 					}
 					if (spaceship) {
 						if (childData.type === "weapon") {
-							spaceship.canons.push(child);
+							let canonTip = MeshUtils.getZMaxVertex(child);
+							BABYLON.Vector3.TransformCoordinatesToRef(canonTip, child.computeWorldMatrix(true), canonTip);
+							spaceship.canons.push(canonTip);
+						}
+						if (childData.type.startsWith("wing")) {
+							let wingTip = MeshUtils.getXMinVertex(child);
+							BABYLON.Vector3.TransformCoordinatesToRef(wingTip, child.computeWorldMatrix(true), wingTip);
+							if (childData.type === "wingL") {
+								spaceship.wingTipLeft.position.copyFrom(wingTip);
+							}
+							else if (childData.type === "wingR") {
+								spaceship.wingTipRight.position.copyFrom(wingTip);
+							}
 						}
 					}
 				}
@@ -338,7 +350,7 @@ class SpaceShip extends BABYLON.Mesh {
 			let bullet = new Projectile(dir, this);
 			this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
 			let canon = this.canons[this._lastCanonIndex];
-			bullet.position.copyFrom(this.absolutePosition);
+			BABYLON.Vector3.TransformCoordinatesToRef(canon, this.getWorldMatrix(), bullet.position);
 			bullet.instantiate();
 		}
 	}
