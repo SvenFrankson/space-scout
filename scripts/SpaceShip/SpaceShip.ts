@@ -166,6 +166,7 @@ class SpaceShip extends BABYLON.Mesh {
 		let meshes = [];
 		await SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
 		this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
+		this._mesh.layerMask = 1;
 		this._mesh.parent = this;
 		return this._mesh;
 	}

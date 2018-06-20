@@ -30,7 +30,7 @@ class Route {
                     test.rotation.y += 0.01;
                 }
             )
-            let wingIndex = (Math.random() * 2 + 1).toFixed(0);
+            let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
             SpaceShip.initializeRecursively(
                 {

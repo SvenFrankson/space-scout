@@ -202,6 +202,8 @@ class Main {
         Main.MenuCamera.setPosition(new BABYLON.Vector3(-3, 3, -3));
         Main.MenuCamera.attachControl(Main.Canvas);
         Main.GUICamera = new BABYLON.FreeCamera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
+        Main.GUICamera.minZ = 0.5;
+        Main.GUICamera.maxZ = 2000;
         Main.GUICamera.layerMask = 2;
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -239,11 +241,11 @@ class Main {
 					gl_FragColor = n[4];
 				} else {
 					float outlineWeight = 0.;
-					if (depth < 10.) {
+					if (depth < 20.) {
 						outlineWeight = 1.;
 					}
-					else if (depth < 30.) {
-						outlineWeight = 1. - (depth - 10.) / (30. - 10.);
+					else if (depth < 50.) {
+						outlineWeight = 1. - (depth - 20.) / (50. - 20.);
 					}
 					gl_FragColor = n[4] * (1. - outlineWeight) + vec4(0.0, 0.0, 0.0, 1.0) * outlineWeight;
 				}
@@ -318,7 +320,16 @@ class Main {
             Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
             Main.GameCamera.attachSpaceShipControl(Main.Canvas);
             Main.GameCamera.setEnabled(false);
+            Main.GameCamera.minZ = 0.5;
+            Main.GameCamera.maxZ = 2000;
             Main.GameCamera.layerMask = 1;
+            let depthMap = Main.Scene.enableDepthRenderer(Main.GameCamera).getDepthMap();
+            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.GameCamera);
+            postProcess.onApply = (effect) => {
+                effect.setTexture("depthSampler", depthMap);
+                effect.setFloat("width", Main.Engine.getRenderWidth());
+                effect.setFloat("height", Main.Engine.getRenderHeight());
+            };
             Main.GUICamera.parent = Main.GameCamera;
             Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
             Main.PlayerMesh = yield Main._tmpPlayer.initialize(spaceshipData.model, "#ffffff", "#00ff00");
@@ -1931,7 +1942,7 @@ class Route {
                 Main.Scene.onBeforeRenderObservable.add(() => {
                     test.rotation.y += 0.01;
                 });
-                let wingIndex = (Math.random() * 2 + 1).toFixed(0);
+                let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
                 let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
                 SpaceShip.initializeRecursively({
                     type: "root",
@@ -2538,6 +2549,7 @@ class SpaceShip extends BABYLON.Mesh {
             let meshes = [];
             yield SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
             this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
+            this._mesh.layerMask = 1;
             this._mesh.parent = this;
             return this._mesh;
         });
