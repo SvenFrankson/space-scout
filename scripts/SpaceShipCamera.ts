@@ -4,7 +4,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
   private _targetRotation: BABYLON.Quaternion;
   private _offset: BABYLON.Vector3;
   private _offsetRotation: BABYLON.Quaternion;
-  private _smoothness: number = 16;
+  private _smoothness: number = 12;
   private _smoothnessRotation: number = 8;
   private _focalLength: number = 100;
   public get focalLength(): number {
@@ -29,7 +29,7 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
     super("SpaceShipCamera", position, scene);
     this._targetPosition = BABYLON.Vector3.Zero();
     this._targetRotation = BABYLON.Quaternion.Identity();
-    this._offset = new BABYLON.Vector3(0, 3, -12);
+    this._offset = new BABYLON.Vector3(0, 3, -10);
     this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / this._focalLength);
     this.rotation.copyFromFloats(0, 0, 0);
     this.rotationQuaternion = BABYLON.Quaternion.Identity();

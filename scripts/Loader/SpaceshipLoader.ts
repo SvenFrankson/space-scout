@@ -1,5 +1,5 @@
 interface ISpaceshipData {
-    model: string;
+    model: SpaceShipElement;
     stamina: number;
     enginePower: number;
     rollPower: number;

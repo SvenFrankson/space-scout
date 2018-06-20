@@ -13,6 +13,7 @@ class Route {
             testCam.attachControl(Main.Canvas);
             testCam.minZ = 0.5;
             testCam.maxZ = 2000;
+            testCam.layerMask = 1;
 
             let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
             var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
@@ -29,26 +30,42 @@ class Route {
                     test.rotation.y += 0.01;
                 }
             )
-            let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-            let body = await SpaceShipFactory.LoadSpaceshipPart("body-1", Main.Scene, "#ffffff", detailColor.toHexString());
-            body.parent = test;
             let wingIndex = (Math.random() * 2 + 1).toFixed(0);
-            let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
-            wingL.parent = body;
-            wingL.position.copyFromFloats(- 0.55, 0, -0.4);
-            let wingR = await SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
-            wingR.parent = body;
-            wingR.position.copyFromFloats(0.55, 0, -0.4);
-            wingR.scaling.x = -1;
-            let canonL = await SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
-            canonL.parent = wingL;
-            canonL.position.copyFromFloats(- 0.94, 0.06, - 0.1);
-            let canonR = await SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
-            canonR.parent = wingR;
-            canonR.position.copyFromFloats(- 0.94, 0.06, - 0.1);
-            let engine = await SpaceShipFactory.LoadSpaceshipPart("engine-1", Main.Scene, "#ffffff", detailColor.toHexString());
-            engine.parent = body;
-            engine.position.copyFromFloats(0, 0, -1);
+            let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+            SpaceShip.initializeRecursively(
+                {
+                    type: "root",
+                    name: "body-1",
+                    children: [
+                        {
+                            type: "wingL",
+                            name: "wing-" + wingIndex,
+                            children: [
+                                {
+                                    type: "weapon",
+                                    name: "canon-1"
+                                }
+                            ]
+                        },
+                        {
+                            type: "wingR",
+                            name: "wing-" + wingIndex,
+                            children: [
+                                {
+                                    type: "weapon",
+                                    name: "canon-1"
+                                }
+                            ]
+                        },
+                        {
+                            type: "engine",
+                            name: "engine-1"
+                        }
+                    ]
+                },
+                "#ffffff",
+                detailColor.toHexString()
+            );
             $("#page").hide();
         }
     }

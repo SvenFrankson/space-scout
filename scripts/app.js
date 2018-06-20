@@ -193,17 +193,15 @@ class Main {
         Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
         let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.4, -0.4, -0.4), Main.Scene);
         sun.intensity = 1;
-        /*
-        let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-        cloud.intensity = 0.3;
+        let cloud = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
+        cloud.intensity = 0.6;
         cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
         cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-        */
         Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
         Main.Scene.activeCamera = Main.MenuCamera;
         Main.MenuCamera.setPosition(new BABYLON.Vector3(-3, 3, -3));
         Main.MenuCamera.attachControl(Main.Canvas);
-        Main.GUICamera = new BABYLON.Camera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
+        Main.GUICamera = new BABYLON.FreeCamera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
         Main.GUICamera.layerMask = 2;
         BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
 			#ifdef GL_ES
@@ -305,7 +303,7 @@ class Main {
     static Play() {
         Main.State = State.Game;
         $("#page").hide(500, "linear");
-        Main.Scene.activeCamera = Main.GameCamera;
+        Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
         Main.Level.OnGameStart();
         Main.playStart = (new Date()).getTime();
     }
@@ -320,8 +318,10 @@ class Main {
             Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
             Main.GameCamera.attachSpaceShipControl(Main.Canvas);
             Main.GameCamera.setEnabled(false);
+            Main.GameCamera.layerMask = 1;
+            Main.GUICamera.parent = Main.GameCamera;
             Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
-            Main.PlayerMesh = yield Main._tmpPlayer.initialize("spaceship");
+            Main.PlayerMesh = yield Main._tmpPlayer.initialize(spaceshipData.model, "#ffffff", "#00ff00");
             let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
             Main._tmpPlayer.attachControler(playerControl);
             playerControl.attachControl(Main.Canvas);
@@ -497,12 +497,12 @@ class Shield extends BABYLON.Mesh {
 class SpaceShipCamera extends BABYLON.FreeCamera {
     constructor(position, scene, spaceShip, smoothness, smoothnessRotation) {
         super("SpaceShipCamera", position, scene);
-        this._smoothness = 16;
+        this._smoothness = 12;
         this._smoothnessRotation = 8;
         this._focalLength = 100;
         this._targetPosition = BABYLON.Vector3.Zero();
         this._targetRotation = BABYLON.Quaternion.Identity();
-        this._offset = new BABYLON.Vector3(0, 3, -12);
+        this._offset = new BABYLON.Vector3(0, 3, -10);
         this._offsetRotation = BABYLON.Quaternion.RotationAxis(BABYLON.Axis.X, 4 / this._focalLength);
         this.rotation.copyFromFloats(0, 0, 0);
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
@@ -993,6 +993,7 @@ class HUD {
                 }
             }
         };
+        ScreenLoger.instance.log("Create HUD");
         this.player = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._update);
@@ -1237,14 +1238,14 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         super("hudSpaceshipInfo", spaceship.getScene());
         this._locked = false;
         this._update = () => {
-            this.lookAt(this.getScene().activeCamera.position);
-            this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
+            this.lookAt(Main.GameCamera.position);
+            this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, Main.GameCamera.position).toFixed(0) + " m";
             if (this.spaceship.controler instanceof DefaultAI) {
                 this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
             }
             if (this.circleNextPos && this.circleNextPos.isVisible) {
                 this.circleNextPos.position = DefaultAI.FuturePosition(this.spaceship, this.hud.player.spaceShip.projectileDurationTo(this.spaceship));
-                this.circleNextPos.lookAt(this.getScene().activeCamera.position);
+                this.circleNextPos.lookAt(Main.GameCamera.position);
             }
         };
         this._updateLock = () => {
@@ -1252,9 +1253,11 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
                 if (!this.lockCircle) {
                     this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
                     this.lockCircle.parent = this;
+                    this.lockCircle.layerMask = 2;
                 }
                 if (!this.circleNextPos) {
                     this.circleNextPos = SSMeshBuilder.CreateZCircleMesh(2, this.spaceship.getScene());
+                    this.circleNextPos.layerMask = 2;
                 }
                 this.lockCircle.isVisible = true;
                 this.circleNextPos.isVisible = true;
@@ -1283,14 +1286,17 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             }
             this.hitpointInfo = SSMeshBuilder.CreateZRailMesh(6.5, 7.5, Math.PI / 4 - Math.PI / 2 * ratio, Math.PI / 4, 64, this.getScene(), color);
             this.hitpointInfo.parent = this;
+            this.hitpointInfo.layerMask = 2;
         };
         this.spaceship = spaceship;
         this.hud = hud;
         this.position = spaceship.position;
         this.circle = SSMeshBuilder.CreateZCircleMesh(6, spaceship.getScene());
         this.circle.parent = this;
+        this.circle.layerMask = 2;
         this.hitpointInfo = SSMeshBuilder.CreateZRailMesh(6.5, 7.5, -Math.PI / 4, Math.PI / 4, 64, this.getScene(), new BABYLON.Color4(0, 1, 0, 1));
         this.hitpointInfo.parent = this;
+        this.hitpointInfo.layerMask = 2;
         let distanceInfoPosition = new BABYLON.Mesh("distanceInfoPosition", this.getScene());
         distanceInfoPosition.parent = this;
         distanceInfoPosition.position.y = -6;
@@ -1912,6 +1918,7 @@ class Route {
                 testCam.attachControl(Main.Canvas);
                 testCam.minZ = 0.5;
                 testCam.maxZ = 2000;
+                testCam.layerMask = 1;
                 let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
                 var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
                 postProcess.onApply = (effect) => {
@@ -1924,26 +1931,38 @@ class Route {
                 Main.Scene.onBeforeRenderObservable.add(() => {
                     test.rotation.y += 0.01;
                 });
-                let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-                let body = yield SpaceShipFactory.LoadSpaceshipPart("body-1", Main.Scene, "#ffffff", detailColor.toHexString());
-                body.parent = test;
                 let wingIndex = (Math.random() * 2 + 1).toFixed(0);
-                let wingL = yield SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
-                wingL.parent = body;
-                wingL.position.copyFromFloats(-0.55, 0, -0.4);
-                let wingR = yield SpaceShipFactory.LoadSpaceshipPart("wing-" + wingIndex, Main.Scene, "#ffffff", detailColor.toHexString());
-                wingR.parent = body;
-                wingR.position.copyFromFloats(0.55, 0, -0.4);
-                wingR.scaling.x = -1;
-                let canonL = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
-                canonL.parent = wingL;
-                canonL.position.copyFromFloats(-0.94, 0.06, -0.1);
-                let canonR = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", Main.Scene, "#ffffff", detailColor.toHexString());
-                canonR.parent = wingR;
-                canonR.position.copyFromFloats(-0.94, 0.06, -0.1);
-                let engine = yield SpaceShipFactory.LoadSpaceshipPart("engine-1", Main.Scene, "#ffffff", detailColor.toHexString());
-                engine.parent = body;
-                engine.position.copyFromFloats(0, 0, -1);
+                let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+                SpaceShip.initializeRecursively({
+                    type: "root",
+                    name: "body-1",
+                    children: [
+                        {
+                            type: "wingL",
+                            name: "wing-" + wingIndex,
+                            children: [
+                                {
+                                    type: "weapon",
+                                    name: "canon-1"
+                                }
+                            ]
+                        },
+                        {
+                            type: "wingR",
+                            name: "wing-" + wingIndex,
+                            children: [
+                                {
+                                    type: "weapon",
+                                    name: "canon-1"
+                                }
+                            ]
+                        },
+                        {
+                            type: "engine",
+                            name: "engine-1"
+                        }
+                    ]
+                }, "#ffffff", detailColor.toHexString());
                 $("#page").hide();
             }
         });
@@ -2337,7 +2356,7 @@ class Projectile extends BABYLON.Mesh {
             }
             this.position.addInPlace(this._direction.scale(this.shotSpeed * dt));
             let zAxis = this._direction;
-            let yAxis = this.getScene().activeCamera.position.subtract(this.position);
+            let yAxis = Main.GameCamera.position.subtract(this.position);
             let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
             BABYLON.Vector3.CrossToRef(zAxis, xAxis, yAxis);
             BABYLON.Quaternion.RotationQuaternionFromAxisToRef(xAxis, yAxis, zAxis, this.rotationQuaternion);
@@ -2514,26 +2533,42 @@ class SpaceShip extends BABYLON.Mesh {
     get localZ() {
         return this._localZ;
     }
-    initialize(url) {
+    initialize(model, baseColor, detailColor) {
         return __awaiter(this, void 0, void 0, function* () {
-            let body = yield SpaceShipFactory.LoadSpaceshipPart("body-1", this.getScene(), "", "");
-            body.parent = this;
-            let wingL = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
-            wingL.parent = body;
-            wingL.position.copyFromFloats(-0.55, 0, -0.4);
-            let canonL = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
-            canonL.parent = wingL;
-            canonL.position.copyFromFloats(-0.94, 0.06, -0.1);
-            let wingR = yield SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
-            wingR.parent = body;
-            wingR.position.copyFromFloats(0.55, 0, -0.4);
-            wingR.scaling.x = -1;
-            let canonR = yield SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
-            canonR.parent = wingR;
-            canonR.position.copyFromFloats(-0.94, 0.06, -0.1);
-            this.canons = [canonL, canonR];
-            this._mesh = body;
-            return body;
+            let meshes = [];
+            yield SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
+            this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
+            this._mesh.parent = this;
+            return this._mesh;
+        });
+    }
+    static initializeRecursively(elementData, baseColor, detailColor, spaceship, meshes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let e = yield SpaceShipFactory.LoadSpaceshipPart(elementData.name, Main.Scene, baseColor, detailColor);
+            if (meshes) {
+                meshes.push(e);
+            }
+            if (elementData.children) {
+                for (let i = 0; i < elementData.children.length; i++) {
+                    let childData = elementData.children[i];
+                    let slot = SpaceShipSlots.getSlot(elementData.name, childData.type);
+                    if (slot) {
+                        let child = yield SpaceShip.initializeRecursively(childData, baseColor, detailColor, spaceship, meshes);
+                        child.parent = e;
+                        child.position = slot.pos;
+                        child.rotation = slot.rot;
+                        if (slot.mirror) {
+                            child.scaling.x = -1;
+                        }
+                        if (spaceship) {
+                            if (childData.type === "weapon") {
+                                spaceship.canons.push(child);
+                            }
+                        }
+                    }
+                }
+            }
+            return e;
         });
     }
     createColliders() {
@@ -2645,7 +2680,7 @@ class SpaceShip extends BABYLON.Mesh {
             let bullet = new Projectile(dir, this);
             this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
             let canon = this.canons[this._lastCanonIndex];
-            bullet.position.copyFrom(canon.absolutePosition);
+            bullet.position.copyFrom(this.absolutePosition);
             bullet.instantiate();
         }
     }
@@ -2707,12 +2742,31 @@ var ISquadRole;
     ISquadRole[ISquadRole["Default"] = 2] = "Default";
 })(ISquadRole || (ISquadRole = {}));
 class SpaceShipFactory {
+    static get cellShadingMaterial() {
+        if (!SpaceShipFactory._cellShadingMaterial) {
+            SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+            SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
+        }
+        return SpaceShipFactory._cellShadingMaterial;
+    }
+    static baseColorFromTeam(team) {
+        return "#ffffff";
+    }
+    static detailColorFromTeam(team) {
+        if (team === 0) {
+            return "#0000ff";
+        }
+        if (team === 1) {
+            return "#ff0000";
+        }
+        return "#00ff00";
+    }
     static AddSpaceShipToScene(data, scene) {
         return __awaiter(this, void 0, void 0, function* () {
             let spaceshipData = yield SpaceshipLoader.instance.get(data.url);
             let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
             spaceShip.name = data.name;
-            yield spaceShip.initialize(spaceshipData.model);
+            yield spaceShip.initialize(spaceshipData.model, SpaceShipFactory.baseColorFromTeam(data.team), SpaceShipFactory.detailColorFromTeam(data.team));
             let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
             spaceShip.attachControler(spaceshipAI);
             spaceShip.position.copyFromFloats(data.x, data.y, data.z);
@@ -2737,10 +2791,9 @@ class SpaceShipFactory {
                 }
             }
             let m = new BABYLON.Mesh(part, Main.Scene);
+            m.layerMask = 1;
             data.applyToMesh(m);
-            let cellMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
-            cellMaterial.computeHighLevel = true;
-            m.material = cellMaterial;
+            m.material = SpaceShipFactory.cellShadingMaterial;
             return m;
         });
     }
@@ -2887,7 +2940,7 @@ class SpaceShipInputs extends SpaceShipControler {
         }
     }
     lockTarget() {
-        let ray = this.spaceShip.getScene().createPickingRay(Main.Scene.pointerX, Main.Scene.pointerY, BABYLON.Matrix.Identity(), Main.Scene.activeCamera);
+        let ray = this.spaceShip.getScene().createPickingRay(Main.Scene.pointerX, Main.Scene.pointerY, BABYLON.Matrix.Identity(), Main.GameCamera);
         let target = undefined;
         let minSqrDist = Infinity;
         for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
@@ -2990,6 +3043,42 @@ class SpaceShipInputs extends SpaceShipControler {
     }
 }
 SpaceShipInputs.SSIInstances = [];
+class SpaceShipSlot {
+    constructor(name, pos, rot, mirror = false) {
+        this.name = name;
+        this.pos = pos;
+        this.rot = rot;
+        this.mirror = mirror;
+    }
+}
+class SpaceShipSlots {
+    static get instance() {
+        if (!SpaceShipSlots._instance) {
+            SpaceShipSlots._instance = new SpaceShipSlots();
+        }
+        return SpaceShipSlots._instance;
+    }
+    constructor() {
+        this._slots = new Map();
+        this._slots.set("body-1", [
+            new SpaceShipSlot("engine", new BABYLON.Vector3(0, 0, -1), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingL", new BABYLON.Vector3(-0.55, 0, -0.4), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingR", new BABYLON.Vector3(0.55, 0, -0.4), new BABYLON.Vector3(0, 0, 0), true)
+        ]);
+        this._slots.set("wing-1", [
+            new SpaceShipSlot("weapon", new BABYLON.Vector3(-1.23, 0.06, -0.15), new BABYLON.Vector3(0, 0, 0))
+        ]);
+        this._slots.set("wing-2", [
+            new SpaceShipSlot("weapon", new BABYLON.Vector3(-0.6, 0.12, 0), new BABYLON.Vector3(0, 0, 0.12))
+        ]);
+    }
+    static getSlot(elementName, slotName) {
+        let slots = SpaceShipSlots.instance._slots.get(elementName);
+        if (slots) {
+            return slots.find((s) => { return s.name === slotName; });
+        }
+    }
+}
 /// <reference path="../SpaceShipControler.ts"/>
 var IIABehaviour;
 (function (IIABehaviour) {

@@ -15,6 +15,30 @@ interface ISpaceshipInstanceData {
 }
 
 class SpaceShipFactory {
+
+	public static _cellShadingMaterial: BABYLON.CellMaterial;
+	public static get cellShadingMaterial(): BABYLON.CellMaterial {
+		if (!SpaceShipFactory._cellShadingMaterial) {
+			SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+			SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
+		}
+		return SpaceShipFactory._cellShadingMaterial;
+	}
+
+	public static baseColorFromTeam(team: number): string {
+		return "#ffffff";
+	}
+
+	public static detailColorFromTeam(team: number): string {
+		if (team === 0) {
+			return "#0000ff";
+		}
+		if (team === 1) {
+			return "#ff0000";
+		}
+		return "#00ff00";
+	}
+
 	public static async AddSpaceShipToScene(
 		data: ISpaceshipInstanceData,
 		scene: BABYLON.Scene
@@ -22,7 +46,11 @@ class SpaceShipFactory {
 		let spaceshipData = await SpaceshipLoader.instance.get(data.url);
 		let spaceShip: SpaceShip = new SpaceShip(spaceshipData, Main.Scene);
 		spaceShip.name = data.name;
-		await spaceShip.initialize(spaceshipData.model);
+		await spaceShip.initialize(
+			spaceshipData.model,
+			SpaceShipFactory.baseColorFromTeam(data.team),
+			SpaceShipFactory.detailColorFromTeam(data.team)
+		);
 		let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
 		spaceShip.attachControler(spaceshipAI);
 		spaceShip.position.copyFromFloats(data.x, data.y, data.z);
@@ -51,10 +79,9 @@ class SpaceShipFactory {
 			}
 		}
 		let m = new BABYLON.Mesh(part, Main.Scene);
+		m.layerMask = 1;
 		data.applyToMesh(m);
-		let cellMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
-		cellMaterial.computeHighLevel = true;
-		m.material = cellMaterial;
+		m.material = SpaceShipFactory.cellShadingMaterial;
 		return m;
 	}
 }

@@ -25,6 +25,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
 
         this.circle = SSMeshBuilder.CreateZCircleMesh(6, spaceship.getScene());
         this.circle.parent = this;
+        this.circle.layerMask = 2;
 
         this.hitpointInfo = SSMeshBuilder.CreateZRailMesh(
             6.5, 7.5,
@@ -35,6 +36,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             new BABYLON.Color4(0, 1, 0, 1)
         );
         this.hitpointInfo.parent = this;
+        this.hitpointInfo.layerMask = 2;
 
         let distanceInfoPosition = new BABYLON.Mesh("distanceInfoPosition", this.getScene());
         distanceInfoPosition.parent = this;
@@ -76,8 +78,8 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
     }
 
     private _update = () => {
-        this.lookAt(this.getScene().activeCamera.position);
-        this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, this.getScene().activeCamera.position).toFixed(0) + " m";
+        this.lookAt(Main.GameCamera.position);
+        this.distanceInfo.text = BABYLON.Vector3.Distance(this.spaceship.position, Main.GameCamera.position).toFixed(0) + " m";
         if (this.spaceship.controler instanceof DefaultAI) {
             this.aiBehaviourInfo.text = this.spaceship.controler.behaviour;
         }
@@ -86,7 +88,7 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
                 this.spaceship,
                 this.hud.player.spaceShip.projectileDurationTo(this.spaceship)
             );
-            this.circleNextPos.lookAt(this.getScene().activeCamera.position);
+            this.circleNextPos.lookAt(Main.GameCamera.position);
         }
     }
 
@@ -95,9 +97,11 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             if (!this.lockCircle) {
                 this.lockCircle = SSMeshBuilder.CreateZCircleMesh(5.5, this.spaceship.getScene());
                 this.lockCircle.parent = this;
+                this.lockCircle.layerMask = 2;
             }
             if (!this.circleNextPos) {
                 this.circleNextPos = SSMeshBuilder.CreateZCircleMesh(2, this.spaceship.getScene());
+                this.circleNextPos.layerMask = 2;
             }
             this.lockCircle.isVisible = true;
             this.circleNextPos.isVisible = true;
@@ -134,5 +138,6 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
             color
         );
         this.hitpointInfo.parent = this;
+        this.hitpointInfo.layerMask = 2;
     }
 }

@@ -158,25 +158,50 @@ class SpaceShip extends BABYLON.Mesh {
 		);
 	}
 
-	public async initialize(url: string): Promise<BABYLON.Mesh> {
-		let body = await SpaceShipFactory.LoadSpaceshipPart("body-1", this.getScene(), "", "");
-		body.parent = this;
-		let wingL = await SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
-		wingL.parent = body;
-		wingL.position.copyFromFloats(- 0.55, 0, -0.4);
-		let canonL = await SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
-		canonL.parent = wingL;
-		canonL.position.copyFromFloats(- 0.94, 0.06, - 0.1);
-		let wingR = await SpaceShipFactory.LoadSpaceshipPart("wing-1", this.getScene(), "", "");
-		wingR.parent = body;
-		wingR.position.copyFromFloats(0.55, 0, -0.4);
-		wingR.scaling.x = -1;
-		let canonR = await SpaceShipFactory.LoadSpaceshipPart("canon-1", this.getScene(), "", "");
-		canonR.parent = wingR;
-		canonR.position.copyFromFloats(- 0.94, 0.06, - 0.1);
-		this.canons = [canonL, canonR];
-		this._mesh = body;
-		return body;
+	public async initialize(
+		model: SpaceShipElement,
+		baseColor: string,
+		detailColor: string
+	): Promise<BABYLON.Mesh> {
+		let meshes = [];
+		await SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
+		this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
+		this._mesh.parent = this;
+		return this._mesh;
+	}
+
+	public static async initializeRecursively(
+		elementData: SpaceShipElement,
+		baseColor: string,
+		detailColor: string,
+		spaceship?: SpaceShip,
+		meshes?: BABYLON.Mesh[]
+	): Promise<BABYLON.Mesh> {
+		let e = await SpaceShipFactory.LoadSpaceshipPart(elementData.name, Main.Scene, baseColor, detailColor);
+		if (meshes) {
+			meshes.push(e);
+		}
+		if (elementData.children) {
+			for (let i = 0; i < elementData.children.length; i++) {
+				let childData = elementData.children[i];
+				let slot = SpaceShipSlots.getSlot(elementData.name, childData.type);
+				if (slot) {
+					let child = await SpaceShip.initializeRecursively(childData, baseColor, detailColor, spaceship, meshes);
+					child.parent = e;
+					child.position = slot.pos;
+					child.rotation = slot.rot;
+					if (slot.mirror) {
+						child.scaling.x = -1;
+					}
+					if (spaceship) {
+						if (childData.type === "weapon") {
+							spaceship.canons.push(child);
+						}
+					}
+				}
+			}
+		}
+		return e;
 	}
 
 	private createColliders(): void {
@@ -312,7 +337,7 @@ class SpaceShip extends BABYLON.Mesh {
 			let bullet = new Projectile(dir, this);
 			this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
 			let canon = this.canons[this._lastCanonIndex];
-			bullet.position.copyFrom(canon.absolutePosition);
+			bullet.position.copyFrom(this.absolutePosition);
 			bullet.instantiate();
 		}
 	}

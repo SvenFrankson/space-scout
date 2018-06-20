@@ -218,7 +218,7 @@ class SpaceShipInputs extends SpaceShipControler {
 	}
 
 	public lockTarget(): void {
-		let ray = this.spaceShip.getScene().createPickingRay(Main.Scene.pointerX, Main.Scene.pointerY, BABYLON.Matrix.Identity(), Main.Scene.activeCamera);
+		let ray = this.spaceShip.getScene().createPickingRay(Main.Scene.pointerX, Main.Scene.pointerY, BABYLON.Matrix.Identity(), Main.GameCamera);
 		let target: SpaceShip = undefined;
 		let minSqrDist: number = Infinity;
 		for (let i = 0; i < SpaceShipControler.Instances.length; i++) {

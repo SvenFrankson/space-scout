@@ -25,6 +25,7 @@ class HUD {
     public onLockedTargetChangedObservable: BABYLON.Observable<SpaceShip> = new BABYLON.Observable<SpaceShip>();
 
     constructor(input: SpaceShipInputs, scene: BABYLON.Scene) {
+        ScreenLoger.instance.log("Create HUD");
         this.player = input;
         this.scene = scene;
         this.scene.onBeforeRenderObservable.add(this._update);

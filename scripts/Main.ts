@@ -23,7 +23,7 @@ class Main {
 	public static Light: BABYLON.HemisphericLight;
 	public static MenuCamera: BABYLON.ArcRotateCamera;
 	public static GameCamera: SpaceShipCamera;
-	public static GUICamera: BABYLON.Camera;
+	public static GUICamera: BABYLON.FreeCamera;
 	public static Level: ILevel
 	public static GuiTexture: BABYLON.GUI.AdvancedDynamicTexture;
 	public static Loger: ScreenLoger;
@@ -46,19 +46,18 @@ class Main {
 
 		let sun: BABYLON.DirectionalLight = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.4, - 0.4, -0.4), Main.Scene);
 		sun.intensity = 1;
-		/*
+		
 		let cloud: BABYLON.HemisphericLight = new BABYLON.HemisphericLight("Green", new BABYLON.Vector3(0.07, 0.66, 0.75), Main.Scene);
-		cloud.intensity = 0.3;
+		cloud.intensity = 0.6;
 		cloud.diffuse.copyFromFloats(86 / 255, 255 / 255, 229 / 255);
 		cloud.groundColor.copyFromFloats(255 / 255, 202 / 255, 45 / 255);
-		*/
 
 		Main.MenuCamera = new BABYLON.ArcRotateCamera("MenuCamera", 0, 0, 1, BABYLON.Vector3.Zero(), Main.Scene);
 		Main.Scene.activeCamera = Main.MenuCamera;
 		Main.MenuCamera.setPosition(new BABYLON.Vector3(- 3, 3, -3));
 		Main.MenuCamera.attachControl(Main.Canvas);
 
-		Main.GUICamera = new BABYLON.Camera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
+		Main.GUICamera = new BABYLON.FreeCamera("GUICamera", BABYLON.Vector3.Zero(), Main.Scene);
 		Main.GUICamera.layerMask = 2;
 
 		BABYLON.Effect.ShadersStore["EdgeFragmentShader"] = `
@@ -173,7 +172,7 @@ class Main {
 	public static Play(): void {
 		Main.State = State.Game;
 		$("#page").hide(500, "linear");
-		Main.Scene.activeCamera = Main.GameCamera;
+		Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
 		Main.Level.OnGameStart();
 		Main.playStart = (new Date()).getTime();
 	}
@@ -191,10 +190,12 @@ class Main {
 		Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
 		Main.GameCamera.attachSpaceShipControl(Main.Canvas);
 		Main.GameCamera.setEnabled(false);
+		Main.GameCamera.layerMask = 1;
+		Main.GUICamera.parent = Main.GameCamera;
 
 		Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
 
-		Main.PlayerMesh = await Main._tmpPlayer.initialize("spaceship");
+		Main.PlayerMesh = await Main._tmpPlayer.initialize(spaceshipData.model, "#ffffff", "#00ff00");
 		let playerControl: SpaceShipInputs = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
 		Main._tmpPlayer.attachControler(playerControl);
 		playerControl.attachControl(Main.Canvas);
