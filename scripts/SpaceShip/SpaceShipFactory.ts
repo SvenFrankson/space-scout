@@ -54,6 +54,16 @@ class SpaceShipFactory {
 		let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
 		spaceShip.attachControler(spaceshipAI);
 		spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+		RuntimeUtils.NextFrame(
+			Main.Scene,
+			() => {
+				spaceShip.trailMeshes.forEach(
+					(t) => {
+						t.foldToGenerator();
+					}
+				)
+			}
+		);
 		return spaceShip;
 	}
 

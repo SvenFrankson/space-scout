@@ -584,6 +584,15 @@ class TrailMesh extends BABYLON.Mesh {
             this.update();
         });
     }
+    foldToGenerator() {
+        let positions = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+        let generatorWorldPosition = this._generator.absolutePosition;
+        for (let i = 0; i < positions.length; i += 3) {
+            positions[i] = generatorWorldPosition.x;
+            positions[i + 1] = generatorWorldPosition.y;
+            positions[i + 2] = generatorWorldPosition.z;
+        }
+    }
     _createMesh() {
         let data = new BABYLON.VertexData();
         let positions = [];
@@ -611,9 +620,10 @@ class TrailMesh extends BABYLON.Mesh {
         data.normals = normals;
         data.indices = indices;
         data.applyToMesh(this, true);
-        let trailMaterial = new TrailMaterial(this.name, this.getScene());
-        trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
-        trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
+        let trailMaterial = new BABYLON.StandardMaterial("white", this.getScene());
+        trailMaterial.diffuseColor.copyFromFloats(1, 1, 1);
+        trailMaterial.emissiveColor.copyFromFloats(1, 1, 1);
+        trailMaterial.specularColor.copyFromFloats(0, 0, 0);
         this.material = trailMaterial;
     }
     update() {
@@ -2436,6 +2446,7 @@ class SpaceShip extends BABYLON.Mesh {
         this._pitch = 0;
         this._dt = 0;
         this._colliders = [];
+        this.trailMeshes = [];
         this.isAlive = true;
         this.stamina = 50;
         this.canons = [];
@@ -2486,8 +2497,10 @@ class SpaceShip extends BABYLON.Mesh {
         this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
         this.wingTipRight.parent = this;
         this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
-        new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
-        new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
+        this.trailMeshes = [
+            new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120),
+            new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120)
+        ];
         this.hitPoint = this.stamina;
         this.createColliders();
         scene.registerBeforeRender(() => {
@@ -2554,6 +2567,8 @@ class SpaceShip extends BABYLON.Mesh {
             this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
             this._mesh.layerMask = 1;
             this._mesh.parent = this;
+            this.wingTipLeft.parent = this._mesh;
+            this.wingTipRight.parent = this._mesh;
             return this._mesh;
         });
     }
@@ -2797,6 +2812,11 @@ class SpaceShipFactory {
             let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
             spaceShip.attachControler(spaceshipAI);
             spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+            RuntimeUtils.NextFrame(Main.Scene, () => {
+                spaceShip.trailMeshes.forEach((t) => {
+                    t.foldToGenerator();
+                });
+            });
             return spaceShip;
         });
     }

@@ -88,6 +88,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public impactParticle: BABYLON.ParticleSystem;
 	public wingTipRight: BABYLON.Mesh;
 	public wingTipLeft: BABYLON.Mesh;
+	public trailMeshes: TrailMesh[] = [];
 	public focalPlane: BABYLON.Mesh;
 	
 	public isAlive: boolean = true;
@@ -147,8 +148,10 @@ class SpaceShip extends BABYLON.Mesh {
 		this.wingTipRight = new BABYLON.Mesh("WingTipRight", scene);
 		this.wingTipRight.parent = this;
 		this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
-		new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120);
-		new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120);
+		this.trailMeshes = [
+			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120),
+			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120)
+		];
 		this.hitPoint = this.stamina;
 		this.createColliders();
 		scene.registerBeforeRender(
@@ -168,6 +171,8 @@ class SpaceShip extends BABYLON.Mesh {
 		this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
 		this._mesh.layerMask = 1;
 		this._mesh.parent = this;
+		this.wingTipLeft.parent = this._mesh;
+		this.wingTipRight.parent = this._mesh;
 		return this._mesh;
 	}
 

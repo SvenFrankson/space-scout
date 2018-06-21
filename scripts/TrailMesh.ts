@@ -24,6 +24,16 @@ class TrailMesh extends BABYLON.Mesh {
 		});
 	}
 
+	public foldToGenerator(): void {
+		let positions: Array<number> | Float32Array = this.getVerticesData(BABYLON.VertexBuffer.PositionKind);
+		let generatorWorldPosition = this._generator.absolutePosition;
+		for (let i = 0; i < positions.length; i += 3) {
+			positions[i] = generatorWorldPosition.x;
+			positions[i + 1] = generatorWorldPosition.y;
+			positions[i + 2] = generatorWorldPosition.z;
+		}
+	}
+
 	private _createMesh(): void {
 		let data: BABYLON.VertexData = new BABYLON.VertexData();
 		let positions: Array<number> = [];
@@ -85,9 +95,10 @@ class TrailMesh extends BABYLON.Mesh {
 		data.normals = normals;
 		data.indices = indices;
 		data.applyToMesh(this, true);
-		let trailMaterial: TrailMaterial = new TrailMaterial(this.name, this.getScene());
-		trailMaterial.diffuseColor1 = new BABYLON.Color4(1, 0, 0, 0.2);
-		trailMaterial.diffuseColor2 = new BABYLON.Color4(1, 1, 1, 0.4);
+		let trailMaterial = new BABYLON.StandardMaterial("white", this.getScene());
+		trailMaterial.diffuseColor.copyFromFloats(1, 1, 1);
+		trailMaterial.emissiveColor.copyFromFloats(1, 1, 1);
+		trailMaterial.specularColor.copyFromFloats(0, 0, 0);
 		this.material = trailMaterial;
 	}
 
