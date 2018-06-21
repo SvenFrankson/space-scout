@@ -31,11 +31,12 @@ class Route {
                 }
             )
             let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
+            let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-            SpaceShip.initializeRecursively(
+            let mesh = await SpaceShip.initializeRecursively(
                 {
                     type: "root",
-                    name: "body-1",
+                    name: "body-" + bodyIndex,
                     children: [
                         {
                             type: "wingL",
@@ -66,6 +67,7 @@ class Route {
                 "#ffffff",
                 detailColor.toHexString()
             );
+            mesh.parent = test;
             $("#page").hide();
         }
     }

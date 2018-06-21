@@ -1944,10 +1944,11 @@ class Route {
                     test.rotation.y += 0.01;
                 });
                 let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
+                let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
                 let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-                SpaceShip.initializeRecursively({
+                let mesh = yield SpaceShip.initializeRecursively({
                     type: "root",
-                    name: "body-1",
+                    name: "body-" + bodyIndex,
                     children: [
                         {
                             type: "wingL",
@@ -1975,6 +1976,7 @@ class Route {
                         }
                     ]
                 }, "#ffffff", detailColor.toHexString());
+                mesh.parent = test;
                 $("#page").hide();
             }
         });
@@ -3089,6 +3091,11 @@ class SpaceShipSlots {
             new SpaceShipSlot("engine", new BABYLON.Vector3(0, 0, -1), new BABYLON.Vector3(0, 0, 0)),
             new SpaceShipSlot("wingL", new BABYLON.Vector3(-0.55, 0, -0.4), new BABYLON.Vector3(0, 0, 0)),
             new SpaceShipSlot("wingR", new BABYLON.Vector3(0.55, 0, -0.4), new BABYLON.Vector3(0, 0, 0), true)
+        ]);
+        this._slots.set("body-2", [
+            new SpaceShipSlot("engine", new BABYLON.Vector3(0, 0, -1), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingL", new BABYLON.Vector3(-0.48, 0, -0.27), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingR", new BABYLON.Vector3(0.48, 0, -0.27), new BABYLON.Vector3(0, 0, 0), true)
         ]);
         this._slots.set("wing-1", [
             new SpaceShipSlot("weapon", new BABYLON.Vector3(-1.23, 0.06, -0.15), new BABYLON.Vector3(0, 0, 0))
