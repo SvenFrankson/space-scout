@@ -74,9 +74,11 @@ class DefaultAI extends SpaceShipAI {
 
     private _aggroTable: AggroTable;
     private _initialPosition: BABYLON.Vector3;
+    private idleRange: number = 50;
     private _idlePosition: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     public behaviour: string;
-    public patrolIndex: number = 0;
+    private _patrolIndex: number = 0;
+    public patrolRange: number = 20;
     public patrolPositions: BABYLON.Vector3[];
 
     constructor(spaceShip: SpaceShip, role: ISquadRole, team: number, scene: BABYLON.Scene, patrolPositions?: BABYLON.Vector3[]) {
@@ -145,7 +147,6 @@ class DefaultAI extends SpaceShipAI {
         );
     }
 
-    private idleRange: number = 50;
     public findNewIdlePosition(leader: SpaceShipControler): void {
         if (leader) {
             this._idlePosition.copyFromFloats(
@@ -208,14 +209,14 @@ class DefaultAI extends SpaceShipAI {
             }
         }
         else if (this.patrolPositions) {
-            let patrolPosition = this.patrolPositions[this.patrolIndex];
+            let patrolPosition = this.patrolPositions[this._patrolIndex];
             this._tmpDirection.copyFrom(patrolPosition).subtractInPlace(this.position).normalize();
             let sqrDistanceToPatrolPosition = BABYLON.Vector3.DistanceSquared(this.position, patrolPosition);
-            this.behaviour = "Patrol " + this.patrolIndex;
+            this.behaviour = "Patrol " + this._patrolIndex;
             this._inputToPosition(patrolPosition);
             this._inputToDirection(this._tmpDirection, BABYLON.Axis.Y);
-            if (sqrDistanceToPatrolPosition < this.idleRange * this.idleRange) {
-                this.patrolIndex = (this.patrolIndex + 1) % this.patrolPositions.length;
+            if (sqrDistanceToPatrolPosition < this.patrolRange * this.patrolRange) {
+                this._patrolIndex = (this._patrolIndex + 1) % this.patrolPositions.length;
             }
         }
         else {
@@ -269,7 +270,7 @@ class DefaultAI extends SpaceShipAI {
         this._spaceShip.pitchInput = (angleAroundX - this.spaceShip.pitch * 0.25) / Math.PI * 20;
     
         let angleAroundZ: number = SpaceMath.AngleFromToAround(up, this._spaceShip.localY, this._spaceShip.localZ);
-        this._spaceShip.rollInput =  (angleAroundZ - this.spaceShip.roll * 0.25) / Math.PI;
+        this._spaceShip.rollInput =  (angleAroundZ - this.spaceShip.roll * 0.25) / Math.PI * 10;
     }
 
     private _onWound = (projectile: Projectile) => {

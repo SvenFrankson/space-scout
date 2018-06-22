@@ -173,6 +173,7 @@ class SpaceShip extends BABYLON.Mesh {
 		this._mesh.parent = this;
 		this.wingTipLeft.parent = this._mesh;
 		this.wingTipRight.parent = this._mesh;
+		this.shield.parent = this._mesh;
 		return this._mesh;
 	}
 

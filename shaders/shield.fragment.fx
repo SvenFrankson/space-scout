@@ -17,32 +17,18 @@ uniform vec3 cameraPosition;
 uniform float fadingDistance;
 
 void main(void) {
-  float vSourceDist1 = sqrt(dot(source1 - vPosition, source1 - vPosition));
-  float delta1 = sourceDist1 - vSourceDist1;
-  delta1 += noiseAmplitude * (cos(noiseFrequency * vPosition.x) + cos(noiseFrequency * vPosition.y) + cos(noiseFrequency * vPosition.z));
-  vec4 value = vec4(0.);
-  if (delta1 > 0.) {
-    if (delta1 < length) {
-        value = texture(tex, vec2(delta1 / length, 0.5));
-    }
-  }
-  if (fadingDistance > 0.) {
-    value.a *= 1. - vSourceDist1 / fadingDistance;
-  }
-
-  // View
-  vec3 vViewDirectionW = normalize(cameraPosition - vPositionW);
+  vec3 color = vec3(0.7, 0.9, 1.);
+  vec3 viewDirectionW = normalize(cameraPosition - vPositionW);
 
   // Fresnel
-  float vFresnelTerm = dot(vViewDirectionW, vNormalW);
-  vFresnelTerm = clamp(
-    pow(
-      (cos(pow(vFresnelTerm, fresnelBias)*3.1415)+1.)/2.,
-      fresnelPower
-    ),
-    0.,
-    1.
-  );
+	float x = dot(viewDirectionW, vNormalW);
+    float fresnelTerm = clamp(1. + cos(x * 20.) / 2. - 8. * x * x, 0., 1.);
 
-  gl_FragColor = value * color + vec4(vec3(vFresnelTerm), 0.);
+    float dist = length(vPositionW - source1);
+    float impactTerm = clamp(1. - 8. * abs(sourceDist1 - dist) + cos(x * 30.) / 2., 0., 1.);
+
+    fresnelTerm = max(fresnelTerm, impactTerm);
+
+
+  gl_FragColor = vec4(color, fresnelTerm);
 }

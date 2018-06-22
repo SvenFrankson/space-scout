@@ -479,24 +479,26 @@ class Shield extends BABYLON.Mesh {
     constructor(spaceShip) {
         super(spaceShip.name + "-Shield", spaceShip.getScene());
         this._spaceShip = spaceShip;
+        this.layerMask = 1;
     }
     initialize() {
-        BABYLON.SceneLoader.ImportMesh("", "./datas/shield.babylon", "", Main.Scene, (meshes, particleSystems, skeletons) => {
-            let shield = meshes[0];
-            if (shield instanceof BABYLON.Mesh) {
-                let data = BABYLON.VertexData.ExtractFromMesh(shield);
-                data.applyToMesh(this);
-                shield.dispose();
-                let shieldMaterial = new ShieldMaterial(this.name, this.getScene());
-                shieldMaterial.color = new BABYLON.Color4(0.13, 0.52, 0.80, 1);
-                shieldMaterial.tex = new BABYLON.Texture("./datas/white-front-gradient.png", Main.Scene);
-                shieldMaterial.noiseAmplitude = 0.25;
-                shieldMaterial.noiseFrequency = 16;
-                this.material = shieldMaterial;
-            }
-        });
+        let template = BABYLON.MeshBuilder.CreateSphere("template", {
+            diameterX: 6,
+            diameterY: 3,
+            diameterZ: 6,
+            segments: 12
+        }, Main.Scene);
+        let data = BABYLON.VertexData.ExtractFromMesh(template);
+        data.applyToMesh(this);
+        template.dispose();
+        let shieldMaterial = new ShieldMaterial(this.name, this.getScene());
+        shieldMaterial.color = new BABYLON.Color4(0.13, 0.52, 0.80, 1);
+        shieldMaterial.tex = new BABYLON.Texture("./datas/white-front-gradient.png", Main.Scene);
+        shieldMaterial.noiseAmplitude = 0.05;
+        shieldMaterial.noiseFrequency = 16;
+        this.material = shieldMaterial;
     }
-    flashAt(position, space = BABYLON.Space.LOCAL, speed = 0.1) {
+    flashAt(position, space = BABYLON.Space.LOCAL, speed = 0.2) {
         if (this.material instanceof ShieldMaterial) {
             if (space === BABYLON.Space.WORLD) {
                 let worldToLocal = BABYLON.Matrix.Invert(this.getWorldMatrix());
@@ -1937,11 +1939,12 @@ class Route {
                 Level0.Start();
             }
             if (hash === "test") {
-                let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 5, BABYLON.Vector3.Zero(), Main.Scene);
+                let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
                 testCam.attachControl(Main.Canvas);
                 testCam.minZ = 0.5;
                 testCam.maxZ = 2000;
                 testCam.layerMask = 1;
+                testCam.wheelPrecision = 20;
                 let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
                 var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
                 postProcess.onApply = (effect) => {
@@ -1990,7 +1993,7 @@ class Route {
                         }
                     ]
                 }, "#ffffff", detailColor.toHexString());
-                let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(50, 0, 50), new BABYLON.Vector3(-50, 0, -50)]);
+                let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
                 spaceShip.attachControler(spaceshipAI);
                 RuntimeUtils.NextFrame(Main.Scene, () => {
                     spaceShip.trailMeshes.forEach((t) => {
@@ -1998,6 +2001,9 @@ class Route {
                     });
                 });
                 testCam.setTarget(spaceShip);
+                setInterval(() => {
+                    spaceShip.shield.flashAt(new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().scaleInPlace(5), BABYLON.Space.LOCAL);
+                }, 3000);
                 $("#page").hide();
                 Main.Play();
             }
@@ -2581,6 +2587,7 @@ class SpaceShip extends BABYLON.Mesh {
             this._mesh.parent = this;
             this.wingTipLeft.parent = this._mesh;
             this.wingTipRight.parent = this._mesh;
+            this.shield.parent = this._mesh;
             return this._mesh;
         });
     }
@@ -3222,8 +3229,10 @@ class AggroTable {
 class DefaultAI extends SpaceShipAI {
     constructor(spaceShip, role, team, scene, patrolPositions) {
         super(spaceShip, role, team, scene);
+        this.idleRange = 50;
         this._idlePosition = BABYLON.Vector3.Zero();
-        this.patrolIndex = 0;
+        this._patrolIndex = 0;
+        this.patrolRange = 20;
         this._updateAggroTable = () => {
             SpaceShipControler.Instances.forEach((spaceShipControler) => {
                 if (spaceShipControler.team !== this.team) {
@@ -3248,7 +3257,6 @@ class DefaultAI extends SpaceShipAI {
             }
             this._aggroTable.sortStep();
         };
-        this.idleRange = 50;
         this.escapeDistance = 150;
         this._tmpEscapeDistance = 150;
         this._tmpDirection = BABYLON.Vector3.Zero();
@@ -3336,14 +3344,14 @@ class DefaultAI extends SpaceShipAI {
             }
         }
         else if (this.patrolPositions) {
-            let patrolPosition = this.patrolPositions[this.patrolIndex];
+            let patrolPosition = this.patrolPositions[this._patrolIndex];
             this._tmpDirection.copyFrom(patrolPosition).subtractInPlace(this.position).normalize();
             let sqrDistanceToPatrolPosition = BABYLON.Vector3.DistanceSquared(this.position, patrolPosition);
-            this.behaviour = "Patrol " + this.patrolIndex;
+            this.behaviour = "Patrol " + this._patrolIndex;
             this._inputToPosition(patrolPosition);
             this._inputToDirection(this._tmpDirection, BABYLON.Axis.Y);
-            if (sqrDistanceToPatrolPosition < this.idleRange * this.idleRange) {
-                this.patrolIndex = (this.patrolIndex + 1) % this.patrolPositions.length;
+            if (sqrDistanceToPatrolPosition < this.patrolRange * this.patrolRange) {
+                this._patrolIndex = (this._patrolIndex + 1) % this.patrolPositions.length;
             }
         }
         else {
@@ -3391,7 +3399,7 @@ class DefaultAI extends SpaceShipAI {
         let angleAroundX = SpaceMath.AngleFromToAround(this._spaceShip.localZ, direction, this._spaceShip.localX);
         this._spaceShip.pitchInput = (angleAroundX - this.spaceShip.pitch * 0.25) / Math.PI * 20;
         let angleAroundZ = SpaceMath.AngleFromToAround(up, this._spaceShip.localY, this._spaceShip.localZ);
-        this._spaceShip.rollInput = (angleAroundZ - this.spaceShip.roll * 0.25) / Math.PI;
+        this._spaceShip.rollInput = (angleAroundZ - this.spaceShip.roll * 0.25) / Math.PI * 10;
     }
 }
 class WingManAI extends SpaceShipAI {

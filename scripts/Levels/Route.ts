@@ -9,11 +9,12 @@ class Route {
             Level0.Start();
         }
         if (hash === "test") {
-            let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 5, BABYLON.Vector3.Zero(), Main.Scene);
+            let testCam = new BABYLON.ArcRotateCamera("testCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
             testCam.attachControl(Main.Canvas);
             testCam.minZ = 0.5;
             testCam.maxZ = 2000;
             testCam.layerMask = 1;
+            testCam.wheelPrecision = 20;
 
             let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
             var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
@@ -71,9 +72,9 @@ class Route {
                 "#ffffff",
                 detailColor.toHexString()
             );
-            let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(50, 0, 50), new BABYLON.Vector3(-50, 0, -50)]);
+            let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
             spaceShip.attachControler(spaceshipAI);
-            
+
             RuntimeUtils.NextFrame(
                 Main.Scene,
                 () => {
@@ -86,6 +87,16 @@ class Route {
             );
 
             testCam.setTarget(spaceShip);
+
+            setInterval(
+                () => {
+                    spaceShip.shield.flashAt(
+                        new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().scaleInPlace(5),
+                        BABYLON.Space.LOCAL
+                    );
+                },
+                3000
+            );
         
             $("#page").hide();
 			Main.Play();
