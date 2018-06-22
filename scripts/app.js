@@ -279,7 +279,6 @@ class Main {
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
-            BeaconEmiter.UpdateAllMapIcons();
             Main.Scene.render();
         });
         window.addEventListener("resize", () => {
@@ -305,8 +304,10 @@ class Main {
     static Play() {
         Main.State = State.Game;
         $("#page").hide(500, "linear");
-        Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
-        Main.Level.OnGameStart();
+        //Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
+        if (Main.Level) {
+            Main.Level.OnGameStart();
+        }
         Main.playStart = (new Date()).getTime();
     }
     static GameOver() {
@@ -1956,7 +1957,10 @@ class Route {
                 let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
                 let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
                 let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-                let mesh = yield SpaceShip.initializeRecursively({
+                let spaceshipData = yield SpaceshipLoader.instance.get("arrow-1");
+                let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
+                spaceShip.name = "Demo";
+                yield spaceShip.initialize({
                     type: "root",
                     name: "body-" + bodyIndex,
                     children: [
@@ -1986,8 +1990,16 @@ class Route {
                         }
                     ]
                 }, "#ffffff", detailColor.toHexString());
-                mesh.parent = test;
+                let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(50, 0, 50), new BABYLON.Vector3(-50, 0, -50)]);
+                spaceShip.attachControler(spaceshipAI);
+                RuntimeUtils.NextFrame(Main.Scene, () => {
+                    spaceShip.trailMeshes.forEach((t) => {
+                        t.foldToGenerator();
+                    });
+                });
+                testCam.setTarget(spaceShip);
                 $("#page").hide();
+                Main.Play();
             }
         });
     }
@@ -3208,9 +3220,10 @@ class AggroTable {
     }
 }
 class DefaultAI extends SpaceShipAI {
-    constructor(spaceShip, role, team, scene) {
+    constructor(spaceShip, role, team, scene, patrolPositions) {
         super(spaceShip, role, team, scene);
         this._idlePosition = BABYLON.Vector3.Zero();
+        this.patrolIndex = 0;
         this._updateAggroTable = () => {
             SpaceShipControler.Instances.forEach((spaceShipControler) => {
                 if (spaceShipControler.team !== this.team) {
@@ -3248,6 +3261,7 @@ class DefaultAI extends SpaceShipAI {
         this._initialPosition = spaceShip.position.clone();
         this._mode = IIABehaviour.Follow;
         this._aggroTable = new AggroTable();
+        this.patrolPositions = patrolPositions;
         spaceShip.onWoundObservable.add(this._onWound);
     }
     findTarget() {
@@ -3319,6 +3333,17 @@ class DefaultAI extends SpaceShipAI {
                     this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
                     this._fullThrust();
                 }
+            }
+        }
+        else if (this.patrolPositions) {
+            let patrolPosition = this.patrolPositions[this.patrolIndex];
+            this._tmpDirection.copyFrom(patrolPosition).subtractInPlace(this.position).normalize();
+            let sqrDistanceToPatrolPosition = BABYLON.Vector3.DistanceSquared(this.position, patrolPosition);
+            this.behaviour = "Patrol " + this.patrolIndex;
+            this._inputToPosition(patrolPosition);
+            this._inputToDirection(this._tmpDirection, BABYLON.Axis.Y);
+            if (sqrDistanceToPatrolPosition < this.idleRange * this.idleRange) {
+                this.patrolIndex = (this.patrolIndex + 1) % this.patrolPositions.length;
             }
         }
         else {

@@ -76,12 +76,15 @@ class DefaultAI extends SpaceShipAI {
     private _initialPosition: BABYLON.Vector3;
     private _idlePosition: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     public behaviour: string;
+    public patrolIndex: number = 0;
+    public patrolPositions: BABYLON.Vector3[];
 
-    constructor(spaceShip: SpaceShip, role: ISquadRole, team: number, scene: BABYLON.Scene) {
+    constructor(spaceShip: SpaceShip, role: ISquadRole, team: number, scene: BABYLON.Scene, patrolPositions?: BABYLON.Vector3[]) {
         super(spaceShip, role, team, scene);
         this._initialPosition = spaceShip.position.clone();
         this._mode = IIABehaviour.Follow;
         this._aggroTable = new AggroTable();
+        this.patrolPositions = patrolPositions;
         spaceShip.onWoundObservable.add(this._onWound);
     }
 
@@ -202,6 +205,17 @@ class DefaultAI extends SpaceShipAI {
                     this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
                     this._fullThrust();
                 }
+            }
+        }
+        else if (this.patrolPositions) {
+            let patrolPosition = this.patrolPositions[this.patrolIndex];
+            this._tmpDirection.copyFrom(patrolPosition).subtractInPlace(this.position).normalize();
+            let sqrDistanceToPatrolPosition = BABYLON.Vector3.DistanceSquared(this.position, patrolPosition);
+            this.behaviour = "Patrol " + this.patrolIndex;
+            this._inputToPosition(patrolPosition);
+            this._inputToDirection(this._tmpDirection, BABYLON.Axis.Y);
+            if (sqrDistanceToPatrolPosition < this.idleRange * this.idleRange) {
+                this.patrolIndex = (this.patrolIndex + 1) % this.patrolPositions.length;
             }
         }
         else {

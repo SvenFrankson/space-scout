@@ -33,7 +33,11 @@ class Route {
             let wingIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
             let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-            let mesh = await SpaceShip.initializeRecursively(
+
+            let spaceshipData = await SpaceshipLoader.instance.get("arrow-1");
+            let spaceShip: SpaceShip = new SpaceShip(spaceshipData, Main.Scene);
+            spaceShip.name = "Demo";
+            await spaceShip.initialize(
                 {
                     type: "root",
                     name: "body-" + bodyIndex,
@@ -67,8 +71,24 @@ class Route {
                 "#ffffff",
                 detailColor.toHexString()
             );
-            mesh.parent = test;
+            let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(50, 0, 50), new BABYLON.Vector3(-50, 0, -50)]);
+            spaceShip.attachControler(spaceshipAI);
+            
+            RuntimeUtils.NextFrame(
+                Main.Scene,
+                () => {
+                    spaceShip.trailMeshes.forEach(
+                        (t) => {
+                            t.foldToGenerator();
+                        }
+                    )
+                }
+            );
+
+            testCam.setTarget(spaceShip);
+        
             $("#page").hide();
+			Main.Play();
         }
     }
 }

@@ -143,7 +143,6 @@ class Main {
 
 	public animate(): void {
 		Main.Engine.runRenderLoop(() => {
-			BeaconEmiter.UpdateAllMapIcons();
 			Main.Scene.render();
 		});
 
@@ -174,8 +173,10 @@ class Main {
 	public static Play(): void {
 		Main.State = State.Game;
 		$("#page").hide(500, "linear");
-		Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
-		Main.Level.OnGameStart();
+		//Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
+		if (Main.Level) {
+			Main.Level.OnGameStart();
+		}
 		Main.playStart = (new Date()).getTime();
 	}
 
