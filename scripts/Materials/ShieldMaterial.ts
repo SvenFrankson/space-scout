@@ -1,7 +1,7 @@
 class Flash {
   public source: BABYLON.Vector3 = BABYLON.Vector3.Zero();
   public distance: number = 100;
-  public speed: number = 0.1;
+  public speed: number = 0.01;
   public resetLimit: number = 10;
 }
 
@@ -86,7 +86,7 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
     this.backFaceCulling = false;
     this.color = new BABYLON.Color4(1, 1, 1, 1);
     this.tex = new BABYLON.Texture("./datas/shield.png", this.getScene());
-    this.length = 1.5;
+    this.length = 0.5;
     this.noiseFrequency = 1;
     this.noiseAmplitude = 0;
     this.fresnelBias = 2;

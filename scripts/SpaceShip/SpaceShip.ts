@@ -86,6 +86,7 @@ class SpaceShip extends BABYLON.Mesh {
 	private _colliders: Array<BABYLON.BoundingSphere> = [];
 	public shield: Shield;
 	public impactParticle: BABYLON.ParticleSystem;
+	public shootFlashParticle: FlashParticle;
 	public wingTipRight: BABYLON.Mesh;
 	public wingTipLeft: BABYLON.Mesh;
 	public trailMeshes: TrailMesh[] = [];
@@ -141,6 +142,7 @@ class SpaceShip extends BABYLON.Mesh {
 		this.impactParticle.manualEmitCount = 100;
 		this.impactParticle.minSize = 0.05;
 		this.impactParticle.maxSize = 0.3;
+		this.shootFlashParticle = new FlashParticle("bang-red", scene, 0.8, 0.15);
 
 		this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
 		this.wingTipLeft.parent = this;
@@ -168,6 +170,13 @@ class SpaceShip extends BABYLON.Mesh {
 	): Promise<BABYLON.Mesh> {
 		let meshes = [];
 		await SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
+		let invWorldMatrix = this.computeWorldMatrix(true).clone().invert();
+		for (let i = 0; i < this._canonNodes.length; i++) {
+			let canonPoint = BABYLON.Vector3.Zero();
+			this._canonNodes[i].computeWorldMatrix(true);
+			BABYLON.Vector3.TransformCoordinatesToRef(this._canonNodes[i].absolutePosition, invWorldMatrix, canonPoint);
+			this.canons.push(canonPoint);
+		}
 		this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
 		this._mesh.layerMask = 1;
 		this._mesh.parent = this;
@@ -177,6 +186,7 @@ class SpaceShip extends BABYLON.Mesh {
 		return this._mesh;
 	}
 
+	private _canonNodes: BABYLON.TransformNode[] = [];
 	public static async initializeRecursively(
 		elementData: SpaceShipElement,
 		baseColor: string,
@@ -203,8 +213,10 @@ class SpaceShip extends BABYLON.Mesh {
 					if (spaceship) {
 						if (childData.type === "weapon") {
 							let canonTip = MeshUtils.getZMaxVertex(child);
-							BABYLON.Vector3.TransformCoordinatesToRef(canonTip, child.computeWorldMatrix(true), canonTip);
-							spaceship.canons.push(canonTip);
+							let canonTipNode = new BABYLON.TransformNode("_tmpCanonTipNode", spaceship.getScene());
+							canonTipNode.parent = child;
+							canonTipNode.position.copyFrom(canonTip);
+							spaceship._canonNodes.push(canonTipNode);
 						}
 						if (childData.type.startsWith("wing")) {
 							let wingTip = MeshUtils.getXMinVertex(child);
@@ -356,7 +368,10 @@ class SpaceShip extends BABYLON.Mesh {
 			let bullet = new Projectile(dir, this);
 			this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
 			let canon = this.canons[this._lastCanonIndex];
-			BABYLON.Vector3.TransformCoordinatesToRef(canon, this.getWorldMatrix(), bullet.position);
+			this.shootFlashParticle.parent = this._mesh;
+			this.shootFlashParticle.flash(canon);
+			let canonWorld = BABYLON.Vector3.TransformCoordinates(canon, this._mesh.getWorldMatrix());
+			bullet.position.copyFrom(canonWorld);
 			bullet.instantiate();
 		}
 	}

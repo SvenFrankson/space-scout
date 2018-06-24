@@ -48,7 +48,13 @@ class Projectile extends BABYLON.Mesh {
         }
         this.position.addInPlace(this._direction.scale(this.shotSpeed * dt));
         let zAxis = this._direction;
-        let yAxis = Main.GameCamera.position.subtract(this.position);
+        let yAxis: BABYLON.Vector3;
+        if (Main.Scene.activeCameras && Main.Scene.activeCameras[0]) {
+            yAxis = Main.Scene.activeCameras[0].position.subtract(this.position);
+        }
+        else {
+            yAxis = Main.Scene.activeCamera.position.subtract(this.position);
+        }
         let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
         BABYLON.Vector3.CrossToRef(zAxis, xAxis, yAxis);
         BABYLON.Quaternion.RotationQuaternionFromAxisToRef(xAxis, yAxis, zAxis, this.rotationQuaternion);

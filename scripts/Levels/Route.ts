@@ -97,6 +97,13 @@ class Route {
                 },
                 3000
             );
+
+            setInterval(
+                () => {
+                    spaceShip.shoot(spaceShip.localZ);
+                },
+                200
+            );
         
             $("#page").hide();
 			Main.Play();

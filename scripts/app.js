@@ -1006,6 +1006,64 @@ class PlayerControler {
         this.character.scene.onPointerObservable.add(this._pointerObserver);
     }
 }
+class FlashParticle extends BABYLON.Mesh {
+    constructor(name, scene, size, lifespan) {
+        super(name, scene);
+        this.size = size;
+        this.lifespan = lifespan;
+        this._timer = 0;
+        this._update = () => {
+            this._timer += this.getScene().getEngine().getDeltaTime() / 1000;
+            let s = this.size * this._timer / (this.lifespan / 2);
+            let target;
+            if (Main.Scene.activeCameras && Main.Scene.activeCameras[0]) {
+                target = Main.Scene.activeCameras[0].position;
+            }
+            else {
+                target = Main.Scene.activeCamera.position;
+            }
+            if (this.parent) {
+                target = target.clone();
+                let invParentWorld = this.parent.getWorldMatrix().clone().invert();
+                BABYLON.Vector3.TransformCoordinatesToRef(target, invParentWorld, target);
+            }
+            this.lookAt(target);
+            if (this._timer < this.lifespan / 2) {
+                this.scaling.copyFromFloats(s, s, s);
+                return;
+            }
+            else {
+                this.scaling.copyFromFloats(this.size, this.size, this.size);
+                if (this._timer > this.lifespan) {
+                    this._timer = 0;
+                    this.scaling.copyFromFloats(0, 0, 0);
+                    this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+                }
+            }
+        };
+        let template = BABYLON.MeshBuilder.CreatePlane("template", { size: 1 }, scene);
+        let data = BABYLON.VertexData.ExtractFromMesh(template);
+        data.applyToMesh(this);
+        template.dispose();
+        let material = new BABYLON.StandardMaterial(name + "-material", scene);
+        material.diffuseTexture = new BABYLON.Texture("./datas/textures/" + name + ".png", scene);
+        material.diffuseTexture.hasAlpha = true;
+        material.specularColor.copyFromFloats(0, 0, 0);
+        material.emissiveTexture = material.diffuseTexture;
+        this.material = material;
+        this.scaling.copyFromFloats(0, 0, 0);
+        this.layerMask = 1;
+    }
+    flash(position) {
+        if (this._timer > 0) {
+            return;
+        }
+        this.position.copyFrom(position);
+        this.scaling.copyFromFloats(0, 0, 0);
+        ScreenLoger.instance.log("Flash !");
+        this.getScene().onBeforeRenderObservable.add(this._update);
+    }
+}
 class HUD {
     constructor(input, scene) {
         this.spaceshipInfos = [];
@@ -2004,6 +2062,9 @@ class Route {
                 setInterval(() => {
                     spaceShip.shield.flashAt(new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().scaleInPlace(5), BABYLON.Space.LOCAL);
                 }, 3000);
+                setInterval(() => {
+                    spaceShip.shoot(spaceShip.localZ);
+                }, 200);
                 $("#page").hide();
                 Main.Play();
             }
@@ -2173,7 +2234,7 @@ class Flash {
     constructor() {
         this.source = BABYLON.Vector3.Zero();
         this.distance = 100;
-        this.speed = 0.1;
+        this.speed = 0.01;
         this.resetLimit = 10;
     }
 }
@@ -2188,7 +2249,7 @@ class ShieldMaterial extends BABYLON.ShaderMaterial {
         this.backFaceCulling = false;
         this.color = new BABYLON.Color4(1, 1, 1, 1);
         this.tex = new BABYLON.Texture("./datas/shield.png", this.getScene());
-        this.length = 1.5;
+        this.length = 0.5;
         this.noiseFrequency = 1;
         this.noiseAmplitude = 0;
         this.fresnelBias = 2;
@@ -2398,7 +2459,13 @@ class Projectile extends BABYLON.Mesh {
             }
             this.position.addInPlace(this._direction.scale(this.shotSpeed * dt));
             let zAxis = this._direction;
-            let yAxis = Main.GameCamera.position.subtract(this.position);
+            let yAxis;
+            if (Main.Scene.activeCameras && Main.Scene.activeCameras[0]) {
+                yAxis = Main.Scene.activeCameras[0].position.subtract(this.position);
+            }
+            else {
+                yAxis = Main.Scene.activeCamera.position.subtract(this.position);
+            }
             let xAxis = BABYLON.Vector3.Cross(yAxis, zAxis).normalize();
             BABYLON.Vector3.CrossToRef(zAxis, xAxis, yAxis);
             BABYLON.Quaternion.RotationQuaternionFromAxisToRef(xAxis, yAxis, zAxis, this.rotationQuaternion);
@@ -2472,6 +2539,7 @@ class SpaceShip extends BABYLON.Mesh {
         this.shootSpeed = 100;
         this.shootCoolDown = 0.3;
         this._shootCool = 0;
+        this._canonNodes = [];
         this._lastCanonIndex = 0;
         this.onWoundObservable = new BABYLON.Observable();
         this.stamina = data.stamina;
@@ -2509,6 +2577,7 @@ class SpaceShip extends BABYLON.Mesh {
         this.impactParticle.manualEmitCount = 100;
         this.impactParticle.minSize = 0.05;
         this.impactParticle.maxSize = 0.3;
+        this.shootFlashParticle = new FlashParticle("bang-red", scene, 0.8, 0.15);
         this.wingTipLeft = new BABYLON.Mesh("WingTipLeft", scene);
         this.wingTipLeft.parent = this;
         this.wingTipLeft.position.copyFromFloats(-2.91, 0, -1.24);
@@ -2582,6 +2651,13 @@ class SpaceShip extends BABYLON.Mesh {
         return __awaiter(this, void 0, void 0, function* () {
             let meshes = [];
             yield SpaceShip.initializeRecursively(model, baseColor, detailColor, this, meshes);
+            let invWorldMatrix = this.computeWorldMatrix(true).clone().invert();
+            for (let i = 0; i < this._canonNodes.length; i++) {
+                let canonPoint = BABYLON.Vector3.Zero();
+                this._canonNodes[i].computeWorldMatrix(true);
+                BABYLON.Vector3.TransformCoordinatesToRef(this._canonNodes[i].absolutePosition, invWorldMatrix, canonPoint);
+                this.canons.push(canonPoint);
+            }
             this._mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
             this._mesh.layerMask = 1;
             this._mesh.parent = this;
@@ -2612,8 +2688,10 @@ class SpaceShip extends BABYLON.Mesh {
                         if (spaceship) {
                             if (childData.type === "weapon") {
                                 let canonTip = MeshUtils.getZMaxVertex(child);
-                                BABYLON.Vector3.TransformCoordinatesToRef(canonTip, child.computeWorldMatrix(true), canonTip);
-                                spaceship.canons.push(canonTip);
+                                let canonTipNode = new BABYLON.TransformNode("_tmpCanonTipNode", spaceship.getScene());
+                                canonTipNode.parent = child;
+                                canonTipNode.position.copyFrom(canonTip);
+                                spaceship._canonNodes.push(canonTipNode);
                             }
                             if (childData.type.startsWith("wing")) {
                                 let wingTip = MeshUtils.getXMinVertex(child);
@@ -2741,7 +2819,10 @@ class SpaceShip extends BABYLON.Mesh {
             let bullet = new Projectile(dir, this);
             this._lastCanonIndex = (this._lastCanonIndex + 1) % this.canons.length;
             let canon = this.canons[this._lastCanonIndex];
-            BABYLON.Vector3.TransformCoordinatesToRef(canon, this.getWorldMatrix(), bullet.position);
+            this.shootFlashParticle.parent = this._mesh;
+            this.shootFlashParticle.flash(canon);
+            let canonWorld = BABYLON.Vector3.TransformCoordinates(canon, this._mesh.getWorldMatrix());
+            bullet.position.copyFrom(canonWorld);
             bullet.instantiate();
         }
     }
