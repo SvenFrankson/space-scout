@@ -2481,11 +2481,11 @@ class Projectile extends BABYLON.Mesh {
     }
     instantiate() {
         return __awaiter(this, void 0, void 0, function* () {
-            let vertexData = yield VertexDataLoader.instance.get("laser");
+            let vertexData = yield VertexDataLoader.instance.get("blaster-trail");
             if (vertexData && !this.isDisposed()) {
                 vertexData.applyToMesh(this);
             }
-            let material = yield MaterialLoader.instance.get("red-laser");
+            let material = yield MaterialLoader.instance.get("red");
             if (material && !this.isDisposed()) {
                 this.material = material;
             }

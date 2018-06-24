@@ -1,0 +1,18 @@
+{"producer":{"name":"Blender","version":"2.78 (sub 0)","exporter_version":"5.4.2","file":"blaster_trail.babylon"},
+"autoClear":true,"clearColor":[0.0509,0.0509,0.0509],"ambientColor":[0,0,0],"gravity":[0,-9.81,0],
+"materials":[{"name":"blaster_trail.Material","id":"blaster_trail.Material","ambient":[0.8,0.8,0.8],"diffuse":[0.64,0.64,0.64],"specular":[0.5,0.5,0.5],"emissive":[0,0,0],"specularPower":50,"alpha":1,"backFaceCulling":true,"checkReadyOnlyOnce":false,"maxSimultaneousLights":4}],
+"multiMaterials":[],
+"skeletons":[],
+"meshes":[{"name":"Cube.001","id":"Cube.001","materialId":"blaster_trail.Material","billboardMode":0,"position":[0,0,0],"rotation":[0,0,0],"scaling":[1,1,1],"isVisible":true,"freezeWorldMatrix":false,"isEnabled":true,"checkCollisions":false,"receiveShadows":false,"tags":""
+,"positions":[0.025,-0.025,-1.075,-0.025,-0.025,-5,-0.025,-0.025,-1.075,0.025,0.025,-1.075,-0.025,0.025,-5,0.025,0.025,-5,0.025,-0.025,-5,-0.025,0.025,-1.075,-0.1,0.1,-1,0.1,-0.1,1,-0.1,-0.1,-1,-0.1,-0.1,1,0.1,0.1,1,0.1,0.1,-1,0.1,-0.1,-1,-0.1,0.1,1]
+,"normals":[0.5789,-0.5789,-0.5742,-0.5773,-0.5773,-0.5773,-0.5789,-0.5789,-0.5743,0.5789,0.5789,-0.5742,-0.5773,0.5773,-0.5773,0.5773,0.5773,-0.5773,0.5773,-0.5773,-0.5773,-0.5789,0.5789,-0.5742,-0.6507,0.6507,-0.3913,0.5773,-0.5773,0.5773,-0.6507,-0.6507,-0.3913,-0.5773,-0.5773,0.5773,0.5773,0.5773,0.5773,0.6507,0.6507,-0.3913,0.6507,-0.6507,-0.3913,-0.5773,0.5773,0.5773]
+,"indices":[0,1,2,3,4,5,3,6,0,5,1,6,1,7,2,8,2,7,9,10,11,12,8,13,12,14,9,0,13,3,8,11,10,12,11,15,2,14,0,7,13,8,0,6,1,3,7,4,3,5
+,6,5,4,1,1,4,7,8,10,2,9,14,10,12,15,8,12,13,14,0,14,13,8,15,11,12,9,11,2,10,14,7,3,13]
+,"subMeshes":[{"materialIndex":0,"verticesStart":0,"verticesCount":16,"indexStart":0,"indexCount":84}]
+,"instances":[]}
+],
+"morphTargetManagers":[],
+"cameras":[],
+"lights":[],
+"shadowGenerators":[]
+}

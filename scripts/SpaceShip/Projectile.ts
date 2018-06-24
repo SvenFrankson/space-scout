@@ -20,11 +20,11 @@ class Projectile extends BABYLON.Mesh {
     }
 
     public async instantiate(): Promise<void> {
-        let vertexData = await VertexDataLoader.instance.get("laser");
+        let vertexData = await VertexDataLoader.instance.get("blaster-trail");
         if (vertexData && !this.isDisposed()) {
             vertexData.applyToMesh(this);
         }
-        let material = await MaterialLoader.instance.get("red-laser");
+        let material = await MaterialLoader.instance.get("red");
         if (material && !this.isDisposed()) {
             this.material = material;
         }
