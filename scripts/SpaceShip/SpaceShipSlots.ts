@@ -57,6 +57,12 @@ class SpaceShipSlots {
                 new SpaceShipSlot("weapon", new BABYLON.Vector3(- 0.6, 0.12, 0), new BABYLON.Vector3(0, 0, 0.12))
             ]
         );
+        this._slots.set(
+            "wing-3",
+            [
+                new SpaceShipSlot("weapon", new BABYLON.Vector3(- 0.9, 0.05, 0.2), new BABYLON.Vector3(0, 0, Math.PI / 2))
+            ]
+        );
     }
 
     public static getSlot(elementName: string, slotName: string): SpaceShipSlot {

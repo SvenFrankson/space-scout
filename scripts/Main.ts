@@ -94,17 +94,11 @@ class Main {
 				vec4 sobel_edge_h = n[2] + (2.0*n[5]) + n[8] - (n[0] + (2.0*n[3]) + n[6]);
 				vec4 sobel_edge_v = n[0] + (2.0*n[1]) + n[2] - (n[6] + (2.0*n[7]) + n[8]);
 				vec4 sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-				if (max (max (sobel.r, sobel.g), sobel.b) < 0.2) {
+				float threshold = 0.4 + max((depth - 10.) / 30., 0.);
+				if (max(sobel.r, max(sobel.g, sobel.b)) < threshold) {
 					gl_FragColor = n[4];
 				} else {
-					float outlineWeight = 0.;
-					if (depth < 20.) {
-						outlineWeight = 1.;
-					}
-					else if (depth < 50.) {
-						outlineWeight = 1. - (depth - 20.) / (50. - 20.);
-					}
-					gl_FragColor = n[4] * (1. - outlineWeight) + vec4(0.0, 0.0, 0.0, 1.0) * outlineWeight;
+					gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
 				}
 			}
 		`;
