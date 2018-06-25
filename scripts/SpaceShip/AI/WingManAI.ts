@@ -52,7 +52,7 @@ class WingManAI extends SpaceShipAI {
   }
 
   private _goTo(dt: number): void {
-    if (this._distance > 2 * this._spaceShip.forward) {
+    if (this._distance > 2 * this._spaceShip.speed) {
       this._spaceShip.forwardInput = 1;
     }
 

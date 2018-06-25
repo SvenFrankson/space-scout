@@ -23,7 +23,7 @@ abstract class SpaceShipAI extends SpaceShipControler {
 
 	public static FuturePosition(spaceship: SpaceShip, delay: number): BABYLON.Vector3 {
 		let futurePosition = spaceship.localZ.clone();
-		futurePosition.scaleInPlace(spaceship.forward * delay);
+		futurePosition.scaleInPlace(spaceship.speed * delay);
 		futurePosition.addInPlace(spaceship.position);
 		return futurePosition;
 	}

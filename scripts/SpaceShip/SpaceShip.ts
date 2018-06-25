@@ -13,7 +13,7 @@ class SpaceShip extends BABYLON.Mesh {
 	private _frontDrag: number = 0.01;
 	private _backDrag: number = 1;
 	private _speed: number = 0;
-	public get forward(): number {
+	public get speed(): number {
 		return this._speed;
 	}
 	
@@ -133,7 +133,7 @@ class SpaceShip extends BABYLON.Mesh {
 		this.shield.parent = this;
 		this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
 		this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
-		this.impactParticle.emitter = this;
+		this.impactParticle.emitter = this.position;
 		this.impactParticle.direction1.copyFromFloats(50, 50, 50);
 		this.impactParticle.direction2.copyFromFloats(-50, -50, -50);
 		this.impactParticle.emitRate = 800;
@@ -151,8 +151,8 @@ class SpaceShip extends BABYLON.Mesh {
 		this.wingTipRight.parent = this;
 		this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
 		this.trailMeshes = [
-			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120),
-			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120)
+			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.07, 120),
+			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.07, 120)
 		];
 		this.hitPoint = this.stamina;
 		this.createColliders();
@@ -304,10 +304,10 @@ class SpaceShip extends BABYLON.Mesh {
 		this._yaw = this.yaw * (1 - this._yawDrag * this._dt);
 		this._pitch = this.pitch * (1 - this._pitchDrag * this._dt);
 
-		let sqrForward: number = this.forward * this.forward;
-		if (this.forward > 0) {
+		let sqrForward: number = this.speed * this.speed;
+		if (this.speed > 0) {
 			this._speed -= this._frontDrag * sqrForward * this._dt;
-		} else if (this.forward < 0) {
+		} else if (this.speed < 0) {
 			this._speed += this._backDrag * sqrForward * this._dt;
 		}
 	}

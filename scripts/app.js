@@ -2060,9 +2060,6 @@ class Route {
                 });
                 testCam.setTarget(spaceShip);
                 setInterval(() => {
-                    spaceShip.shield.flashAt(new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().scaleInPlace(5), BABYLON.Space.LOCAL);
-                }, 3000);
-                setInterval(() => {
                     spaceShip.shoot(spaceShip.localZ);
                 }, 200);
                 $("#page").hide();
@@ -2568,7 +2565,7 @@ class SpaceShip extends BABYLON.Mesh {
         this.shield.parent = this;
         this.impactParticle = new BABYLON.ParticleSystem("particles", 2000, scene);
         this.impactParticle.particleTexture = new BABYLON.Texture("./datas/textures/impact.png", scene);
-        this.impactParticle.emitter = this;
+        this.impactParticle.emitter = this.position;
         this.impactParticle.direction1.copyFromFloats(50, 50, 50);
         this.impactParticle.direction2.copyFromFloats(-50, -50, -50);
         this.impactParticle.emitRate = 800;
@@ -2585,8 +2582,8 @@ class SpaceShip extends BABYLON.Mesh {
         this.wingTipRight.parent = this;
         this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
         this.trailMeshes = [
-            new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.1, 120),
-            new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.1, 120)
+            new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.07, 120),
+            new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.07, 120)
         ];
         this.hitPoint = this.stamina;
         this.createColliders();
@@ -2602,7 +2599,7 @@ class SpaceShip extends BABYLON.Mesh {
             this._forwardInput = BABYLON.Scalar.Clamp(v, -1, 1);
         }
     }
-    get forward() {
+    get speed() {
         return this._speed;
     }
     get rollInput() {
@@ -2758,11 +2755,11 @@ class SpaceShip extends BABYLON.Mesh {
         this._roll = this.roll * (1 - this._rollDrag * this._dt);
         this._yaw = this.yaw * (1 - this._yawDrag * this._dt);
         this._pitch = this.pitch * (1 - this._pitchDrag * this._dt);
-        let sqrForward = this.forward * this.forward;
-        if (this.forward > 0) {
+        let sqrForward = this.speed * this.speed;
+        if (this.speed > 0) {
             this._speed -= this._frontDrag * sqrForward * this._dt;
         }
-        else if (this.forward < 0) {
+        else if (this.speed < 0) {
             this._speed += this._backDrag * sqrForward * this._dt;
         }
     }
@@ -3247,7 +3244,7 @@ class SpaceShipAI extends SpaceShipControler {
     }
     static FuturePosition(spaceship, delay) {
         let futurePosition = spaceship.localZ.clone();
-        futurePosition.scaleInPlace(spaceship.forward * delay);
+        futurePosition.scaleInPlace(spaceship.speed * delay);
         futurePosition.addInPlace(spaceship.position);
         return futurePosition;
     }
@@ -3531,7 +3528,7 @@ class WingManAI extends SpaceShipAI {
         $("#behaviour").text(IIABehaviour[this._mode]);
     }
     _goTo(dt) {
-        if (this._distance > 2 * this._spaceShip.forward) {
+        if (this._distance > 2 * this._spaceShip.speed) {
             this._spaceShip.forwardInput = 1;
         }
         let angleAroundY = SpaceMath.AngleFromToAround(this._spaceShip.localZ, this._direction, this._spaceShip.localY);

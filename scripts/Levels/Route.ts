@@ -90,16 +90,6 @@ class Route {
 
             setInterval(
                 () => {
-                    spaceShip.shield.flashAt(
-                        new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize().scaleInPlace(5),
-                        BABYLON.Space.LOCAL
-                    );
-                },
-                3000
-            );
-
-            setInterval(
-                () => {
                     spaceShip.shoot(spaceShip.localZ);
                 },
                 200
