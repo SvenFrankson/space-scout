@@ -81,6 +81,23 @@ class Route {
             drone.position.x -= 1.5;
             drone.position.y += 1.5;
             drone.position.z -= 1.5;
+            setInterval(
+                () => {
+                    drone.unFold();
+                },
+                8000
+            );
+            setTimeout(
+                () => {
+                    setInterval(
+                        () => {
+                            drone.fold();
+                        },
+                        8000
+                    );
+                },
+                4000
+            )
 
             RuntimeUtils.NextFrame(
                 Main.Scene,

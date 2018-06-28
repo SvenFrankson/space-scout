@@ -2052,6 +2052,14 @@ class Route {
                 drone.position.x -= 1.5;
                 drone.position.y += 1.5;
                 drone.position.z -= 1.5;
+                setInterval(() => {
+                    drone.unFold();
+                }, 8000);
+                setTimeout(() => {
+                    setInterval(() => {
+                        drone.fold();
+                    }, 8000);
+                }, 4000);
                 RuntimeUtils.NextFrame(Main.Scene, () => {
                     spaceShip.trailMeshes.forEach((t) => {
                         t.foldToGenerator();
@@ -2508,6 +2516,50 @@ class Projectile extends BABYLON.Mesh {
 class RepairDrone extends BABYLON.TransformNode {
     constructor(scene) {
         super("Repair-Drone", scene);
+        this._kFold = 0;
+        this._fold = () => {
+            this._kFold++;
+            let ratio = this._kFold / 60;
+            BABYLON.Vector3.LerpToRef(RepairDrone.BodyBottomUnFoldPosition, RepairDrone.BodyBottomFoldPosition, ratio, this.bodyBottom.position);
+            BABYLON.Vector3.LerpToRef(RepairDrone.AntennaUnFoldScaling, RepairDrone.AntennaFoldScaling, ratio, this.antenna.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.ArmLUnFoldScaling, RepairDrone.ArmLFoldScaling, ratio, this.armL.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.ArmRUnFoldScaling, RepairDrone.ArmRFoldScaling, ratio, this.armR.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.WingLUnFoldRotation, RepairDrone.WingLFoldRotation, ratio, this.wingL.rotation);
+            BABYLON.Vector3.LerpToRef(RepairDrone.WingRUnFoldRotation, RepairDrone.WingRFoldRotation, ratio, this.wingR.rotation);
+            if (this._kFold > 60) {
+                this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
+                this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
+                this.armR.scaling.copyFrom(RepairDrone.ArmLFoldScaling);
+                this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
+                this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
+                this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
+                this.getScene().onBeforeRenderObservable.removeCallback(this._fold);
+            }
+        };
+        this._kUnFold = 0;
+        this._unFold = () => {
+            this._kUnFold++;
+            let ratio = RepairDrone.easeOutElastic(this._kUnFold / 60);
+            BABYLON.Vector3.LerpToRef(RepairDrone.BodyBottomFoldPosition, RepairDrone.BodyBottomUnFoldPosition, ratio, this.bodyBottom.position);
+            BABYLON.Vector3.LerpToRef(RepairDrone.AntennaFoldScaling, RepairDrone.AntennaUnFoldScaling, ratio, this.antenna.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.ArmLFoldScaling, RepairDrone.ArmLUnFoldScaling, ratio, this.armL.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.ArmRFoldScaling, RepairDrone.ArmRUnFoldScaling, ratio, this.armR.scaling);
+            BABYLON.Vector3.LerpToRef(RepairDrone.WingLFoldRotation, RepairDrone.WingLUnFoldRotation, ratio, this.wingL.rotation);
+            BABYLON.Vector3.LerpToRef(RepairDrone.WingRFoldRotation, RepairDrone.WingRUnFoldRotation, ratio, this.wingR.rotation);
+            if (this._kUnFold > 60) {
+                this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomUnFoldPosition);
+                this.antenna.scaling.copyFrom(RepairDrone.AntennaUnFoldScaling);
+                this.armR.scaling.copyFrom(RepairDrone.ArmLUnFoldScaling);
+                this.armL.scaling.copyFrom(RepairDrone.ArmRUnFoldScaling);
+                this.wingL.rotation.copyFrom(RepairDrone.WingLUnFoldRotation);
+                this.wingR.rotation.copyFrom(RepairDrone.WingRUnFoldRotation);
+                this.getScene().onBeforeRenderObservable.removeCallback(this._unFold);
+            }
+        };
+    }
+    static easeOutElastic(t) {
+        var p = 0.3;
+        return Math.pow(2, -10 * t) * Math.sin((t - p / 4) * (2 * Math.PI) / p) + 1;
     }
     initialize() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -2543,32 +2595,39 @@ class RepairDrone extends BABYLON.TransformNode {
                     }
                     this.armL.parent = this.bodyBottom;
                     this.armR.parent = this.bodyBottom;
-                    this.fold();
-                    setTimeout(() => {
-                        this.unFold();
-                    }, 3000);
+                    this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
+                    this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
+                    this.armR.scaling.copyFrom(RepairDrone.ArmLFoldScaling);
+                    this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
+                    this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
+                    this.wingR.rotation.copyFrom(RepairDrone.WingFoldRotation);
+                    this.unFold();
                     resolve();
                 });
             });
         });
     }
     fold() {
-        this.bodyBottom.position.copyFromFloats(0, 0.095, 0);
-        this.antenna.scaling.copyFromFloats(0, 0, 0);
-        this.armR.scaling.copyFromFloats(0, 0, 0);
-        this.armL.scaling.copyFromFloats(0, 0, 0);
-        this.wingL.rotation.copyFromFloats(0, -1.22, 0);
-        this.wingR.rotation.copyFromFloats(0, 1.22, 0);
+        this._kFold = 0;
+        this.getScene().onBeforeRenderObservable.add(this._fold);
     }
     unFold() {
-        this.bodyBottom.position.copyFromFloats(0, 0, 0);
-        this.antenna.scaling.copyFromFloats(1, 1, 1);
-        this.armR.scaling.copyFromFloats(1, 1, 1);
-        this.armL.scaling.copyFromFloats(1, 1, 1);
-        this.wingL.rotation.copyFromFloats(0, 0, 0);
-        this.wingR.rotation.copyFromFloats(0, 0, 0);
+        this._kUnFold = 0;
+        this.getScene().onBeforeRenderObservable.add(this._unFold);
     }
 }
+RepairDrone.BodyBottomFoldPosition = new BABYLON.Vector3(0, 0.095, 0);
+RepairDrone.AntennaFoldScaling = new BABYLON.Vector3(0, 0, 0);
+RepairDrone.ArmLFoldScaling = new BABYLON.Vector3(0, 0, 0);
+RepairDrone.ArmRFoldScaling = new BABYLON.Vector3(0, 0, 0);
+RepairDrone.WingLFoldRotation = new BABYLON.Vector3(0, -1.22, 0);
+RepairDrone.WingRFoldRotation = new BABYLON.Vector3(0, 1.22, 0);
+RepairDrone.BodyBottomUnFoldPosition = new BABYLON.Vector3(0, 0, 0);
+RepairDrone.AntennaUnFoldScaling = new BABYLON.Vector3(1, 1, 1);
+RepairDrone.ArmLUnFoldScaling = new BABYLON.Vector3(1, 1, 1);
+RepairDrone.ArmRUnFoldScaling = new BABYLON.Vector3(1, 1, 1);
+RepairDrone.WingLUnFoldRotation = new BABYLON.Vector3(0, 0, 0);
+RepairDrone.WingRUnFoldRotation = new BABYLON.Vector3(0, 0, 0);
 class SpaceShip extends BABYLON.Mesh {
     constructor(data, scene) {
         super("spaceship", scene);
