@@ -31,7 +31,6 @@ class FlashParticle extends BABYLON.Mesh {
         }
         this.position.copyFrom(position);
         this.scaling.copyFromFloats(0, 0, 0);
-        ScreenLoger.instance.log("Flash !");
         this.getScene().onBeforeRenderObservable.add(this._update);
     }
 

@@ -1054,7 +1054,6 @@ class FlashParticle extends BABYLON.Mesh {
         }
         this.position.copyFrom(position);
         this.scaling.copyFromFloats(0, 0, 0);
-        ScreenLoger.instance.log("Flash !");
         this.getScene().onBeforeRenderObservable.add(this._update);
     }
 }
@@ -1995,7 +1994,7 @@ class Route {
                 testCam.attachControl(Main.Canvas);
                 testCam.minZ = 0.5;
                 testCam.maxZ = 2000;
-                testCam.layerMask = 1;
+                testCam.layerMask = 1 | 2;
                 testCam.wheelPrecision = 20;
                 let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
                 var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, testCam);
@@ -2047,6 +2046,12 @@ class Route {
                 }, "#ffffff", detailColor.toHexString());
                 let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
                 spaceShip.attachControler(spaceshipAI);
+                let drone = new RepairDrone(Main.Scene);
+                drone.initialize();
+                drone.parent = spaceShip;
+                drone.position.x -= 1.5;
+                drone.position.y += 1.5;
+                drone.position.z -= 1.5;
                 RuntimeUtils.NextFrame(Main.Scene, () => {
                     spaceShip.trailMeshes.forEach((t) => {
                         t.foldToGenerator();
@@ -2498,6 +2503,70 @@ class Projectile extends BABYLON.Mesh {
             }
         }
         return undefined;
+    }
+}
+class RepairDrone extends BABYLON.TransformNode {
+    constructor(scene) {
+        super("Repair-Drone", scene);
+    }
+    initialize() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => {
+                BABYLON.SceneLoader.ImportMesh("", "./datas/models/repair-drone.babylon", "", this.getScene(), (meshes) => {
+                    for (let i = 0; i < meshes.length; i++) {
+                        let mesh = meshes[i];
+                        if (mesh instanceof BABYLON.Mesh) {
+                            if (mesh.name === "antenna") {
+                                this.antenna = mesh;
+                            }
+                            else if (mesh.name === "body-top") {
+                                this.bodyTop = mesh;
+                            }
+                            else if (mesh.name === "body-bottom") {
+                                this.bodyBottom = mesh;
+                            }
+                            else if (mesh.name === "arm-L") {
+                                this.armL = mesh;
+                            }
+                            else if (mesh.name === "arm-R") {
+                                this.armR = mesh;
+                            }
+                            else if (mesh.name === "wing-L") {
+                                this.wingL = mesh;
+                            }
+                            else if (mesh.name === "wing-R") {
+                                this.wingR = mesh;
+                            }
+                            ScreenLoger.instance.log(mesh.name);
+                            mesh.parent = this;
+                        }
+                    }
+                    this.armL.parent = this.bodyBottom;
+                    this.armR.parent = this.bodyBottom;
+                    this.fold();
+                    setTimeout(() => {
+                        this.unFold();
+                    }, 3000);
+                    resolve();
+                });
+            });
+        });
+    }
+    fold() {
+        this.bodyBottom.position.copyFromFloats(0, 0.095, 0);
+        this.antenna.scaling.copyFromFloats(0, 0, 0);
+        this.armR.scaling.copyFromFloats(0, 0, 0);
+        this.armL.scaling.copyFromFloats(0, 0, 0);
+        this.wingL.rotation.copyFromFloats(0, -1.22, 0);
+        this.wingR.rotation.copyFromFloats(0, 1.22, 0);
+    }
+    unFold() {
+        this.bodyBottom.position.copyFromFloats(0, 0, 0);
+        this.antenna.scaling.copyFromFloats(1, 1, 1);
+        this.armR.scaling.copyFromFloats(1, 1, 1);
+        this.armL.scaling.copyFromFloats(1, 1, 1);
+        this.wingL.rotation.copyFromFloats(0, 0, 0);
+        this.wingR.rotation.copyFromFloats(0, 0, 0);
     }
 }
 class SpaceShip extends BABYLON.Mesh {

@@ -13,7 +13,7 @@ class Route {
             testCam.attachControl(Main.Canvas);
             testCam.minZ = 0.5;
             testCam.maxZ = 2000;
-            testCam.layerMask = 1;
+            testCam.layerMask = 1 | 2;
             testCam.wheelPrecision = 20;
 
             let depthMap = Main.Scene.enableDepthRenderer(testCam).getDepthMap();
@@ -74,6 +74,13 @@ class Route {
             );
             let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
             spaceShip.attachControler(spaceshipAI);
+
+            let drone = new RepairDrone(Main.Scene);
+            drone.initialize();
+            drone.parent = spaceShip;
+            drone.position.x -= 1.5;
+            drone.position.y += 1.5;
+            drone.position.z -= 1.5;
 
             RuntimeUtils.NextFrame(
                 Main.Scene,
