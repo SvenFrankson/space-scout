@@ -9,12 +9,12 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  laser
 		WARNING: No materials have been assigned: 
-		num positions      :  16
-		num normals        :  16
+		num positions      :  34
+		num normals        :  34
 		num uvs            :  0
 		num uvs2           :  0
-		num colors         :  64
-		num indices        :  84
+		num colors         :  136
+		num indices        :  192
 	processing begun of mesh:  antenna
 		WARNING: No materials have been assigned: 
 		num positions      :  26
@@ -74,4 +74,4 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.2558 secs
+elapsed time:  0 min, 0.2253 secs

@@ -15,6 +15,8 @@ class RepairDrone extends BABYLON.TransformNode {
     public antenna: BABYLON.Mesh;
     public armL: BABYLON.Mesh;
     public armR: BABYLON.Mesh;
+    public armRTip: BABYLON.TransformNode;
+    public laser: BABYLON.Mesh;
 
     private _speed: number = 0;
 
@@ -57,12 +59,20 @@ class RepairDrone extends BABYLON.TransformNode {
                                 else if (mesh.name === "wing-R") {
                                     this.wingR = mesh;
                                 }
+                                else if (mesh.name === "laser") {
+                                    this.laser = mesh;
+                                }
+                                mesh.material = SpaceShipFactory.cellShadingMaterial;
                                 ScreenLoger.instance.log(mesh.name);
                                 mesh.parent = this.container;
                             }
                         }
                         this.armL.parent = this.bodyBottom;
                         this.armR.parent = this.bodyBottom;
+                        this.armRTip = new BABYLON.TransformNode("armRTip", this.getScene());
+                        this.armRTip.parent = this.armR;
+                        this.armRTip.position.copyFromFloats(0, 0, 0.65);
+                        this.laser.parent = this.spaceship;
                         
                         this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
                         this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
@@ -136,6 +146,7 @@ class RepairDrone extends BABYLON.TransformNode {
         path.parent = this.spaceship;
 
         let l = this._targetPositions.length;
+        this.laser.isVisible = false;
         this.fold();
         while (this._targetPositions.length > 1) {
             let targetPosition = this._targetPositions[0];
@@ -150,8 +161,13 @@ class RepairDrone extends BABYLON.TransformNode {
         }
 
         let timer = 0;
+        this.laser.isVisible = true;
+        this.laser.scaling.x = 0;
+        this.laser.scaling.y = 0;
         this.unFold();
         while (timer < 5) {
+            this.laser.scaling.x = BABYLON.Scalar.Clamp(1, this.laser.scaling.x - 0.1, this.laser.scaling.x + 0.1);
+            this.laser.scaling.y = BABYLON.Scalar.Clamp(1, this.laser.scaling.y - 0.1, this.laser.scaling.y + 0.1);
             timer += this.getScene().getEngine().getDeltaTime() / 1000;
             yield;
         }
@@ -175,13 +191,12 @@ class RepairDrone extends BABYLON.TransformNode {
             let deltaTime = this.getScene().getEngine().getDeltaTime() / 1000;
             let targetPosition = this._targetPositions[0];
             if (targetPosition) {
-                /*
+                
                 if (!this._m) {
-                    this._m = BABYLON.MeshBuilder.CreateBox("m", {size: 0.3}, Main.Scene);
-                    this._m.parent = this.spaceship;
+                    //this._m = BABYLON.MeshBuilder.CreateBox("m", {size: 0.2}, Main.Scene);
+                    //this._m.parent = this.spaceship;
                 }
-                this._m.position.copyFrom(targetPosition);
-                */
+                
                 let dir = targetPosition.subtract(this.position);
                 let dist = dir.length();
                 dir.scaleInPlace(1 / dist);
@@ -190,6 +205,14 @@ class RepairDrone extends BABYLON.TransformNode {
                     this.position.addInPlace(dir.scale(Math.min(dist, this._speed * deltaTime)));
                 }
                 this.lookAt(BABYLON.Vector3.Zero(), 0, Math.PI, Math.PI, BABYLON.Space.LOCAL);
+                this.laser.position.copyFrom(targetPosition.subtract(BABYLON.Vector3.Normalize(targetPosition)));
+                let invWorld = this.spaceship.getWorldMatrix().clone().invert();
+                this.armRTip.computeWorldMatrix(true);
+                let armTipWorldPosition = BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), this.armRTip.getWorldMatrix());
+                let armTipPos = BABYLON.Vector3.TransformCoordinates(armTipWorldPosition, invWorld);
+                //this._m.position.copyFrom(armTipWorldPosition);
+                this.laser.scaling.z =BABYLON.Vector3.Distance(armTipPos, this.laser.position);
+                this.laser.lookAt(armTipPos, 0, Math.PI, Math.PI, BABYLON.Space.LOCAL);
             }
         }
     }
