@@ -21,8 +21,9 @@ class RepairDrone extends BABYLON.TransformNode {
 
     private _speed: number = 0;
 
-    constructor(public spaceship: BABYLON.Mesh, scene: BABYLON.Scene) {
-        super("Repair-Drone", scene);
+    constructor(public spaceship: SpaceShip) {
+        super("Repair-Drone", spaceship.getScene());
+        this.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
 
     public async initialize(): Promise<void> {
@@ -73,7 +74,7 @@ class RepairDrone extends BABYLON.TransformNode {
                         this.armRTip = new BABYLON.TransformNode("armRTip", this.getScene());
                         this.armRTip.parent = this.armR;
                         this.armRTip.position.copyFromFloats(0, 0, 0.65);
-                        this.laser.parent = this.spaceship;
+                        this.laser.parent = this.spaceship.mesh;
                         
                         this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
                         this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
@@ -81,8 +82,7 @@ class RepairDrone extends BABYLON.TransformNode {
                         this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
                         this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
                         this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
-
-                        
+                        this._isBased = true;
                         
                         let particleMaterial = new BABYLON.StandardMaterial(name + "-material", this.getScene());
                         particleMaterial.diffuseTexture = new BABYLON.Texture("./datas/textures/impact-white.png", this.getScene());
@@ -165,11 +165,12 @@ class RepairDrone extends BABYLON.TransformNode {
                         //scene.debugLayer.show();
                         // animation
 
-                        this.parent = this.spaceship;
+                        this.parent = this.spaceship.mesh;
                         this.position.copyFrom(this.basePosition);
                         this.getScene().onBeforeRenderObservable.add(this._update);
                         this.repairCycle();
 
+                        ScreenLoger.instance.log("RepairDrone initialized.");
                         resolve();
                     }
                 )
@@ -179,19 +180,19 @@ class RepairDrone extends BABYLON.TransformNode {
 
     private async repairCycle() {
         while (!this.isDisposed()) {
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < 3; i++) {
                 ScreenLoger.instance.log("New Repair Cycle.");
                 let A = this.position.clone();
                 let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
                 B.normalize().scaleInPlace(10);
                 let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
-                ray = BABYLON.Ray.Transform(ray, this.spaceship.getWorldMatrix());
-                let hit = ray.intersectsMesh(this.spaceship)
+                ray = BABYLON.Ray.Transform(ray, this.spaceship.mesh.getWorldMatrix());
+                let hit = ray.intersectsMesh(this.spaceship.mesh)
                 if (hit.hit) {
                     let p = hit.pickedPoint;
                     B = BABYLON.Vector3.TransformCoordinates(
                         p,
-                        this.spaceship.getWorldMatrix().clone().invert()
+                        this.spaceship.mesh.getWorldMatrix().clone().invert()
                     );
                     B = B.addInPlace(BABYLON.Vector3.Normalize(B));
                 }
@@ -233,7 +234,7 @@ class RepairDrone extends BABYLON.TransformNode {
             },
             this.getScene()
         );
-        path.parent = this.spaceship;
+        path.parent = this.spaceship.mesh;
 
         let l = this._targetPositions.length;
         this.laser.isVisible = false;
@@ -291,7 +292,7 @@ class RepairDrone extends BABYLON.TransformNode {
             },
             this.getScene()
         );
-        path.parent = this.spaceship;
+        path.parent = this.spaceship.mesh;
 
         let l = this._targetPositions.length;
         this.laser.isVisible = false;
@@ -319,7 +320,7 @@ class RepairDrone extends BABYLON.TransformNode {
         this.unFold();
         this.repairParticle.mesh.isVisible = true;
         this.getScene().registerBeforeRender(startSPS);
-        this.repairParticle.mesh.parent = this.spaceship;
+        this.repairParticle.mesh.parent = this.spaceship.mesh;
         this.repairParticle.mesh.position = this._targetPositions[0].subtract(this._targetPositions[0].clone().normalize());
         while (timer < 5) {
             this.laser.scaling.x = BABYLON.Scalar.Clamp(1 + 0.25 * Math.cos(timer * 2 * Math.PI), this.laser.scaling.x - 0.1, this.laser.scaling.x + 0.1);
@@ -341,7 +342,7 @@ class RepairDrone extends BABYLON.TransformNode {
         if (this._isBased) {
            BABYLON.Vector3.LerpToRef(this.position, this.basePosition, 0.05, this.position);
            BABYLON.Vector3.LerpToRef(this.container.position, BABYLON.Vector3.Zero(), 0.05, this.container.position);
-           BABYLON.Vector3.LerpToRef(this.rotation, BABYLON.Vector3.Zero(), 0.05, this.rotation);
+           BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, BABYLON.Quaternion.Identity(), 0.05, this.rotationQuaternion);
         }
         else {
             this.container.position.x = 0.25 * Math.sin(this._kIdle / 200 * Math.PI * 2);
@@ -363,9 +364,14 @@ class RepairDrone extends BABYLON.TransformNode {
                 if (dist > 0) {
                     this.position.addInPlace(dir.scale(Math.min(dist, this._speed * deltaTime)));
                 }
-                this.lookAt(BABYLON.Vector3.Zero(), 0, Math.PI, Math.PI, BABYLON.Space.LOCAL);
+                
+                let zAxis = this.position.scale(-1).normalize();
+                let xAxis = BABYLON.Vector3.Cross(BABYLON.Axis.Y, zAxis);
+                let yAxis = BABYLON.Vector3.Cross(zAxis, xAxis);
+                BABYLON.Quaternion.SlerpToRef(this.rotationQuaternion, BABYLON.Quaternion.RotationQuaternionFromAxis(xAxis, yAxis, zAxis), 0.05, this.rotationQuaternion)
+                
                 this.laser.position.copyFrom(targetPosition.subtract(BABYLON.Vector3.Normalize(targetPosition)));
-                let invWorld = this.spaceship.getWorldMatrix().clone().invert();
+                let invWorld = this.spaceship.mesh.getWorldMatrix().clone().invert();
                 this.armRTip.computeWorldMatrix(true);
                 let armTipWorldPosition = BABYLON.Vector3.TransformCoordinates(BABYLON.Vector3.Zero(), this.armRTip.getWorldMatrix());
                 let armTipPos = BABYLON.Vector3.TransformCoordinates(armTipWorldPosition, invWorld);

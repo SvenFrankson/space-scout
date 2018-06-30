@@ -66,6 +66,10 @@ class Route {
                         {
                             type: "engine",
                             name: "engine-1"
+                        },
+                        {
+                            type: "drone",
+                            name: "repair-drone"
                         }
                     ]
                 },
@@ -74,9 +78,6 @@ class Route {
             );
             let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
             spaceShip.attachControler(spaceshipAI);
-
-            let drone = new RepairDrone(spaceShip._mesh, Main.Scene);
-            drone.initialize();
 
             RuntimeUtils.NextFrame(
                 Main.Scene,
