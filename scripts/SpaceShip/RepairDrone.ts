@@ -5,7 +5,7 @@ class RepairDrone extends BABYLON.TransformNode {
         return Math.pow(2,-10*t) * Math.sin((t-p/4)*(2*Math.PI)/p) + 1;
     }
     
-    public basePosition: BABYLON.Vector3 = new BABYLON.Vector3(-1.5, 1.5, -1.5);
+    public basePosition: BABYLON.Vector3 = new BABYLON.Vector3(0, 1, 0);
 
     public container: BABYLON.TransformNode;
     public bodyTop: BABYLON.Mesh;
@@ -17,6 +17,7 @@ class RepairDrone extends BABYLON.TransformNode {
     public armR: BABYLON.Mesh;
     public armRTip: BABYLON.TransformNode;
     public laser: BABYLON.Mesh;
+    public repairParticle: BABYLON.SolidParticleSystem;
 
     private _speed: number = 0;
 
@@ -81,6 +82,89 @@ class RepairDrone extends BABYLON.TransformNode {
                         this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
                         this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
 
+                        
+                        
+                        let particleMaterial = new BABYLON.StandardMaterial(name + "-material", this.getScene());
+                        particleMaterial.diffuseTexture = new BABYLON.Texture("./datas/textures/impact-white.png", this.getScene());
+                        particleMaterial.diffuseTexture.hasAlpha = true;
+                        particleMaterial.specularColor.copyFromFloats(0, 0, 0);
+                        particleMaterial.emissiveTexture = particleMaterial.diffuseTexture;
+                         // SPS creation
+                        var plane = BABYLON.Mesh.CreatePlane("plane", 5, this.getScene());
+                        this.repairParticle = new BABYLON.SolidParticleSystem('SPS', this.getScene());
+                        this.repairParticle.addShape(plane, 20);
+                        var mesh = this.repairParticle.buildMesh();
+                        mesh.material = particleMaterial;
+                        mesh.position.y = -50;
+                        plane.dispose();  // free memory
+                        
+
+                        // SPS behavior definition
+                        var speed = 0.08;
+                        var gravity = -0.005;
+
+                        // init
+                        this.repairParticle.initParticles = () => {
+                            // just recycle everything
+                            for (var p = 0; p < this.repairParticle.nbParticles; p++) {
+                                this.repairParticle.recycleParticle(this.repairParticle.particles[p]);
+                            }
+                        };
+
+                        // recycle
+                        this.repairParticle.recycleParticle = (particle) => {
+                            // Set particle new velocity, scale and rotation
+                            // As this function is called for each particle, we don't allocate new
+                            // memory by using "new BABYLON.Vector3()" but we set directly the
+                            // x, y, z particle properties instead
+                            particle.position.x = 0;
+                            particle.position.y = 0;
+                            particle.position.z = 0;
+                            particle.velocity.x = (Math.random() - 0.5) * speed;
+                            particle.velocity.y = Math.random() * speed;
+                            particle.velocity.z = (Math.random() - 0.5) * speed;
+                            var scale = 0.015 + Math.random() * 0.055;
+                            particle.scale.x = scale;
+                            particle.scale.y = scale;
+                            particle.scale.z = scale;
+                            particle.rotation.x = Math.random() * 3.5;
+                            particle.rotation.y = Math.random() * 3.5;
+                            particle.rotation.z = Math.random() * 3.5;
+                            particle.color.r = Math.random() * 0.4 + 0.3;
+                            particle.color.g = 1;
+                            particle.color.b = particle.color.r;
+                            particle.color.a = 1;
+                            return particle;
+                        };
+
+                        // update : will be called by setParticles()
+                        this.repairParticle.updateParticle = (particle) => {  
+                            // some physics here 
+                            if (particle.position.y < 0) {
+                                this.repairParticle.recycleParticle(particle);
+                            }
+                            particle.velocity.y += gravity;                         // apply gravity to y
+                            (particle.position).addInPlace(particle.velocity);      // update particle new position
+                            particle.position.y += speed / 2;
+                            particle.scale.scaleInPlace(0.9);
+                            return particle;
+                        };
+
+
+                        // init all particle values and set them once to apply textures, colors, etc
+                        this.repairParticle.initParticles();
+                        this.repairParticle.setParticles();
+                        
+                        // Tuning : plane particles facing, so billboard and no rotation computation
+                        // colors not changing then, neither textures
+                        this.repairParticle.billboard = true;
+                        this.repairParticle.computeParticleRotation = false;
+                        this.repairParticle.computeParticleColor = false;
+                        this.repairParticle.computeParticleTexture = false;
+                            
+                        //scene.debugLayer.show();
+                        // animation
+
                         this.parent = this.spaceship;
                         this.position.copyFrom(this.basePosition);
                         this.getScene().onBeforeRenderObservable.add(this._update);
@@ -95,23 +179,87 @@ class RepairDrone extends BABYLON.TransformNode {
 
     private async repairCycle() {
         while (!this.isDisposed()) {
-            ScreenLoger.instance.log("New Cycle.");
-            let A = this.position.clone();
-            let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-            B.normalize().scaleInPlace(10);
-            let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
-            ray = BABYLON.Ray.Transform(ray, this.spaceship.getWorldMatrix());
-            let hit = ray.intersectsMesh(this.spaceship)
-            if (hit.hit) {
-                let p = hit.pickedPoint;
-                B = BABYLON.Vector3.TransformCoordinates(
-                    p,
-                    this.spaceship.getWorldMatrix().clone().invert()
-                );
-                B = B.addInPlace(BABYLON.Vector3.Normalize(B));
+            for (let i = 0; i < 1; i++) {
+                ScreenLoger.instance.log("New Repair Cycle.");
+                let A = this.position.clone();
+                let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                B.normalize().scaleInPlace(10);
+                let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
+                ray = BABYLON.Ray.Transform(ray, this.spaceship.getWorldMatrix());
+                let hit = ray.intersectsMesh(this.spaceship)
+                if (hit.hit) {
+                    let p = hit.pickedPoint;
+                    B = BABYLON.Vector3.TransformCoordinates(
+                        p,
+                        this.spaceship.getWorldMatrix().clone().invert()
+                    );
+                    B = B.addInPlace(BABYLON.Vector3.Normalize(B));
+                }
+                await RuntimeUtils.RunCoroutine(this._repairStep(A, B));
             }
-            await RuntimeUtils.RunCoroutine(this._repairStep(A, B));
+            ScreenLoger.instance.log("New Base Cycle.");
+            let A = this.position.clone();
+            let B = this.basePosition.clone();
+            await RuntimeUtils.RunCoroutine(this._baseStep(A, B));
         }
+    }
+
+    private * _baseStep(A: BABYLON.Vector3, B: BABYLON.Vector3): IterableIterator<any> {
+        ScreenLoger.instance.log("New Step.");
+        // Build a path for the step.
+        let n = BABYLON.Vector3.Cross(A, B).normalize();
+        let alpha = Math.acos(BABYLON.Vector3.Dot(A.clone().normalize(), B.clone().normalize()));
+        let length = Math.ceil(alpha / (Math.PI / 32));
+        let step = alpha / length;
+        let dA = A.length();
+        let dB = B.length();
+
+        this._targetPositions = [A];
+        for (let i = 1; i < length; i++) {
+            let matrix = BABYLON.Matrix.RotationAxis(n, step * i);
+            let p = BABYLON.Vector3.TransformCoordinates(A, matrix);
+            let mult = 1.5 - 0.5 * (1 - i / (length / 2)) * (1 - i / (length / 2));
+            let r = i / length;
+            p.normalize();
+            p.scaleInPlace(dA * mult * (1 - r) + dB * mult * r);
+            this._targetPositions.push(p);
+        }
+        this._targetPositions.push(B);
+        
+        let path = BABYLON.MeshBuilder.CreateLines(
+            "path",
+            {
+                points: this._targetPositions,
+            },
+            this.getScene()
+        );
+        path.parent = this.spaceship;
+
+        let l = this._targetPositions.length;
+        this.laser.isVisible = false;
+        this.fold();
+        let startSPS = () => {
+            this.repairParticle.setParticles();
+        }
+        while (this._targetPositions.length > 1) {
+            let targetPosition = this._targetPositions[0];
+            let d = BABYLON.Vector3.Distance(targetPosition, this.position);
+            let ll = this._targetPositions.length;
+            this._speed = 1.5 - 0.5 * (1 - ll / (l / 2)) * (1 - ll / (l / 2));
+            if (d < 0.5) {
+                ScreenLoger.instance.log("Repair Drone reached point in path, " + this._targetPositions.length + " points left.");
+                this._targetPositions.splice(0, 1);
+            }
+            yield;
+        }
+
+        this._isBased = true;
+        let timer = 0;
+        while (timer < 5) {
+            timer += this.getScene().getEngine().getDeltaTime() / 1000;
+            yield;
+        }
+        ScreenLoger.instance.log("Step Done.");
     }
 
     private * _repairStep(A: BABYLON.Vector3, B: BABYLON.Vector3): IterableIterator<any> {
@@ -148,6 +296,10 @@ class RepairDrone extends BABYLON.TransformNode {
         let l = this._targetPositions.length;
         this.laser.isVisible = false;
         this.fold();
+        let startSPS = () => {
+            this.repairParticle.setParticles();
+        }
+        this._isBased = false;
         while (this._targetPositions.length > 1) {
             let targetPosition = this._targetPositions[0];
             let d = BABYLON.Vector3.Distance(targetPosition, this.position);
@@ -165,12 +317,18 @@ class RepairDrone extends BABYLON.TransformNode {
         this.laser.scaling.x = 0;
         this.laser.scaling.y = 0;
         this.unFold();
+        this.repairParticle.mesh.isVisible = true;
+        this.getScene().registerBeforeRender(startSPS);
+        this.repairParticle.mesh.parent = this.spaceship;
+        this.repairParticle.mesh.position = this._targetPositions[0].subtract(this._targetPositions[0].clone().normalize());
         while (timer < 5) {
-            this.laser.scaling.x = BABYLON.Scalar.Clamp(1, this.laser.scaling.x - 0.1, this.laser.scaling.x + 0.1);
-            this.laser.scaling.y = BABYLON.Scalar.Clamp(1, this.laser.scaling.y - 0.1, this.laser.scaling.y + 0.1);
+            this.laser.scaling.x = BABYLON.Scalar.Clamp(1 + 0.25 * Math.cos(timer * 2 * Math.PI), this.laser.scaling.x - 0.1, this.laser.scaling.x + 0.1);
+            this.laser.scaling.y = BABYLON.Scalar.Clamp(1 + 0.25 * Math.cos(timer * 2 * Math.PI), this.laser.scaling.y - 0.1, this.laser.scaling.y + 0.1);
             timer += this.getScene().getEngine().getDeltaTime() / 1000;
             yield;
         }
+        this.getScene().unregisterBeforeRender(startSPS);
+        this.repairParticle.mesh.isVisible = false;
         ScreenLoger.instance.log("Step Done.");
     }
 
@@ -181,7 +339,9 @@ class RepairDrone extends BABYLON.TransformNode {
     private _isBased: boolean = false;
     private _update = () => {
         if (this._isBased) {
-           this.position.copyFrom(this.basePosition);
+           BABYLON.Vector3.LerpToRef(this.position, this.basePosition, 0.05, this.position);
+           BABYLON.Vector3.LerpToRef(this.container.position, BABYLON.Vector3.Zero(), 0.05, this.container.position);
+           BABYLON.Vector3.LerpToRef(this.rotation, BABYLON.Vector3.Zero(), 0.05, this.rotation);
         }
         else {
             this.container.position.x = 0.25 * Math.sin(this._kIdle / 200 * Math.PI * 2);
@@ -200,7 +360,6 @@ class RepairDrone extends BABYLON.TransformNode {
                 let dir = targetPosition.subtract(this.position);
                 let dist = dir.length();
                 dir.scaleInPlace(1 / dist);
-                console.log(this.position);
                 if (dist > 0) {
                     this.position.addInPlace(dir.scale(Math.min(dist, this._speed * deltaTime)));
                 }
@@ -213,6 +372,7 @@ class RepairDrone extends BABYLON.TransformNode {
                 //this._m.position.copyFrom(armTipWorldPosition);
                 this.laser.scaling.z =BABYLON.Vector3.Distance(armTipPos, this.laser.position);
                 this.laser.lookAt(armTipPos, 0, Math.PI, Math.PI, BABYLON.Space.LOCAL);
+                this.repairParticle.mesh.lookAt(armTipPos, 0, Math.PI / 2, Math.PI, BABYLON.Space.LOCAL);
             }
         }
     }
