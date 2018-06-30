@@ -2046,20 +2046,8 @@ class Route {
                 }, "#ffffff", detailColor.toHexString());
                 let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
                 spaceShip.attachControler(spaceshipAI);
-                let drone = new RepairDrone(Main.Scene);
+                let drone = new RepairDrone(spaceShip._mesh, Main.Scene);
                 drone.initialize();
-                drone.parent = spaceShip;
-                drone.position.x -= 1.5;
-                drone.position.y += 1.5;
-                drone.position.z -= 1.5;
-                setInterval(() => {
-                    drone.unFold();
-                }, 8000);
-                setTimeout(() => {
-                    setInterval(() => {
-                        drone.fold();
-                    }, 8000);
-                }, 4000);
                 RuntimeUtils.NextFrame(Main.Scene, () => {
                     spaceShip.trailMeshes.forEach((t) => {
                         t.foldToGenerator();
@@ -2514,8 +2502,44 @@ class Projectile extends BABYLON.Mesh {
     }
 }
 class RepairDrone extends BABYLON.TransformNode {
-    constructor(scene) {
+    constructor(spaceship, scene) {
         super("Repair-Drone", scene);
+        this.spaceship = spaceship;
+        this.basePosition = new BABYLON.Vector3(-1.5, 1.5, -1.5);
+        this._speed = 0;
+        this._targetPositions = [];
+        this._kIdle = 0;
+        this._isBased = false;
+        this._update = () => {
+            if (this._isBased) {
+                this.position.copyFrom(this.basePosition);
+            }
+            else {
+                this.container.position.x = 0.25 * Math.sin(this._kIdle / 200 * Math.PI * 2);
+                this.container.position.y = 0.25 * Math.sin(this._kIdle / 100 * Math.PI * 2);
+                this.container.position.z = 0.25 * Math.sin(this._kIdle / 400 * Math.PI * 2);
+                this._kIdle++;
+                let deltaTime = this.getScene().getEngine().getDeltaTime() / 1000;
+                let targetPosition = this._targetPositions[0];
+                if (targetPosition) {
+                    /*
+                    if (!this._m) {
+                        this._m = BABYLON.MeshBuilder.CreateBox("m", {size: 0.3}, Main.Scene);
+                        this._m.parent = this.spaceship;
+                    }
+                    this._m.position.copyFrom(targetPosition);
+                    */
+                    let dir = targetPosition.subtract(this.position);
+                    let dist = dir.length();
+                    dir.scaleInPlace(1 / dist);
+                    console.log(this.position);
+                    if (dist > 0) {
+                        this.position.addInPlace(dir.scale(Math.min(dist, this._speed * deltaTime)));
+                    }
+                    this.lookAt(BABYLON.Vector3.Zero(), 0, Math.PI, Math.PI, BABYLON.Space.LOCAL);
+                }
+            }
+        };
         this._kFold = 0;
         this._fold = () => {
             this._kFold++;
@@ -2558,11 +2582,13 @@ class RepairDrone extends BABYLON.TransformNode {
         };
     }
     static easeOutElastic(t) {
-        var p = 0.3;
+        let p = 0.3;
         return Math.pow(2, -10 * t) * Math.sin((t - p / 4) * (2 * Math.PI) / p) + 1;
     }
     initialize() {
         return __awaiter(this, void 0, void 0, function* () {
+            this.container = new BABYLON.TransformNode("container", this.getScene());
+            this.container.parent = this;
             return new Promise((resolve) => {
                 BABYLON.SceneLoader.ImportMesh("", "./datas/models/repair-drone.babylon", "", this.getScene(), (meshes) => {
                     for (let i = 0; i < meshes.length; i++) {
@@ -2590,7 +2616,7 @@ class RepairDrone extends BABYLON.TransformNode {
                                 this.wingR = mesh;
                             }
                             ScreenLoger.instance.log(mesh.name);
-                            mesh.parent = this;
+                            mesh.parent = this.container;
                         }
                     }
                     this.armL.parent = this.bodyBottom;
@@ -2600,12 +2626,79 @@ class RepairDrone extends BABYLON.TransformNode {
                     this.armR.scaling.copyFrom(RepairDrone.ArmLFoldScaling);
                     this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
                     this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
-                    this.wingR.rotation.copyFrom(RepairDrone.WingFoldRotation);
-                    this.unFold();
+                    this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
+                    this.parent = this.spaceship;
+                    this.position.copyFrom(this.basePosition);
+                    this.getScene().onBeforeRenderObservable.add(this._update);
+                    this.repairCycle();
                     resolve();
                 });
             });
         });
+    }
+    repairCycle() {
+        return __awaiter(this, void 0, void 0, function* () {
+            while (!this.isDisposed()) {
+                ScreenLoger.instance.log("New Cycle.");
+                let A = this.position.clone();
+                let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                B.normalize().scaleInPlace(10);
+                let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
+                ray = BABYLON.Ray.Transform(ray, this.spaceship.getWorldMatrix());
+                let hit = ray.intersectsMesh(this.spaceship);
+                if (hit.hit) {
+                    let p = hit.pickedPoint;
+                    B = BABYLON.Vector3.TransformCoordinates(p, this.spaceship.getWorldMatrix().clone().invert());
+                    B = B.addInPlace(BABYLON.Vector3.Normalize(B));
+                }
+                yield RuntimeUtils.RunCoroutine(this._repairStep(A, B));
+            }
+        });
+    }
+    *_repairStep(A, B) {
+        ScreenLoger.instance.log("New Step.");
+        // Build a path for the step.
+        let n = BABYLON.Vector3.Cross(A, B).normalize();
+        let alpha = Math.acos(BABYLON.Vector3.Dot(A.clone().normalize(), B.clone().normalize()));
+        let length = Math.ceil(alpha / (Math.PI / 32));
+        let step = alpha / length;
+        let dA = A.length();
+        let dB = B.length();
+        this._targetPositions = [A];
+        for (let i = 1; i < length; i++) {
+            let matrix = BABYLON.Matrix.RotationAxis(n, step * i);
+            let p = BABYLON.Vector3.TransformCoordinates(A, matrix);
+            let mult = 1.5 - 0.5 * (1 - i / (length / 2)) * (1 - i / (length / 2));
+            let r = i / length;
+            p.normalize();
+            p.scaleInPlace(dA * mult * (1 - r) + dB * mult * r);
+            this._targetPositions.push(p);
+        }
+        this._targetPositions.push(B);
+        let path = BABYLON.MeshBuilder.CreateLines("path", {
+            points: this._targetPositions,
+        }, this.getScene());
+        path.parent = this.spaceship;
+        let l = this._targetPositions.length;
+        this.fold();
+        while (this._targetPositions.length > 1) {
+            let targetPosition = this._targetPositions[0];
+            let d = BABYLON.Vector3.Distance(targetPosition, this.position);
+            let ll = this._targetPositions.length;
+            this._speed = 1.5 - 0.5 * (1 - ll / (l / 2)) * (1 - ll / (l / 2));
+            if (d < 0.5) {
+                ScreenLoger.instance.log("Repair Drone reached point in path, " + this._targetPositions.length + " points left.");
+                this._targetPositions.splice(0, 1);
+            }
+            yield;
+        }
+        let timer = 0;
+        this.unFold();
+        while (timer < 5) {
+            timer += this.getScene().getEngine().getDeltaTime() / 1000;
+            yield;
+        }
+        ScreenLoger.instance.log("Step Done.");
     }
     fold() {
         this._kFold = 0;
@@ -4422,6 +4515,31 @@ class MeshUtils {
     }
 }
 class RuntimeUtils {
+    static StartCoroutine(coroutine) {
+        ScreenLoger.instance.log("Start Coroutine");
+        let step = () => {
+            if (coroutine.next()) {
+                return;
+            }
+            Main.Scene.onBeforeRenderObservable.removeCallback(step);
+        };
+        Main.Scene.onBeforeRenderObservable.add(step);
+    }
+    static RunCoroutine(coroutine) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("Run Coroutine");
+            return new Promise((resolve) => {
+                let step = () => {
+                    if (!coroutine.next().done) {
+                        return;
+                    }
+                    resolve();
+                    Main.Scene.onBeforeRenderObservable.removeCallback(step);
+                };
+                Main.Scene.onBeforeRenderObservable.add(step);
+            });
+        });
+    }
     static NextFrame(scene, callback) {
         let todoNextFrame = () => {
             callback();

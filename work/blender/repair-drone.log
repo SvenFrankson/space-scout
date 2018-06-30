@@ -4,7 +4,7 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 		selected layers only:  true
 		flat shading entire scene:  false
 		inline textures:  false
-		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\datas\models\
+		texture directory:  C:\Users\Sven\Documents\SvenFrankson\space-scout\work\blender\
 	Python World class constructor completed
 	WARNING: No active camera has been assigned, or is not in a currently selected Blender layer
 	processing begun of mesh:  laser
@@ -74,4 +74,4 @@ Exporter version: 5.4.2, Blender version: 2.78 (sub 0)
 ========= Writing of scene file started =========
 ========= Writing of scene file completed =========
 ========= end of processing =========
-elapsed time:  0 min, 0.2558 secs
+elapsed time:  0 min, 0.1992 secs

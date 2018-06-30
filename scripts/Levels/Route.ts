@@ -75,29 +75,8 @@ class Route {
             let spaceshipAI = new DefaultAI(spaceShip, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
             spaceShip.attachControler(spaceshipAI);
 
-            let drone = new RepairDrone(Main.Scene);
+            let drone = new RepairDrone(spaceShip._mesh, Main.Scene);
             drone.initialize();
-            drone.parent = spaceShip;
-            drone.position.x -= 1.5;
-            drone.position.y += 1.5;
-            drone.position.z -= 1.5;
-            setInterval(
-                () => {
-                    drone.unFold();
-                },
-                8000
-            );
-            setTimeout(
-                () => {
-                    setInterval(
-                        () => {
-                            drone.fold();
-                        },
-                        8000
-                    );
-                },
-                4000
-            )
 
             RuntimeUtils.NextFrame(
                 Main.Scene,
