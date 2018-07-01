@@ -2009,7 +2009,7 @@ class Route {
                     test.rotation.y += 0.01;
                 });
                 let wingIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
-                let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
+                let bodyIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
                 let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
                 let spaceshipData = yield SpaceshipLoader.instance.get("arrow-1");
                 let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
@@ -3624,6 +3624,12 @@ class SpaceShipSlots {
             new SpaceShipSlot("wingL", new BABYLON.Vector3(-0.48, 0, -0.27), new BABYLON.Vector3(0, 0, 0)),
             new SpaceShipSlot("wingR", new BABYLON.Vector3(0.48, 0, -0.27), new BABYLON.Vector3(0, 0, 0), true),
             new SpaceShipSlot("drone", new BABYLON.Vector3(0, 0.6, -0.6), new BABYLON.Vector3(0, 0, 0))
+        ]);
+        this._slots.set("body-3", [
+            new SpaceShipSlot("engine", new BABYLON.Vector3(0, 0, -0.7), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingL", new BABYLON.Vector3(-0.55, 0, -0.37), new BABYLON.Vector3(0, 0, 0)),
+            new SpaceShipSlot("wingR", new BABYLON.Vector3(0.55, 0, -0.37), new BABYLON.Vector3(0, 0, 0), true),
+            new SpaceShipSlot("drone", new BABYLON.Vector3(0, 0.9, -0.34), new BABYLON.Vector3(0, 0, 0))
         ]);
         this._slots.set("wing-1", [
             new SpaceShipSlot("weapon", new BABYLON.Vector3(-1.23, 0.06, -0.15), new BABYLON.Vector3(0, 0, 0))

@@ -32,7 +32,7 @@ class Route {
                 }
             )
             let wingIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
-            let bodyIndex = Math.floor(Math.random() * 2 + 1).toFixed(0);
+            let bodyIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
             let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
 
             let spaceshipData = await SpaceshipLoader.instance.get("arrow-1");

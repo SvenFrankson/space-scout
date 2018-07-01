@@ -48,6 +48,15 @@ class SpaceShipSlots {
             ]
         );
         this._slots.set(
+            "body-3",
+            [
+                new SpaceShipSlot("engine", new BABYLON.Vector3(0, 0, -0.7), new BABYLON.Vector3(0, 0, 0)),
+                new SpaceShipSlot("wingL", new BABYLON.Vector3(- 0.55, 0, -0.37), new BABYLON.Vector3(0, 0, 0)),
+                new SpaceShipSlot("wingR", new BABYLON.Vector3(0.55, 0, -0.37), new BABYLON.Vector3(0, 0, 0), true),
+                new SpaceShipSlot("drone", new BABYLON.Vector3(0, 0.9, -0.34), new BABYLON.Vector3(0, 0, 0))
+            ]
+        );
+        this._slots.set(
             "wing-1",
             [
                 new SpaceShipSlot("weapon", new BABYLON.Vector3(- 1.23, 0.06, - 0.15), new BABYLON.Vector3(0, 0, 0))
