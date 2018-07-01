@@ -98,6 +98,21 @@ class Route {
                 },
                 200
             );
+
+            spaceShip.hitPoint -= 5 * Math.random();
+            setInterval(
+                () => {
+                    spaceShip.hitPoint -= 5 * Math.random();
+                },
+                10000
+            );
+
+            setInterval(
+                () => {
+                    ScreenLoger.instance.log("Spaceship status " + spaceShip.hitPoint.toFixed(0) + " / " + spaceShip.stamina.toFixed(0));
+                },
+                500
+            );
         
             $("#page").hide();
 			Main.Play();
