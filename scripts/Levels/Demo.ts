@@ -22,7 +22,8 @@ class Demo {
         Main.Scene.activeCamera = Demo._demoCamera;
         Demo._bodyIndex = Math.floor(Math.random() * 3);
         Demo._wingsIndex = Math.floor(Math.random() * 3);
-        Demo._color = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+        Demo._baseColor = new BABYLON.Color3(1, 1, 1);
+        Demo._detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
 
         Demo._CreateUI();
         Demo._UpdateUI();
@@ -78,8 +79,8 @@ class Demo {
                     }
                 ]
             },
-            "#ffffff",
-            Demo._color.toHexString()
+            Demo._baseColor.toHexString(),
+            Demo._detailColor.toHexString()
         );
         let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
         Demo._demoSpaceship.attachControler(spaceshipAI);
@@ -120,7 +121,8 @@ class Demo {
     private static _wingsButtons: BABYLON.GUI.Button[] = [];
     private static _bodyIndex: number = 0;
     private static _wingsIndex: number = 0;
-    private static _color: BABYLON.Color3;
+    private static _baseColor: BABYLON.Color3;
+    private static _detailColor: BABYLON.Color3;
 
     private static _CreateUI(): void {
         let size = 60;
@@ -201,20 +203,20 @@ class Demo {
             )
         }
         
-        let colorTitle = new BABYLON.GUI.TextBlock("colorTitle", "Color");
-        colorTitle.width = "250px";
-        colorTitle.height = size + "px";
-        colorTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        colorTitle.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-        colorTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
-        colorTitle.left = size + "px";
-        colorTitle.top = "205px";
-        colorTitle.color = "white";
-        colorTitle.fontSize = (size * 0.8).toFixed(0) + "px";
-        colorTitle.fontFamily = "Oneday";
-        Main.GuiTexture.addControl(colorTitle);
+        let color1Title = new BABYLON.GUI.TextBlock("color1Title", "Color-1");
+        color1Title.width = "250px";
+        color1Title.height = size + "px";
+        color1Title.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        color1Title.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        color1Title.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        color1Title.left = size + "px";
+        color1Title.top = "205px";
+        color1Title.color = "white";
+        color1Title.fontSize = (size * 0.8).toFixed(0) + "px";
+        color1Title.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(color1Title);
 
-        let colorPicker = new BABYLON.GUI.ColorPicker("colorPicker");
+        let colorPicker = new BABYLON.GUI.ColorPicker("color1Picker");
         colorPicker.width = (size * 2).toFixed(0) + "px";
         colorPicker.height = (size * 2).toFixed(0) + "px";
         colorPicker.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
@@ -224,12 +226,49 @@ class Demo {
         colorPicker.color = "white";
         colorPicker.fontFamily = "Oneday";
         Main.GuiTexture.addControl(colorPicker);
-        let throttle: number = NaN;
+        let throttle1: number = NaN;
         colorPicker.onValueChangedObservable.add(
             (color) => {
-                Demo._color = color;
-                clearTimeout(throttle);
-                throttle = setTimeout(
+                Demo._baseColor = color;
+                clearTimeout(throttle1);
+                throttle1 = setTimeout(
+                    () => {
+                        this._ResetSpaceship();
+                    },
+                    200
+                );
+            }
+        )
+        
+        let color2 = new BABYLON.GUI.TextBlock("color2", "Color-2");
+        color2.width = "250px";
+        color2.height = size + "px";
+        color2.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        color2.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        color2.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        color2.left = size + "px";
+        color2.top = "345px";
+        color2.color = "white";
+        color2.fontSize = (size * 0.8).toFixed(0) + "px";
+        color2.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(color2);
+
+        let color2Picker = new BABYLON.GUI.ColorPicker("color2Picker");
+        color2Picker.width = (size * 2).toFixed(0) + "px";
+        color2Picker.height = (size * 2).toFixed(0) + "px";
+        color2Picker.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        color2Picker.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        color2Picker.left = "290px";
+        color2Picker.top = "310px";
+        color2Picker.color = "white";
+        color2Picker.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(color2Picker);
+        let throttle2: number = NaN;
+        color2Picker.onValueChangedObservable.add(
+            (color) => {
+                Demo._detailColor = color;
+                clearTimeout(throttle2);
+                throttle2 = setTimeout(
                     () => {
                         this._ResetSpaceship();
                     },

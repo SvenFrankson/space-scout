@@ -60,6 +60,7 @@ class RepairDrone extends BABYLON.TransformNode {
                             if (mesh instanceof BABYLON.Mesh) {
                                 let data = BABYLON.VertexData.ExtractFromMesh(mesh);
                                 if (data.colors) {
+                                    let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
                                     let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
                                     for (let i = 0; i < data.colors.length / 4; i++) {
                                         let r = data.colors[4 * i];
@@ -69,6 +70,16 @@ class RepairDrone extends BABYLON.TransformNode {
                                             data.colors[4 * i] = detailColor3.r;
                                             data.colors[4 * i + 1] = detailColor3.g;
                                             data.colors[4 * i + 2] = detailColor3.b;
+                                        }
+                                        else if (r === 1 && g === 1 && b === 1) {
+                                            data.colors[4 * i] = baseColor3.r;
+                                            data.colors[4 * i + 1] = baseColor3.g;
+                                            data.colors[4 * i + 2] = baseColor3.b;
+                                        }
+                                        else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                                            data.colors[4 * i] = baseColor3.r * 0.5;
+                                            data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                                            data.colors[4 * i + 2] = baseColor3.b * 0.5;
                                         }
                                     }
                                 }
