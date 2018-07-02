@@ -1634,10 +1634,12 @@ class Demo {
                 effect.setFloat("height", Main.Engine.getRenderHeight());
             };
             Main.Scene.activeCamera = Demo._demoCamera;
+            Demo._bodyIndex = Math.floor(Math.random() * 3);
+            Demo._wingsIndex = Math.floor(Math.random() * 3);
+            Demo._color = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+            Demo._CreateUI();
+            Demo._UpdateUI();
             yield Demo._ResetSpaceship();
-            setInterval(() => {
-                Demo._ResetSpaceship();
-            }, 5000);
         });
     }
     static _ResetSpaceship() {
@@ -1647,19 +1649,16 @@ class Demo {
             if (this._demoSpaceship) {
                 this._demoSpaceship.destroy();
             }
-            let wingIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
-            let bodyIndex = Math.floor(Math.random() * 3 + 1).toFixed(0);
-            let detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
             let spaceshipData = yield SpaceshipLoader.instance.get("arrow-1");
             Demo._demoSpaceship = new SpaceShip(spaceshipData, Main.Scene);
             Demo._demoSpaceship.name = "Demo";
             yield Demo._demoSpaceship.initialize({
                 type: "root",
-                name: "body-" + bodyIndex,
+                name: "body-" + (Demo._bodyIndex + 1).toFixed(0),
                 children: [
                     {
                         type: "wingL",
-                        name: "wing-" + wingIndex,
+                        name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
                         children: [
                             {
                                 type: "weapon",
@@ -1669,7 +1668,7 @@ class Demo {
                     },
                     {
                         type: "wingR",
-                        name: "wing-" + wingIndex,
+                        name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
                         children: [
                             {
                                 type: "weapon",
@@ -1686,7 +1685,7 @@ class Demo {
                         name: "repair-drone"
                     }
                 ]
-            }, "#ffffff", detailColor.toHexString());
+            }, "#ffffff", Demo._color.toHexString());
             let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
             Demo._demoSpaceship.attachControler(spaceshipAI);
             RuntimeUtils.NextFrame(Main.Scene, () => {
@@ -1707,7 +1706,134 @@ class Demo {
             }, 10000);
         });
     }
+    static _CreateUI() {
+        let size = 60;
+        let bodyTitle = new BABYLON.GUI.TextBlock("bodyTitle", "Body");
+        bodyTitle.width = "250px";
+        bodyTitle.height = size + "px";
+        bodyTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        bodyTitle.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        bodyTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        bodyTitle.left = size + "px";
+        bodyTitle.top = "30px";
+        bodyTitle.color = "white";
+        bodyTitle.fontSize = (size * 0.8).toFixed(0) + "px";
+        bodyTitle.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(bodyTitle);
+        for (let i = 0; i < 3; i++) {
+            let bodyButton = BABYLON.GUI.Button.CreateSimpleButton("body-" + i.toFixed(0), (i + 1).toFixed(0));
+            bodyButton.width = size + "px";
+            bodyButton.height = size + "px";
+            bodyButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            bodyButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            bodyButton.left = (290 + i * 70) + "px";
+            bodyButton.top = "30px";
+            bodyButton.color = "white";
+            bodyButton.fontSize = (size * 0.8).toFixed(0) + "px";
+            bodyButton.fontFamily = "Oneday";
+            bodyButton.cornerRadius = 5;
+            bodyButton.thickness = 2;
+            Main.GuiTexture.addControl(bodyButton);
+            Demo._bodyButtons[i] = bodyButton;
+            let index = i;
+            bodyButton.onPointerUpObservable.add(() => {
+                this._bodyIndex = index;
+                this._UpdateUI();
+                this._ResetSpaceship();
+            });
+        }
+        let wingTitle = new BABYLON.GUI.TextBlock("wingTitle", "Wings");
+        wingTitle.width = "250px";
+        wingTitle.height = size + "px";
+        wingTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        wingTitle.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        wingTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        wingTitle.left = size + "px";
+        wingTitle.top = "100px";
+        wingTitle.color = "white";
+        wingTitle.fontSize = (size * 0.8).toFixed(0) + "px";
+        wingTitle.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(wingTitle);
+        for (let i = 0; i < 3; i++) {
+            let wingButton = BABYLON.GUI.Button.CreateSimpleButton("body-" + i.toFixed(0), (i + 1).toFixed(0));
+            wingButton.width = size + "px";
+            wingButton.height = size + "px";
+            wingButton.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+            wingButton.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+            wingButton.left = (290 + i * 70) + "px";
+            wingButton.top = "100px";
+            wingButton.color = "white";
+            wingButton.fontSize = (size * 0.8).toFixed(0) + "px";
+            wingButton.fontFamily = "Oneday";
+            wingButton.cornerRadius = 5;
+            wingButton.thickness = 2;
+            Main.GuiTexture.addControl(wingButton);
+            Demo._wingsButtons[i] = wingButton;
+            let index = i;
+            wingButton.onPointerUpObservable.add(() => {
+                this._wingsIndex = index;
+                this._UpdateUI();
+                this._ResetSpaceship();
+            });
+        }
+        let colorTitle = new BABYLON.GUI.TextBlock("colorTitle", "Color");
+        colorTitle.width = "250px";
+        colorTitle.height = size + "px";
+        colorTitle.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        colorTitle.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        colorTitle.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        colorTitle.left = size + "px";
+        colorTitle.top = "205px";
+        colorTitle.color = "white";
+        colorTitle.fontSize = (size * 0.8).toFixed(0) + "px";
+        colorTitle.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(colorTitle);
+        let colorPicker = new BABYLON.GUI.ColorPicker("colorPicker");
+        colorPicker.width = (size * 2).toFixed(0) + "px";
+        colorPicker.height = (size * 2).toFixed(0) + "px";
+        colorPicker.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+        colorPicker.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_TOP;
+        colorPicker.left = "290px";
+        colorPicker.top = "170px";
+        colorPicker.color = "white";
+        colorPicker.fontFamily = "Oneday";
+        Main.GuiTexture.addControl(colorPicker);
+        let throttle = NaN;
+        colorPicker.onValueChangedObservable.add((color) => {
+            Demo._color = color;
+            clearTimeout(throttle);
+            throttle = setTimeout(() => {
+                this._ResetSpaceship();
+            }, 200);
+        });
+    }
+    static _UpdateUI() {
+        this._bodyButtons.forEach((b, index) => {
+            if (index === Demo._bodyIndex) {
+                b.color = "black";
+                b.background = "white";
+            }
+            else {
+                b.color = "white";
+                b.background = "black";
+            }
+        });
+        this._wingsButtons.forEach((b, index) => {
+            if (index === Demo._wingsIndex) {
+                b.color = "black";
+                b.background = "white";
+            }
+            else {
+                b.color = "white";
+                b.background = "black";
+            }
+        });
+    }
 }
+Demo._bodyButtons = [];
+Demo._wingsButtons = [];
+Demo._bodyIndex = 0;
+Demo._wingsIndex = 0;
 class Home {
     static Start() {
         $.ajax({
