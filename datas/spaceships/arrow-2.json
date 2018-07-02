@@ -4,7 +4,7 @@
         "name": "body-1",
         "children": [{
                 "type": "wingL",
-                "name": "wing-2",
+                "name": "wing-1",
                 "children": [{
                     "type": "weapon",
                     "name": "canon-1"
@@ -12,7 +12,7 @@
             },
             {
                 "type": "wingR",
-                "name": "wing-2",
+                "name": "wing-1",
                 "children": [{
                     "type": "weapon",
                     "name": "canon-1"

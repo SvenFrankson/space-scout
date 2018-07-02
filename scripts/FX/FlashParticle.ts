@@ -23,6 +23,11 @@ class FlashParticle extends BABYLON.Mesh {
         this.layerMask = 1;
     }
 
+    public destroy(): void {
+        this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+        this.dispose();
+    }
+
     public flash(
         position: BABYLON.Vector3
     ) {

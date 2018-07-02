@@ -23,6 +23,14 @@ abstract class SpaceShipControler {
 		this._role = role;
 		this._team = team;
 		SpaceShipControler.Instances.push(this);
+		this.spaceShip.onDestroyObservable.add(this._onSpaceshipDestroy);
+	}
+
+	private _onSpaceshipDestroy = () => {
+		let index = SpaceShipControler.Instances.indexOf(this);
+		if (index !== -1) {
+			SpaceShipControler.Instances.splice(index, 1);
+		}
 	}
 
 	public abstract checkInputs(dt: number): void;

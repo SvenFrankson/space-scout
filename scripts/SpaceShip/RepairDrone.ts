@@ -29,9 +29,22 @@ class RepairDrone extends BABYLON.TransformNode {
     constructor(public spaceship: SpaceShip) {
         super("Repair-Drone", spaceship.getScene());
         this.rotationQuaternion = BABYLON.Quaternion.Identity();
+        spaceship.onDestroyObservable.add(
+            () => {
+                this.destroy();
+            }
+        )
     }
 
-    public async initialize(): Promise<void> {
+    public destroy(): void {
+        this.dispose();
+        this.getScene().onBeforeRenderObservable.removeCallback(this._update);
+    }
+
+    public async initialize(
+		baseColor: string,
+        detailColor: string
+    ): Promise<void> {
         this.container = new BABYLON.TransformNode("container", this.getScene());
         this.container.parent = this;
         return new Promise<void>(
@@ -45,6 +58,21 @@ class RepairDrone extends BABYLON.TransformNode {
                         for (let i = 0; i < meshes.length; i++) {
                             let mesh = meshes[i];
                             if (mesh instanceof BABYLON.Mesh) {
+                                let data = BABYLON.VertexData.ExtractFromMesh(mesh);
+                                if (data.colors) {
+                                    let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+                                    for (let i = 0; i < data.colors.length / 4; i++) {
+                                        let r = data.colors[4 * i];
+                                        let g = data.colors[4 * i + 1];
+                                        let b = data.colors[4 * i + 2];
+                                        if (r === 1 && g === 0 && b === 0) {
+                                            data.colors[4 * i] = detailColor3.r;
+                                            data.colors[4 * i + 1] = detailColor3.g;
+                                            data.colors[4 * i + 2] = detailColor3.b;
+                                        }
+                                    }
+                                }
+                                data.applyToMesh(mesh);
                                 if (mesh.name === "antenna") {
                                     this.antenna = mesh;
                                 }
@@ -70,6 +98,7 @@ class RepairDrone extends BABYLON.TransformNode {
                                     this.laser = mesh;
                                 }
                                 mesh.material = SpaceShipFactory.cellShadingMaterial;
+                                mesh.layerMask = 1;
                                 ScreenLoger.instance.log(mesh.name);
                                 mesh.parent = this.container;
                             }
@@ -80,6 +109,7 @@ class RepairDrone extends BABYLON.TransformNode {
                         this.armRTip.parent = this.armR;
                         this.armRTip.position.copyFromFloats(0, 0, 0.65);
                         this.laser.parent = this.spaceship.mesh;
+                        this.laser.isVisible = false;
                         
                         this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
                         this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
