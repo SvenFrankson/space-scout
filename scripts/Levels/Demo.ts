@@ -82,7 +82,7 @@ class Demo {
             Demo._baseColor.toHexString(),
             Demo._detailColor.toHexString()
         );
-        let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
+        let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(60, 0, 60), new BABYLON.Vector3(-60, 0, -60)]);
         Demo._demoSpaceship.attachControler(spaceshipAI);
 
         RuntimeUtils.NextFrame(
@@ -225,6 +225,7 @@ class Demo {
         colorPicker.top = "170px";
         colorPicker.color = "white";
         colorPicker.fontFamily = "Oneday";
+        colorPicker.value = Demo._baseColor;
         Main.GuiTexture.addControl(colorPicker);
         let throttle1: number = NaN;
         colorPicker.onValueChangedObservable.add(
@@ -262,6 +263,7 @@ class Demo {
         color2Picker.top = "310px";
         color2Picker.color = "white";
         color2Picker.fontFamily = "Oneday";
+        color2Picker.value = Demo._detailColor;
         Main.GuiTexture.addControl(color2Picker);
         let throttle2: number = NaN;
         color2Picker.onValueChangedObservable.add(
