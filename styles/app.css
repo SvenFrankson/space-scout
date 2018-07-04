@@ -209,3 +209,13 @@
     pointer-events: none;
     z-index: 2;
   }
+
+  #credit {
+    position: absolute;
+    width: 256px;
+    height: 40px;
+    bottom: 0px;
+    right: 0px;
+    font-size: 24px;
+    color: white;
+  }

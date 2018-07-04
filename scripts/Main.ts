@@ -41,6 +41,7 @@ class Main {
 
 		Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
 		Main.GuiTexture.layer.layerMask = 2;
+		Main.GuiTexture.idealWidth = 1920;
 
 		Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
 

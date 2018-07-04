@@ -178,7 +178,7 @@ class Demo {
         wingTitle.fontFamily = "Oneday";
         Main.GuiTexture.addControl(wingTitle);
 
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             let wingButton = BABYLON.GUI.Button.CreateSimpleButton("body-" + i.toFixed(0), (i + 1).toFixed(0));
             wingButton.width = size + "px";
             wingButton.height = size + "px";

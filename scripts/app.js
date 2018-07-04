@@ -190,6 +190,7 @@ class Main {
         this.resize();
         Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
         Main.GuiTexture.layer.layerMask = 2;
+        Main.GuiTexture.idealWidth = 1920;
         Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
         let sun = new BABYLON.DirectionalLight("Sun", new BABYLON.Vector3(0.4, -0.4, -0.4), Main.Scene);
         sun.intensity = 1;
@@ -1687,7 +1688,7 @@ class Demo {
                     }
                 ]
             }, Demo._baseColor.toHexString(), Demo._detailColor.toHexString());
-            let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(40, 0, 40), new BABYLON.Vector3(-40, 0, -40)]);
+            let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(60, 0, 60), new BABYLON.Vector3(-60, 0, -60)]);
             Demo._demoSpaceship.attachControler(spaceshipAI);
             RuntimeUtils.NextFrame(Main.Scene, () => {
                 Demo._demoSpaceship.trailMeshes.forEach((t) => {
@@ -1755,7 +1756,7 @@ class Demo {
         wingTitle.fontSize = (size * 0.8).toFixed(0) + "px";
         wingTitle.fontFamily = "Oneday";
         Main.GuiTexture.addControl(wingTitle);
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 4; i++) {
             let wingButton = BABYLON.GUI.Button.CreateSimpleButton("body-" + i.toFixed(0), (i + 1).toFixed(0));
             wingButton.width = size + "px";
             wingButton.height = size + "px";
@@ -1798,6 +1799,7 @@ class Demo {
         colorPicker.top = "170px";
         colorPicker.color = "white";
         colorPicker.fontFamily = "Oneday";
+        colorPicker.value = Demo._baseColor;
         Main.GuiTexture.addControl(colorPicker);
         let throttle1 = NaN;
         colorPicker.onValueChangedObservable.add((color) => {
@@ -1828,6 +1830,7 @@ class Demo {
         color2Picker.top = "310px";
         color2Picker.color = "white";
         color2Picker.fontFamily = "Oneday";
+        color2Picker.value = Demo._detailColor;
         Main.GuiTexture.addControl(color2Picker);
         let throttle2 = NaN;
         color2Picker.onValueChangedObservable.add((color) => {
@@ -3883,6 +3886,9 @@ class SpaceShipSlots {
         this._slots.set("wing-3", [
             new SpaceShipSlot("weapon", new BABYLON.Vector3(-0.9, 0.05, 0.2), new BABYLON.Vector3(0, 0, Math.PI / 2))
         ]);
+        this._slots.set("wing-4", [
+            new SpaceShipSlot("weapon", new BABYLON.Vector3(-1.31, 0.1, 0.24), new BABYLON.Vector3(0, 0, Math.PI / 4))
+        ]);
     }
     static getSlot(elementName, slotName) {
         let slots = SpaceShipSlots.instance._slots.get(elementName);
@@ -5092,7 +5098,7 @@ class ScreenLoger {
         this.log("Max lines = " + this.maxLines);
     }
     log(text, duration) {
-        this.lines.splice(0, 0, new ScreenLogerLine(text, duration, this));
+        //this.lines.splice(0, 0, new ScreenLogerLine(text, duration, this));
     }
 }
 class SSMeshBuilder {

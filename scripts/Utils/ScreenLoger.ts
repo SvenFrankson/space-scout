@@ -44,7 +44,7 @@ class ScreenLoger {
     }
 
     public log(text: string, duration?: number): void {
-        this.lines.splice(0, 0, new ScreenLogerLine(text, duration, this));
+        //this.lines.splice(0, 0, new ScreenLogerLine(text, duration, this));
     }
 
     public _update = () => {
