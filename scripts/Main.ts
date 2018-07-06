@@ -134,6 +134,33 @@ class Main {
 		new VertexDataLoader(Main.Scene);
 		new MaterialLoader(Main.Scene);
 		new SpaceshipLoader(Main.Scene);
+
+		BABYLON.SceneLoader.ImportMesh(
+			"",
+			"./datas/models/station.babylon",
+			"",
+			Main.Scene,
+			(meshes) => {
+				for (let i = 0; i < meshes.length; i++) {
+					let mesh = meshes[i];
+					if (mesh.material instanceof BABYLON.StandardMaterial) {
+						let material = new BABYLON.CellMaterial("m", Main.Scene);
+						material.diffuseColor = mesh.material.diffuseColor;
+						mesh.material = material;
+					}
+					else if (mesh.material instanceof BABYLON.MultiMaterial) {
+						let multiMaterial = mesh.material;
+						for (let j = 0; j < mesh.material.subMaterials.length; j++) {
+							let material = new BABYLON.CellMaterial("m", Main.Scene);
+							material.diffuseColor = mesh.material.subMaterials[j].diffuseColor;
+							mesh.material.subMaterials[j] = material;
+						}
+					}
+					mesh.position.z = 50;
+					mesh.layerMask = 1;
+				}
+			}
+		)
 	}
 
 	public animate(): void {
