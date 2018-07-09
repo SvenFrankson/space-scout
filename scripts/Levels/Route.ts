@@ -13,5 +13,10 @@ class Route {
             $("#page").hide();
 			Main.Play();
         }
+        if (hash === "demo-station") {
+            await DemoStation.Start();
+            $("#page").hide();
+			Main.Play();
+        }
     }
 }

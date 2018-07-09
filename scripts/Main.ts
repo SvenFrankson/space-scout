@@ -134,11 +134,6 @@ class Main {
 		new VertexDataLoader(Main.Scene);
 		new MaterialLoader(Main.Scene);
 		new SpaceshipLoader(Main.Scene);
-
-		let block = new Block();
-		block.position.copyFromFloats(10, 5, 30);
-		block.size.copyFromFloats(15, 6, 10);
-		block.instantiate(Main.Scene);
 	}
 
 	public animate(): void {

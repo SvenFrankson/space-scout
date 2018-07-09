@@ -271,7 +271,7 @@ class Block extends Solid {
                 northFace[i][j] = 0;
                 let I = this.position.x + this.size.x - i - 1;
                 let J = this.position.y + j;
-                let K = this.position.z - 1;
+                let K = this.position.z + this.size.z;
                 if (Solid.intersectsAny(I, J, K)) {
                     northFace[i][j] = 1;
                 }
@@ -310,13 +310,44 @@ class Way extends Solid {
 
     public static Instances: Way[] = [];
 
-    constructor() {
+    constructor(public origin: BABYLON.Vector3, public direction: string, public width: number, public height: number, public length: number) {
         super();
+        if (direction === "north") {
+            this.position.copyFrom(origin);
+            this.size.copyFromFloats(width, height, length);
+        }
+        if (direction === "east") {
+            this.position.copyFrom(origin);
+            this.position.z -= this.width;
+            this.size.copyFromFloats(length, height, width);
+        }
         Way.Instances.push(this);
     }
 
-    public instantiate(scene: BABYLON.Scene) {
-        let wayMesh = BABYLON.MeshBuilder.CreateBox("wayMesh", { width: this.size.x * 0.5, height: this.size.y * 0.5, depth: this.size.z * 0.5 }, scene);
-        wayMesh.position.copyFrom(this.position).scaleInPlace(0.5).addInPlace(this.size.scale(0.25));
+    public async instantiate(scene: BABYLON.Scene): Promise<BABYLON.Mesh> {
+        let blockMesh = new BABYLON.Mesh("wayMesh", scene);
+        let data = await VertexDataLoader.instance.get("station-way");
+        data = VertexDataLoader.clone(data);
+
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += this.width * 0.5 - 1;
+            }
+            if (data.positions[i + 1] > 1.5) {
+                data.positions[i + 1] += this.height * 0.5 - 2;
+            }
+            if (data.positions[i + 2] > 0.5) {
+                data.positions[i + 2] += this.length * 0.5 - 1;
+            }
+        }
+        data.applyToMesh(blockMesh);
+        blockMesh.position.copyFrom(this.origin).scaleInPlace(0.5);
+        if (this.direction === "east") {
+            blockMesh.rotation.y = Math.PI / 2;
+        }
+        blockMesh.material = Solid.cellShadingMaterial;
+        blockMesh.layerMask = 1;
+
+        return blockMesh;
     }
 }

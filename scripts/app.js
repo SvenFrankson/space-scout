@@ -271,10 +271,6 @@ class Main {
         new VertexDataLoader(Main.Scene);
         new MaterialLoader(Main.Scene);
         new SpaceshipLoader(Main.Scene);
-        let block = new Block();
-        block.position.copyFromFloats(10, 5, 30);
-        block.size.copyFromFloats(15, 6, 10);
-        block.instantiate(Main.Scene);
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -1872,6 +1868,41 @@ Demo._bodyButtons = [];
 Demo._wingsButtons = [];
 Demo._bodyIndex = 0;
 Demo._wingsIndex = 0;
+class DemoStation {
+    static Start() {
+        return __awaiter(this, void 0, void 0, function* () {
+            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+            DemoStation._demoCamera.attachControl(Main.Canvas);
+            DemoStation._demoCamera.minZ = 0.5;
+            DemoStation._demoCamera.maxZ = 2000;
+            DemoStation._demoCamera.layerMask = 1 | 2;
+            DemoStation._demoCamera.wheelPrecision = 20;
+            let depthMap = Main.Scene.enableDepthRenderer(DemoStation._demoCamera).getDepthMap();
+            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, DemoStation._demoCamera);
+            postProcess.onApply = (effect) => {
+                effect.setTexture("depthSampler", depthMap);
+                effect.setFloat("width", Main.Engine.getRenderWidth());
+                effect.setFloat("height", Main.Engine.getRenderHeight());
+            };
+            Main.Scene.activeCamera = DemoStation._demoCamera;
+            let block = new Block();
+            block.size.copyFromFloats(15, 8, 10);
+            let way = new Way(new BABYLON.Vector3(7, 1, 10), "north", 3, 5, 10);
+            let way2 = new Way(new BABYLON.Vector3(15, 1, 6), "east", 3, 4, 8);
+            let block2 = new Block();
+            block2.position.copyFromFloats(3, 0, 20);
+            block2.size.copyFromFloats(10, 12, 6);
+            let block3 = new Block();
+            block3.position.copyFromFloats(23, 0, 2);
+            block3.size.copyFromFloats(10, 12, 10);
+            block.instantiate(Main.Scene);
+            block2.instantiate(Main.Scene);
+            block3.instantiate(Main.Scene);
+            way.instantiate(Main.Scene);
+            way2.instantiate(Main.Scene);
+        });
+    }
+}
 class Home {
     static Start() {
         $.ajax({
@@ -2252,6 +2283,11 @@ class Route {
             }
             if (hash === "test") {
                 yield Demo.Start();
+                $("#page").hide();
+                Main.Play();
+            }
+            if (hash === "demo-station") {
+                yield DemoStation.Start();
                 $("#page").hide();
                 Main.Play();
             }
@@ -4456,7 +4492,7 @@ class Block extends Solid {
                     northFace[i][j] = 0;
                     let I = this.position.x + this.size.x - i - 1;
                     let J = this.position.y + j;
-                    let K = this.position.z - 1;
+                    let K = this.position.z + this.size.z;
                     if (Solid.intersectsAny(I, J, K)) {
                         northFace[i][j] = 1;
                     }
@@ -4488,13 +4524,49 @@ class Block extends Solid {
 }
 Block.Instances = [];
 class Way extends Solid {
-    constructor() {
+    constructor(origin, direction, width, height, length) {
         super();
+        this.origin = origin;
+        this.direction = direction;
+        this.width = width;
+        this.height = height;
+        this.length = length;
+        if (direction === "north") {
+            this.position.copyFrom(origin);
+            this.size.copyFromFloats(width, height, length);
+        }
+        if (direction === "east") {
+            this.position.copyFrom(origin);
+            this.position.z -= this.width;
+            this.size.copyFromFloats(length, height, width);
+        }
         Way.Instances.push(this);
     }
     instantiate(scene) {
-        let wayMesh = BABYLON.MeshBuilder.CreateBox("wayMesh", { width: this.size.x * 0.5, height: this.size.y * 0.5, depth: this.size.z * 0.5 }, scene);
-        wayMesh.position.copyFrom(this.position).scaleInPlace(0.5).addInPlace(this.size.scale(0.25));
+        return __awaiter(this, void 0, void 0, function* () {
+            let blockMesh = new BABYLON.Mesh("wayMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-way");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += this.width * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 1.5) {
+                    data.positions[i + 1] += this.height * 0.5 - 2;
+                }
+                if (data.positions[i + 2] > 0.5) {
+                    data.positions[i + 2] += this.length * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(blockMesh);
+            blockMesh.position.copyFrom(this.origin).scaleInPlace(0.5);
+            if (this.direction === "east") {
+                blockMesh.rotation.y = Math.PI / 2;
+            }
+            blockMesh.material = Solid.cellShadingMaterial;
+            blockMesh.layerMask = 1;
+            return blockMesh;
+        });
     }
 }
 Way.Instances = [];
