@@ -271,26 +271,10 @@ class Main {
         new VertexDataLoader(Main.Scene);
         new MaterialLoader(Main.Scene);
         new SpaceshipLoader(Main.Scene);
-        BABYLON.SceneLoader.ImportMesh("", "./datas/models/station.babylon", "", Main.Scene, (meshes) => {
-            for (let i = 0; i < meshes.length; i++) {
-                let mesh = meshes[i];
-                if (mesh.material instanceof BABYLON.StandardMaterial) {
-                    let material = new BABYLON.CellMaterial("m", Main.Scene);
-                    material.diffuseColor = mesh.material.diffuseColor;
-                    mesh.material = material;
-                }
-                else if (mesh.material instanceof BABYLON.MultiMaterial) {
-                    let multiMaterial = mesh.material;
-                    for (let j = 0; j < mesh.material.subMaterials.length; j++) {
-                        let material = new BABYLON.CellMaterial("m", Main.Scene);
-                        material.diffuseColor = mesh.material.subMaterials[j].diffuseColor;
-                        mesh.material.subMaterials[j] = material;
-                    }
-                }
-                mesh.position.z = 50;
-                mesh.layerMask = 1;
-            }
-        });
+        let block = new Block();
+        block.position.copyFromFloats(10, 5, 30);
+        block.size.copyFromFloats(15, 6, 10);
+        block.instantiate(Main.Scene);
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -4237,6 +4221,283 @@ class WingManAI extends SpaceShipAI {
         }
     }
 }
+class Solid {
+    constructor() {
+        this.position = BABYLON.Vector3.Zero();
+        this.size = BABYLON.Vector3.One();
+    }
+    static get cellShadingMaterial() {
+        if (!SpaceShipFactory._cellShadingMaterial) {
+            SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+            SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
+        }
+        return SpaceShipFactory._cellShadingMaterial;
+    }
+    intersects(i, j, k) {
+        if (i >= this.position.x && i < this.position.x + this.size.x) {
+            if (j >= this.position.y && j < this.position.y + this.size.y) {
+                if (k >= this.position.z && k < this.position.z + this.size.z) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    static intersectsAny(i, j, k) {
+        for (let b = 0; b < Block.Instances.length; b++) {
+            if (Block.Instances[b].intersects(i, j, k)) {
+                return true;
+            }
+        }
+        for (let w = 0; w < Way.Instances.length; w++) {
+            if (Way.Instances[w].intersects(i, j, k)) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+class Block extends Solid {
+    constructor() {
+        super();
+        Block.Instances.push(this);
+    }
+    tryPush(scene, face, side, attempts, w, h, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let randomizeY = false;
+            if (y === undefined) {
+                randomizeY = true;
+            }
+            for (let n = 0; n < attempts; n++) {
+                let x = Math.floor(Math.random() * (face.length - w - 1) + 1);
+                if (randomizeY) {
+                    y = Math.floor(Math.random() * (face[0].length - h - 1) + 1);
+                }
+                let ok = true;
+                for (let i = 0; i < w; i++) {
+                    for (let j = 0; j < h; j++) {
+                        if (face[x + i][y + j] > 0) {
+                            ok = false;
+                        }
+                    }
+                }
+                if (ok) {
+                    for (let i = 0; i < w; i++) {
+                        for (let j = 0; j < h; j++) {
+                            face[x + i][y + j] = 2;
+                        }
+                    }
+                    if (side === "north") {
+                        yield this.pushNorth(scene, w, h, x, y);
+                    }
+                    if (side === "east") {
+                        yield this.pushEast(scene, w, h, x, y);
+                    }
+                    if (side === "south") {
+                        yield this.pushSouth(scene, w, h, x, y);
+                    }
+                    if (side === "west") {
+                        yield this.pushWest(scene, w, h, x, y);
+                    }
+                }
+            }
+        });
+    }
+    pushNorth(scene, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("NORTH");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-window");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            windowMesh.position.copyFromFloats((this.position.x + this.size.x - x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z) * 0.5);
+            windowMesh.rotation.y = Math.PI;
+            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushEast(scene, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("EAST");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-window");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            windowMesh.position.copyFromFloats((this.position.x + this.size.x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + x) * 0.5);
+            windowMesh.rotation.y = -Math.PI / 2;
+            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushSouth(scene, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("SOUTH");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-window");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            windowMesh.position.copyFromFloats((this.position.x + x) * 0.5, (this.position.y + y) * 0.5, this.position.z * 0.5);
+            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushWest(scene, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("WEST");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-window");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            windowMesh.position.copyFromFloats(this.position.x * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z - x) * 0.5);
+            windowMesh.rotation.y = Math.PI / 2;
+            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let blockMesh = new BABYLON.Mesh("blockMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-block");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += this.size.x * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += this.size.y * 0.5 - 1;
+                }
+                if (data.positions[i + 2] > 0.5) {
+                    data.positions[i + 2] += this.size.z * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(blockMesh);
+            blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
+            blockMesh.material = Solid.cellShadingMaterial;
+            blockMesh.layerMask = 1;
+            let eastFace = [];
+            for (let i = 0; i < this.size.z; i++) {
+                eastFace[i] = [];
+                for (let j = 0; j < this.size.y; j++) {
+                    eastFace[i][j] = 0;
+                    let I = this.position.x + this.size.x;
+                    let J = this.position.y + j;
+                    let K = this.position.z + i;
+                    if (Solid.intersectsAny(I, J, K)) {
+                        eastFace[i][j] = 1;
+                    }
+                }
+            }
+            let southFace = [];
+            for (let i = 0; i < this.size.x; i++) {
+                southFace[i] = [];
+                for (let j = 0; j < this.size.y; j++) {
+                    southFace[i][j] = 0;
+                    let I = this.position.x + i;
+                    let J = this.position.y + j;
+                    let K = this.position.z - 1;
+                    if (Solid.intersectsAny(I, J, K)) {
+                        southFace[i][j] = 1;
+                    }
+                }
+            }
+            let westFace = [];
+            for (let i = 0; i < this.size.z; i++) {
+                westFace[i] = [];
+                for (let j = 0; j < this.size.y; j++) {
+                    westFace[i][j] = 0;
+                    let I = this.position.x - 1;
+                    let J = this.position.y + j;
+                    let K = this.position.z + this.size.z - i - 1;
+                    if (Solid.intersectsAny(I, J, K)) {
+                        westFace[i][j] = 1;
+                    }
+                }
+            }
+            let northFace = [];
+            for (let i = 0; i < this.size.x; i++) {
+                northFace[i] = [];
+                for (let j = 0; j < this.size.y; j++) {
+                    northFace[i][j] = 0;
+                    let I = this.position.x + this.size.x - i - 1;
+                    let J = this.position.y + j;
+                    let K = this.position.z - 1;
+                    if (Solid.intersectsAny(I, J, K)) {
+                        northFace[i][j] = 1;
+                    }
+                }
+            }
+            yield this.tryPush(scene, eastFace, "east", 3, 2, 4, 1);
+            yield this.tryPush(scene, eastFace, "east", 2, 1, 4, 1);
+            yield this.tryPush(scene, eastFace, "east", 10, 2, 2, 1);
+            yield this.tryPush(scene, eastFace, "east", 10, 2, 2, 3);
+            yield this.tryPush(scene, eastFace, "east", 20, 1, 1);
+            yield this.tryPush(scene, southFace, "south", 3, 2, 4, 1);
+            yield this.tryPush(scene, southFace, "south", 2, 1, 4, 1);
+            yield this.tryPush(scene, southFace, "south", 10, 2, 2, 1);
+            yield this.tryPush(scene, southFace, "south", 10, 2, 2, 3);
+            yield this.tryPush(scene, southFace, "south", 20, 1, 1);
+            yield this.tryPush(scene, westFace, "west", 3, 2, 4, 1);
+            yield this.tryPush(scene, westFace, "west", 2, 1, 4, 1);
+            yield this.tryPush(scene, westFace, "west", 10, 2, 2, 1);
+            yield this.tryPush(scene, westFace, "west", 10, 2, 2, 3);
+            yield this.tryPush(scene, westFace, "west", 20, 1, 1);
+            yield this.tryPush(scene, northFace, "north", 3, 2, 4, 1);
+            yield this.tryPush(scene, northFace, "north", 2, 1, 4, 1);
+            yield this.tryPush(scene, northFace, "north", 10, 2, 2, 1);
+            yield this.tryPush(scene, northFace, "north", 10, 2, 2, 3);
+            yield this.tryPush(scene, northFace, "north", 20, 1, 1);
+            return blockMesh;
+        });
+    }
+}
+Block.Instances = [];
+class Way extends Solid {
+    constructor() {
+        super();
+        Way.Instances.push(this);
+    }
+    instantiate(scene) {
+        let wayMesh = BABYLON.MeshBuilder.CreateBox("wayMesh", { width: this.size.x * 0.5, height: this.size.y * 0.5, depth: this.size.z * 0.5 }, scene);
+        wayMesh.position.copyFrom(this.position).scaleInPlace(0.5).addInPlace(this.size.scale(0.25));
+    }
+}
+Way.Instances = [];
 class SectionLevel {
     constructor(section) {
         this.name = "NewLevel";
