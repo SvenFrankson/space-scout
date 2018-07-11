@@ -1885,21 +1885,21 @@ class DemoStation {
                 effect.setFloat("height", Main.Engine.getRenderHeight());
             };
             Main.Scene.activeCamera = DemoStation._demoCamera;
-            let block = new Block();
-            block.size.copyFromFloats(15, 8, 10);
-            let way = new Way(new BABYLON.Vector3(7, 1, 10), "north", 3, 5, 10);
-            let way2 = new Way(new BABYLON.Vector3(15, 1, 6), "east", 3, 4, 8);
-            let block2 = new Block();
-            block2.position.copyFromFloats(3, 0, 20);
-            block2.size.copyFromFloats(10, 12, 6);
-            let block3 = new Block();
-            block3.position.copyFromFloats(23, 0, 2);
-            block3.size.copyFromFloats(10, 12, 10);
-            block.instantiate(Main.Scene);
-            block2.instantiate(Main.Scene);
-            block3.instantiate(Main.Scene);
-            way.instantiate(Main.Scene);
-            way2.instantiate(Main.Scene);
+            let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
+            let blocks = [block];
+            for (let i = 0; i < 5; i++) {
+                let newBlocks = [];
+                for (let j = 0; j < blocks.length; j++) {
+                    newBlocks.push(...blocks[j].tryPop());
+                }
+                blocks = newBlocks;
+            }
+            Block.instances.forEach((b) => __awaiter(this, void 0, void 0, function* () {
+                yield b.instantiate(Main.Scene);
+            }));
+            Way.instances.forEach((w) => __awaiter(this, void 0, void 0, function* () {
+                yield w.instantiate(Main.Scene);
+            }));
         });
     }
 }
@@ -4257,7 +4257,515 @@ class WingManAI extends SpaceShipAI {
         }
     }
 }
-class Solid {
+var Direction;
+(function (Direction) {
+    Direction[Direction["North"] = 0] = "North";
+    Direction[Direction["East"] = 1] = "East";
+    Direction[Direction["South"] = 2] = "South";
+    Direction[Direction["West"] = 3] = "West";
+})(Direction || (Direction = {}));
+;
+class MinMax {
+    constructor() {
+        this.min = BABYLON.Vector3.Zero();
+        this.max = BABYLON.Vector3.Zero();
+        MinMax.instances.push(this);
+    }
+    static get cellShadingMaterial() {
+        if (!SpaceShipFactory._cellShadingMaterial) {
+            SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+            SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
+        }
+        return SpaceShipFactory._cellShadingMaterial;
+    }
+    destroy() {
+        let index = MinMax.instances.indexOf(this);
+        if (index !== -1) {
+            MinMax.instances.splice(index, 1);
+        }
+    }
+    containsPoint(point) {
+        if (point.x >= this.min.x) {
+            if (point.x <= this.max.x) {
+                if (point.y >= this.min.y) {
+                    if (point.y <= this.max.y) {
+                        if (point.z >= this.min.z) {
+                            if (point.z <= this.max.z) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    static containsPointAny(point) {
+        for (let i = 0; i < MinMax.instances.length; i++) {
+            let minMax = MinMax.instances[i];
+            if (minMax.containsPoint(point)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    intersects(other) {
+        if (other.max.x >= this.min.x) {
+            if (other.min.x <= this.max.x) {
+                if (other.max.y >= this.min.y) {
+                    if (other.min.y <= this.max.y) {
+                        if (other.max.z >= this.min.z) {
+                            if (other.min.z <= this.max.z) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    intersectsAny() {
+        for (let i = 0; i < MinMax.instances.length; i++) {
+            let other = MinMax.instances[i];
+            if (this !== other) {
+                if (this.intersects(other)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
+MinMax.instances = [];
+class Way extends MinMax {
+    constructor(position, direction, width, height, length) {
+        super();
+        this.position = position;
+        this.direction = direction;
+        this.width = width;
+        this.height = height;
+        this.length = length;
+        Way.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        this.max.y += height - 1;
+        if (this.direction === Direction.North) {
+            this.min.x -= width;
+            this.max.x += width;
+            this.max.z += length - 1;
+        }
+        if (this.direction === Direction.East) {
+            this.max.x += length - 1;
+            this.min.z -= width;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.South) {
+            this.min.x -= width;
+            this.max.x += width;
+            this.min.z -= length - 1;
+        }
+        if (this.direction === Direction.West) {
+            this.min.x -= length - 1;
+            this.min.z -= width;
+            this.max.z += width;
+        }
+    }
+    destroy() {
+        super.destroy();
+        let index = Way.instances.indexOf(this);
+        if (index !== -1) {
+            Way.instances.splice(index, 1);
+        }
+    }
+    slot() {
+        let slot = this.position.clone();
+        if (this.direction === Direction.North) {
+            slot.z += this.length;
+        }
+        if (this.direction === Direction.East) {
+            slot.x += this.length;
+        }
+        if (this.direction === Direction.South) {
+            slot.z -= this.length;
+        }
+        if (this.direction === Direction.West) {
+            slot.x -= this.length;
+        }
+        return slot;
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            //let container = new BABYLON.Mesh("container", scene);
+            let wayMesh = new BABYLON.Mesh("wayMesh", scene);
+            wayMesh.position.x = this.position.x / 2 + 0.25;
+            wayMesh.position.y = this.position.y / 2 + 0.25;
+            wayMesh.position.z = this.position.z / 2 + 0.25;
+            if (this.direction === Direction.East) {
+                wayMesh.rotation.y = Math.PI / 2;
+            }
+            if (this.direction === Direction.South) {
+                wayMesh.rotation.y = Math.PI;
+            }
+            if (this.direction === Direction.West) {
+                wayMesh.rotation.y = -Math.PI / 2;
+            }
+            let data = yield VertexDataLoader.instance.get("station-way");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0) {
+                    data.positions[i] += (this.width - 1) * 0.5;
+                }
+                else {
+                    data.positions[i] -= (this.width - 1) * 0.5;
+                }
+                if (data.positions[i + 1] > 1) {
+                    data.positions[i + 1] += (this.height - 4) * 0.5;
+                }
+                if (data.positions[i + 2] > 0) {
+                    data.positions[i + 2] += (this.length - 2) * 0.5;
+                }
+            }
+            data.applyToMesh(wayMesh);
+            wayMesh.material = Solid2.cellShadingMaterial;
+            wayMesh.layerMask = 1;
+            wayMesh.material = MinMax.cellShadingMaterial;
+            return wayMesh;
+        });
+    }
+}
+Way.instances = [];
+class Block extends MinMax {
+    constructor(position, width, height, depth) {
+        super();
+        this.position = position;
+        this.width = width;
+        this.height = height;
+        this.depth = depth;
+        Block.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        this.min.x -= width;
+        this.min.y -= height;
+        this.min.z -= depth;
+        this.max.x += width;
+        this.max.y += height;
+        this.max.z += depth;
+    }
+    slot(direction) {
+        let out = this.position.clone();
+        if (direction === Direction.North) {
+            out.z += this.depth + 1;
+        }
+        if (direction === Direction.South) {
+            out.z -= this.depth + 1;
+        }
+        if (direction === Direction.East) {
+            out.x += this.width + 1;
+        }
+        if (direction === Direction.West) {
+            out.x -= this.width + 1;
+        }
+        out.y -= this.height;
+        out.y += 1;
+        let floors = Math.floor(this.height / 3);
+        ScreenLoger.instance.log("Floors " + floors);
+        out.y += Math.floor(floors * Math.random()) * 6;
+        return out;
+    }
+    destroy() {
+        super.destroy();
+        let index = Block.instances.indexOf(this);
+        if (index !== -1) {
+            Block.instances.splice(index, 1);
+        }
+    }
+    tryPush(scene, face, side, elementName, attempts, w, h, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let randomizeY = false;
+            if (y === undefined) {
+                randomizeY = true;
+            }
+            for (let n = 0; n < attempts; n++) {
+                let x = Math.floor(Math.random() * (face.length - w - 1) + 1);
+                if (randomizeY) {
+                    y = Math.floor(Math.random() * (face[0].length - h - 1) + 1);
+                }
+                let ok = true;
+                for (let i = 0; i < w; i++) {
+                    for (let j = 0; j < h; j++) {
+                        if (face[x + i][y + j] > 0) {
+                            ok = false;
+                        }
+                    }
+                }
+                if (ok) {
+                    for (let i = 0; i < w; i++) {
+                        for (let j = 0; j < h; j++) {
+                            face[x + i][y + j] = 2;
+                        }
+                    }
+                    if (side === Direction.North) {
+                        yield this.pushNorth(scene, elementName, w, h, x, y);
+                    }
+                    if (side === Direction.East) {
+                        yield this.pushEast(scene, elementName, w, h, x, y);
+                    }
+                    if (side === Direction.South) {
+                        yield this.pushSouth(scene, elementName, w, h, x, y);
+                    }
+                    if (side === Direction.West) {
+                        yield this.pushWest(scene, elementName, w, h, x, y);
+                    }
+                }
+            }
+        });
+    }
+    pushNorth(scene, elementName, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("NORTH");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get(elementName);
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            //windowMesh.position.copyFromFloats((this.position.x + this.size.x - x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z) * 0.5);
+            windowMesh.rotation.y = Math.PI;
+            windowMesh.material = Solid2.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushEast(scene, elementName, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("EAST");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get(elementName);
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            //windowMesh.position.copyFromFloats((this.position.x + this.size.x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + x) * 0.5);
+            windowMesh.rotation.y = -Math.PI / 2;
+            windowMesh.material = Solid2.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushSouth(scene, elementName, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("SOUTH");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get(elementName);
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            windowMesh.position.copyFrom(this.min).scaleInPlace(0.5);
+            windowMesh.position.x += x * 0.5;
+            windowMesh.position.y += y * 0.5;
+            windowMesh.material = Solid2.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    pushWest(scene, elementName, w, h, x, y) {
+        return __awaiter(this, void 0, void 0, function* () {
+            ScreenLoger.instance.log("WEST");
+            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+            let data = yield VertexDataLoader.instance.get(elementName);
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += w * 0.5 - 1;
+                }
+                if (data.positions[i + 1] > 0.5) {
+                    data.positions[i + 1] += h * 0.5 - 1;
+                }
+            }
+            data.applyToMesh(windowMesh);
+            //windowMesh.position.copyFromFloats(this.position.x * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z - x) * 0.5);
+            windowMesh.rotation.y = Math.PI / 2;
+            windowMesh.material = Solid2.cellShadingMaterial;
+            windowMesh.layerMask = 1;
+            return windowMesh;
+        });
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let blockMesh = new BABYLON.Mesh("blockMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-block");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0) {
+                    data.positions[i] += (this.width - 1) * 0.5;
+                }
+                else {
+                    data.positions[i] -= (this.width - 1) * 0.5;
+                }
+                if (data.positions[i + 1] > 0) {
+                    data.positions[i + 1] += (this.height - 1) * 0.5;
+                }
+                else {
+                    data.positions[i + 1] -= (this.height - 1) * 0.5;
+                }
+                if (data.positions[i + 2] > 0) {
+                    data.positions[i + 2] += (this.depth - 1) * 0.5;
+                }
+                else {
+                    data.positions[i + 2] -= (this.depth - 1) * 0.5;
+                }
+            }
+            data.applyToMesh(blockMesh);
+            blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
+            blockMesh.material = Solid2.cellShadingMaterial;
+            blockMesh.layerMask = 1;
+            blockMesh.position.x = this.position.x / 2 + 0.25;
+            blockMesh.position.y = this.position.y / 2 + 0.25;
+            blockMesh.position.z = this.position.z / 2 + 0.25;
+            blockMesh.material = MinMax.cellShadingMaterial;
+            let southFace = [];
+            for (let i = 0; i < this.width * 2 + 1; i++) {
+                southFace[i] = [];
+                for (let j = 0; j < this.height * 2 + 1; j++) {
+                    southFace[i][j] = 0;
+                    let I = this.min.x + i;
+                    let J = this.min.y + j;
+                    let K = this.min.z - 1;
+                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                        southFace[i][j] = 1;
+                    }
+                }
+            }
+            let floors = Math.floor(this.height / 3);
+            for (let i = 1; i < floors; i++) {
+                yield this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            }
+            for (let i = 0; i < floors; i++) {
+                yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
+            }
+            yield this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
+            return blockMesh;
+        });
+    }
+    tryPop() {
+        let blocks = [];
+        if (Math.random() > 0.2) {
+            let northL = Math.floor(5 + 10 * Math.random());
+            let northWay = new Way(this.slot(Direction.North), Direction.North, 1, 5, northL);
+            if (northWay.intersectsAny()) {
+                northWay.destroy();
+            }
+            else {
+                let w = Math.floor(5 + 10 * Math.random());
+                let d = Math.floor(5 + 10 * Math.random());
+                let h = 3 * Math.floor(4 * Math.random() + 1);
+                let pos = northWay.slot();
+                pos.y += h - 1;
+                pos.z += d;
+                let northBlock = new Block(pos, w, h, d);
+                if (northBlock.intersectsAny()) {
+                    northWay.destroy();
+                    northBlock.destroy();
+                }
+                else {
+                    blocks.push(northBlock);
+                }
+            }
+        }
+        if (Math.random() > 0.2) {
+            let eastL = Math.floor(5 + 10 * Math.random());
+            let eastWay = new Way(this.slot(Direction.East), Direction.East, 1, 5, eastL);
+            if (eastWay.intersectsAny()) {
+                eastWay.destroy();
+            }
+            else {
+                let w = Math.floor(5 + 10 * Math.random());
+                let d = Math.floor(5 + 10 * Math.random());
+                let h = 3 * Math.floor(4 * Math.random() + 1);
+                let pos = eastWay.slot();
+                pos.x += w;
+                pos.y += h - 1;
+                let eastBlock = new Block(pos, w, h, d);
+                if (eastBlock.intersectsAny()) {
+                    eastWay.destroy();
+                    eastBlock.destroy();
+                }
+                else {
+                    blocks.push(eastBlock);
+                }
+            }
+        }
+        if (Math.random() > 0.2) {
+            let southL = Math.floor(5 + 10 * Math.random());
+            let southWay = new Way(this.slot(Direction.South), Direction.South, 1, 5, southL);
+            if (southWay.intersectsAny()) {
+                southWay.destroy();
+            }
+            else {
+                let w = Math.floor(5 + 10 * Math.random());
+                let d = Math.floor(5 + 10 * Math.random());
+                let h = 3 * Math.floor(4 * Math.random() + 1);
+                let pos = southWay.slot();
+                pos.y += h - 1;
+                pos.z -= d;
+                let southBlock = new Block(pos, w, h, d);
+                if (southBlock.intersectsAny()) {
+                    southWay.destroy();
+                    southBlock.destroy();
+                }
+                else {
+                    blocks.push(southBlock);
+                }
+            }
+        }
+        if (Math.random() > 0.2) {
+            let westL = Math.floor(5 + 10 * Math.random());
+            let westWay = new Way(this.slot(Direction.West), Direction.West, 1, 5, westL);
+            if (westWay.intersectsAny()) {
+                westWay.destroy();
+            }
+            else {
+                let w = Math.floor(5 + 10 * Math.random());
+                let d = Math.floor(5 + 10 * Math.random());
+                let h = 3 * Math.floor(4 * Math.random() + 1);
+                let pos = westWay.slot();
+                pos.x -= w;
+                pos.y += h - 1;
+                let westBlock = new Block(pos, w, h, d);
+                if (westBlock.intersectsAny()) {
+                    westWay.destroy();
+                    westBlock.destroy();
+                }
+                else {
+                    blocks.push(westBlock);
+                }
+            }
+        }
+        return blocks;
+    }
+}
+Block.instances = [];
+class Solid2 {
     constructor() {
         this.position = BABYLON.Vector3.Zero();
         this.size = BABYLON.Vector3.One();
@@ -4280,23 +4788,35 @@ class Solid {
         return false;
     }
     static intersectsAny(i, j, k) {
-        for (let b = 0; b < Block.Instances.length; b++) {
-            if (Block.Instances[b].intersects(i, j, k)) {
+        for (let b = 0; b < Block2.Instances.length; b++) {
+            if (Block2.Instances[b].intersects(i, j, k)) {
                 return true;
             }
         }
-        for (let w = 0; w < Way.Instances.length; w++) {
-            if (Way.Instances[w].intersects(i, j, k)) {
+        for (let w = 0; w < Way2.Instances.length; w++) {
+            if (Way2.Instances[w].intersects(i, j, k)) {
                 return true;
             }
         }
         return false;
     }
 }
-class Block extends Solid {
+class Block2 extends Solid2 {
     constructor() {
         super();
-        Block.Instances.push(this);
+        Block2.Instances.push(this);
+    }
+    northOrigin() {
+        return new BABYLON.Vector3(this.position.x + Math.floor(this.size.x / 2), this.position.y + 1, this.position.z + this.size.z);
+    }
+    southOrigin() {
+        return new BABYLON.Vector3(this.position.x + Math.floor(this.size.x / 2), this.position.y + 1, this.position.z);
+    }
+    eastOrigin() {
+        return new BABYLON.Vector3(this.position.x + this.size.x, this.position.y + 1, this.position.z + Math.floor(this.size.z / 2));
+    }
+    westOrigin() {
+        return new BABYLON.Vector3(this.position.x, this.position.y + 1, this.position.z + Math.floor(this.size.z / 2));
     }
     tryPush(scene, face, side, attempts, w, h, y) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -4356,7 +4876,7 @@ class Block extends Solid {
             data.applyToMesh(windowMesh);
             windowMesh.position.copyFromFloats((this.position.x + this.size.x - x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z) * 0.5);
             windowMesh.rotation.y = Math.PI;
-            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4378,7 +4898,7 @@ class Block extends Solid {
             data.applyToMesh(windowMesh);
             windowMesh.position.copyFromFloats((this.position.x + this.size.x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + x) * 0.5);
             windowMesh.rotation.y = -Math.PI / 2;
-            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4399,7 +4919,7 @@ class Block extends Solid {
             }
             data.applyToMesh(windowMesh);
             windowMesh.position.copyFromFloats((this.position.x + x) * 0.5, (this.position.y + y) * 0.5, this.position.z * 0.5);
-            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4421,15 +4941,15 @@ class Block extends Solid {
             data.applyToMesh(windowMesh);
             windowMesh.position.copyFromFloats(this.position.x * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z - x) * 0.5);
             windowMesh.rotation.y = Math.PI / 2;
-            windowMesh.material = Solid.cellShadingMaterial;
+            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
     }
     instantiate(scene) {
         return __awaiter(this, void 0, void 0, function* () {
-            let blockMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-block");
+            let block2Mesh = new BABYLON.Mesh("block2Mesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-block2");
             data = VertexDataLoader.clone(data);
             for (let i = 0; i < data.positions.length; i += 3) {
                 if (data.positions[i] > 0.5) {
@@ -4442,10 +4962,10 @@ class Block extends Solid {
                     data.positions[i + 2] += this.size.z * 0.5 - 1;
                 }
             }
-            data.applyToMesh(blockMesh);
-            blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
-            blockMesh.material = Solid.cellShadingMaterial;
-            blockMesh.layerMask = 1;
+            data.applyToMesh(block2Mesh);
+            block2Mesh.position.copyFrom(this.position).scaleInPlace(0.5);
+            block2Mesh.material = Solid2.cellShadingMaterial;
+            block2Mesh.layerMask = 1;
             let eastFace = [];
             for (let i = 0; i < this.size.z; i++) {
                 eastFace[i] = [];
@@ -4454,7 +4974,7 @@ class Block extends Solid {
                     let I = this.position.x + this.size.x;
                     let J = this.position.y + j;
                     let K = this.position.z + i;
-                    if (Solid.intersectsAny(I, J, K)) {
+                    if (Solid2.intersectsAny(I, J, K)) {
                         eastFace[i][j] = 1;
                     }
                 }
@@ -4467,7 +4987,7 @@ class Block extends Solid {
                     let I = this.position.x + i;
                     let J = this.position.y + j;
                     let K = this.position.z - 1;
-                    if (Solid.intersectsAny(I, J, K)) {
+                    if (Solid2.intersectsAny(I, J, K)) {
                         southFace[i][j] = 1;
                     }
                 }
@@ -4480,7 +5000,7 @@ class Block extends Solid {
                     let I = this.position.x - 1;
                     let J = this.position.y + j;
                     let K = this.position.z + this.size.z - i - 1;
-                    if (Solid.intersectsAny(I, J, K)) {
+                    if (Solid2.intersectsAny(I, J, K)) {
                         westFace[i][j] = 1;
                     }
                 }
@@ -4493,7 +5013,7 @@ class Block extends Solid {
                     let I = this.position.x + this.size.x - i - 1;
                     let J = this.position.y + j;
                     let K = this.position.z + this.size.z;
-                    if (Solid.intersectsAny(I, J, K)) {
+                    if (Solid2.intersectsAny(I, J, K)) {
                         northFace[i][j] = 1;
                     }
                 }
@@ -4518,12 +5038,12 @@ class Block extends Solid {
             yield this.tryPush(scene, northFace, "north", 10, 2, 2, 1);
             yield this.tryPush(scene, northFace, "north", 10, 2, 2, 3);
             yield this.tryPush(scene, northFace, "north", 20, 1, 1);
-            return blockMesh;
+            return block2Mesh;
         });
     }
 }
-Block.Instances = [];
-class Way extends Solid {
+Block2.Instances = [];
+class Way2 extends Solid2 {
     constructor(origin, direction, width, height, length) {
         super();
         this.origin = origin;
@@ -4540,12 +5060,39 @@ class Way extends Solid {
             this.position.z -= this.width;
             this.size.copyFromFloats(length, height, width);
         }
-        Way.Instances.push(this);
+        if (direction === "west") {
+            this.position.copyFrom(origin);
+            this.position.x -= this.length;
+            this.size.copyFromFloats(length, height, width);
+        }
+        if (direction === "south") {
+            this.position.copyFrom(origin);
+            this.position.x -= this.width;
+            this.position.z -= this.length;
+            this.size.copyFromFloats(width, height, length);
+        }
+        Way2.Instances.push(this);
+    }
+    outPoint() {
+        let out = this.origin.clone();
+        if (this.direction === "north") {
+            out.z += this.length;
+        }
+        if (this.direction === "east") {
+            out.x += this.length;
+        }
+        if (this.direction === "south") {
+            out.z -= this.length;
+        }
+        if (this.direction === "west") {
+            out.x -= this.length;
+        }
+        return out;
     }
     instantiate(scene) {
         return __awaiter(this, void 0, void 0, function* () {
-            let blockMesh = new BABYLON.Mesh("wayMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-way");
+            let block2Mesh = new BABYLON.Mesh("way2Mesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-way2");
             data = VertexDataLoader.clone(data);
             for (let i = 0; i < data.positions.length; i += 3) {
                 if (data.positions[i] > 0.5) {
@@ -4558,18 +5105,24 @@ class Way extends Solid {
                     data.positions[i + 2] += this.length * 0.5 - 1;
                 }
             }
-            data.applyToMesh(blockMesh);
-            blockMesh.position.copyFrom(this.origin).scaleInPlace(0.5);
+            data.applyToMesh(block2Mesh);
+            block2Mesh.position.copyFrom(this.origin).scaleInPlace(0.5);
             if (this.direction === "east") {
-                blockMesh.rotation.y = Math.PI / 2;
+                block2Mesh.rotation.y = Math.PI / 2;
             }
-            blockMesh.material = Solid.cellShadingMaterial;
-            blockMesh.layerMask = 1;
-            return blockMesh;
+            if (this.direction === "west") {
+                block2Mesh.rotation.y = -Math.PI / 2;
+            }
+            if (this.direction === "south") {
+                block2Mesh.rotation.y = Math.PI;
+            }
+            block2Mesh.material = Solid2.cellShadingMaterial;
+            block2Mesh.layerMask = 1;
+            return block2Mesh;
         });
     }
 }
-Way.Instances = [];
+Way2.Instances = [];
 class SectionLevel {
     constructor(section) {
         this.name = "NewLevel";

@@ -20,20 +20,24 @@ class DemoStation {
         
         Main.Scene.activeCamera = DemoStation._demoCamera;
 
-        let block = new Block();
-        block.size.copyFromFloats(15, 8, 10);
-        let way = new Way(new BABYLON.Vector3(7, 1, 10), "north", 3, 5, 10);
-        let way2 = new Way(new BABYLON.Vector3(15, 1, 6), "east", 3, 4, 8);
-        let block2 = new Block();
-        block2.position.copyFromFloats(3, 0, 20);
-        block2.size.copyFromFloats(10, 12, 6);
-        let block3 = new Block();
-        block3.position.copyFromFloats(23, 0, 2);
-        block3.size.copyFromFloats(10, 12, 10);
-        block.instantiate(Main.Scene);
-        block2.instantiate(Main.Scene);
-        block3.instantiate(Main.Scene);
-        way.instantiate(Main.Scene);
-        way2.instantiate(Main.Scene);
+        let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
+        let blocks = [block];
+        for (let i = 0; i < 5; i++) {
+            let newBlocks: Block[] = [];
+            for (let j = 0; j < blocks.length; j++) {
+                newBlocks.push(...blocks[j].tryPop());
+            }
+            blocks = newBlocks;
+        }
+        Block.instances.forEach(
+            async (b) => {
+                await b.instantiate(Main.Scene);
+            }
+        )
+        Way.instances.forEach(
+            async (w) => {
+                await w.instantiate(Main.Scene);
+            }
+        )
     }
 }
