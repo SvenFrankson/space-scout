@@ -4523,7 +4523,7 @@ class Block extends MinMax {
     }
     pushNorth(scene, elementName, w, h, x, y) {
         return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("North");
+            ScreenLoger.instance.log("NORTH");
             let windowMesh = new BABYLON.Mesh("windowMesh", scene);
             let data = yield VertexDataLoader.instance.get(elementName);
             data = VertexDataLoader.clone(data);
@@ -4560,8 +4560,10 @@ class Block extends MinMax {
                 }
             }
             data.applyToMesh(windowMesh);
-            //windowMesh.position.copyFromFloats((this.position.x + this.size.x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + x) * 0.5);
+            windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.min.z).scaleInPlace(0.5);
+            windowMesh.position.y += y * 0.5;
             windowMesh.rotation.y = -Math.PI / 2;
+            windowMesh.position.z += x * 0.5;
             windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
@@ -4592,7 +4594,7 @@ class Block extends MinMax {
     }
     pushWest(scene, elementName, w, h, x, y) {
         return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("WEST");
+            ScreenLoger.instance.log("West");
             let windowMesh = new BABYLON.Mesh("windowMesh", scene);
             let data = yield VertexDataLoader.instance.get(elementName);
             data = VertexDataLoader.clone(data);
@@ -4605,8 +4607,10 @@ class Block extends MinMax {
                 }
             }
             data.applyToMesh(windowMesh);
-            //windowMesh.position.copyFromFloats(this.position.x * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z - x) * 0.5);
+            windowMesh.position.copyFromFloats(this.min.x, this.min.y, this.max.z + 1).scaleInPlace(0.5);
+            windowMesh.position.y += y * 0.5;
             windowMesh.rotation.y = Math.PI / 2;
+            windowMesh.position.z -= x * 0.5;
             windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
@@ -4658,6 +4662,19 @@ class Block extends MinMax {
                     }
                 }
             }
+            let eastFace = [];
+            for (let i = 0; i < this.depth * 2 + 1; i++) {
+                eastFace[i] = [];
+                for (let j = 0; j < this.height * 2 + 1; j++) {
+                    eastFace[i][j] = 0;
+                    let I = this.max.x + 1;
+                    let J = this.min.y + j;
+                    let K = this.min.z + i;
+                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                        eastFace[i][j] = 1;
+                    }
+                }
+            }
             let southFace = [];
             for (let i = 0; i < this.width * 2 + 1; i++) {
                 southFace[i] = [];
@@ -4671,14 +4688,31 @@ class Block extends MinMax {
                     }
                 }
             }
+            let westFace = [];
+            for (let i = 0; i < this.depth * 2 + 1; i++) {
+                westFace[i] = [];
+                for (let j = 0; j < this.height * 2 + 1; j++) {
+                    westFace[i][j] = 0;
+                    let I = this.min.x - 1;
+                    let J = this.min.y + j;
+                    let K = this.max.z + 1 - i;
+                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                        westFace[i][j] = 1;
+                    }
+                }
+            }
             let floors = Math.floor(this.height / 3);
             for (let i = 1; i < floors; i++) {
                 yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
                 yield this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+                yield this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
             }
             for (let i = 0; i < floors; i++) {
                 yield this.tryPush(scene, northFace, Direction.North, "station-window", 3, 4, 5, i * 6 + 1);
+                yield this.tryPush(scene, eastFace, Direction.East, "station-window", 3, 4, 5, i * 6 + 1);
                 yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
+                yield this.tryPush(scene, westFace, Direction.West, "station-window", 3, 4, 5, i * 6 + 1);
             }
             yield this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
             return blockMesh;
