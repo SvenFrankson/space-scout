@@ -22,7 +22,7 @@ class DemoStation {
 
         let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
         let blocks = [block];
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 4; i++) {
             let newBlocks: Block[] = [];
             for (let j = 0; j < blocks.length; j++) {
                 newBlocks.push(...blocks[j].tryPop());

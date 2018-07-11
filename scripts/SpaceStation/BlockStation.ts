@@ -300,7 +300,7 @@ class Block extends MinMax {
         x: number,
         y: number
     ): Promise<BABYLON.Mesh> {
-        ScreenLoger.instance.log("NORTH");
+        ScreenLoger.instance.log("North");
         let windowMesh = new BABYLON.Mesh("windowMesh", scene);
         let data = await VertexDataLoader.instance.get(elementName);
         data = VertexDataLoader.clone(data);
@@ -313,7 +313,9 @@ class Block extends MinMax {
             }
         }
         data.applyToMesh(windowMesh);
-        //windowMesh.position.copyFromFloats((this.position.x + this.size.x - x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z) * 0.5);
+        windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.max.z + 1).scaleInPlace(0.5);
+        windowMesh.position.x -= x * 0.5;
+        windowMesh.position.y += y * 0.5;
         windowMesh.rotation.y = Math.PI;
         windowMesh.material = Solid2.cellShadingMaterial;
         windowMesh.layerMask = 1;
@@ -438,6 +440,20 @@ class Block extends MinMax {
         blockMesh.position.z = this.position.z / 2 + 0.25;
         blockMesh.material = MinMax.cellShadingMaterial;
 
+        let northFace: number[][] = [];
+        for (let i = 0; i < this.width * 2 + 1; i++) {
+            northFace[i] = [];
+            for (let j = 0; j < this.height * 2 + 1; j++) {
+                northFace[i][j] = 0;
+                let I = this.max.x + 1 - i;
+                let J = this.min.y + j;
+                let K = this.max.z + 1;
+                if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                    northFace[i][j] = 1;
+                }
+            }
+        }
+
         let southFace: number[][] = [];
         for (let i = 0; i < this.width * 2 + 1; i++) {
             southFace[i] = [];
@@ -454,9 +470,11 @@ class Block extends MinMax {
 
         let floors = Math.floor(this.height / 3);
         for (let i = 1; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
             await this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
         }
         for (let i = 0; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-window", 3, 4, 5, i * 6 + 1);
             await this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
         }
         await this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
@@ -468,14 +486,14 @@ class Block extends MinMax {
         let blocks: Block[] = [];
 
         if (Math.random() > 0.2) {
-            let northL = Math.floor(5 + 10 * Math.random());
+            let northL = Math.floor(5 + 20 * Math.random());
             let northWay = new Way(this.slot(Direction.North), Direction.North, 1, 5, northL);
             if (northWay.intersectsAny()) {
                 northWay.destroy();
             }
             else {
-                let w = Math.floor(5 + 10 * Math.random());
-                let d = Math.floor(5 + 10 * Math.random());
+                let w = Math.floor(5 + 20 * Math.random());
+                let d = Math.floor(5 + 20 * Math.random());
                 let h = 3 * Math.floor(4 * Math.random() + 1);
                 let pos = northWay.slot();
                 pos.y += h - 1;
@@ -492,14 +510,14 @@ class Block extends MinMax {
         }
 
         if (Math.random() > 0.2) {
-            let eastL = Math.floor(5 + 10 * Math.random());
+            let eastL = Math.floor(5 + 20 * Math.random());
             let eastWay = new Way(this.slot(Direction.East), Direction.East, 1, 5, eastL);
             if (eastWay.intersectsAny()) {
                 eastWay.destroy();
             }
             else {
-                let w = Math.floor(5 + 10 * Math.random());
-                let d = Math.floor(5 + 10 * Math.random());
+                let w = Math.floor(5 + 20 * Math.random());
+                let d = Math.floor(5 + 20 * Math.random());
                 let h = 3 * Math.floor(4 * Math.random() + 1);
                 let pos = eastWay.slot();
                 pos.x += w;
@@ -516,14 +534,14 @@ class Block extends MinMax {
         }
 
         if (Math.random() > 0.2) {
-            let southL = Math.floor(5 + 10 * Math.random());
+            let southL = Math.floor(5 + 20 * Math.random());
             let southWay = new Way(this.slot(Direction.South), Direction.South, 1, 5, southL);
             if (southWay.intersectsAny()) {
                 southWay.destroy();
             }
             else {
-                let w = Math.floor(5 + 10 * Math.random());
-                let d = Math.floor(5 + 10 * Math.random());
+                let w = Math.floor(5 + 20 * Math.random());
+                let d = Math.floor(5 + 20 * Math.random());
                 let h = 3 * Math.floor(4 * Math.random() + 1);
                 let pos = southWay.slot();
                 pos.y += h - 1;
@@ -540,14 +558,14 @@ class Block extends MinMax {
         }
 
         if (Math.random() > 0.2) {
-            let westL = Math.floor(5 + 10 * Math.random());
+            let westL = Math.floor(5 + 20 * Math.random());
             let westWay = new Way(this.slot(Direction.West), Direction.West, 1, 5, westL);
             if (westWay.intersectsAny()) {
                 westWay.destroy();
             }
             else {
-                let w = Math.floor(5 + 10 * Math.random());
-                let d = Math.floor(5 + 10 * Math.random());
+                let w = Math.floor(5 + 20 * Math.random());
+                let d = Math.floor(5 + 20 * Math.random());
                 let h = 3 * Math.floor(4 * Math.random() + 1);
                 let pos = westWay.slot();
                 pos.x -= w;
