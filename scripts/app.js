@@ -271,27 +271,6 @@ class Main {
         new VertexDataLoader(Main.Scene);
         new MaterialLoader(Main.Scene);
         new SpaceshipLoader(Main.Scene);
-        /*
-        let block = new Block(new BABYLON.Vector3(20, 0, 50), 12, 3, 8);
-        let blocks = [block];
-        for (let i = 0; i < 2; i++) {
-            let newBlocks: Block[] = [];
-            for (let j = 0; j < blocks.length; j++) {
-                newBlocks.push(...blocks[j].tryPop());
-            }
-            blocks = newBlocks;
-        }
-        Block.instances.forEach(
-            async (b) => {
-                await b.instantiate(Main.Scene);
-            }
-        )
-        Way.instances.forEach(
-            async (w) => {
-                await w.instantiate(Main.Scene);
-            }
-        )
-        */
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -2020,6 +1999,21 @@ class Level0 {
                         yield Main.TMPCreateRogue();
                         yield Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
+                        let block = new Block(new BABYLON.Vector3(20, 0, 50), 12, 3, 8);
+                        let blocks = [block];
+                        for (let i = 0; i < 2; i++) {
+                            let newBlocks = [];
+                            for (let j = 0; j < blocks.length; j++) {
+                                newBlocks.push(...blocks[j].tryPop());
+                            }
+                            blocks = newBlocks;
+                        }
+                        Block.instances.forEach((b) => __awaiter(this, void 0, void 0, function* () {
+                            yield b.instantiate(Main.Scene);
+                        }));
+                        Way.instances.forEach((w) => __awaiter(this, void 0, void 0, function* () {
+                            yield w.instantiate(Main.Scene);
+                        }));
                     }));
                 });
             }
@@ -4527,17 +4521,21 @@ class Block extends MinMax {
                             face[x + i][y + j] = 2;
                         }
                     }
+                    let newMesh;
                     if (side === Direction.North) {
-                        yield this.pushNorth(scene, elementName, w, h, x, y);
+                        newMesh = yield this.pushNorth(scene, elementName, w, h, x, y);
                     }
                     if (side === Direction.East) {
-                        yield this.pushEast(scene, elementName, w, h, x, y);
+                        newMesh = yield this.pushEast(scene, elementName, w, h, x, y);
                     }
                     if (side === Direction.South) {
-                        yield this.pushSouth(scene, elementName, w, h, x, y);
+                        newMesh = yield this.pushSouth(scene, elementName, w, h, x, y);
                     }
                     if (side === Direction.West) {
-                        yield this.pushWest(scene, elementName, w, h, x, y);
+                        newMesh = yield this.pushWest(scene, elementName, w, h, x, y);
+                    }
+                    if (newMesh) {
+                        this._meshes.push(newMesh);
                     }
                 }
             }
@@ -4671,6 +4669,7 @@ class Block extends MinMax {
             blockMesh.position.y = this.position.y / 2 + 0.25;
             blockMesh.position.z = this.position.z / 2 + 0.25;
             blockMesh.material = MinMax.cellShadingMaterial;
+            this._meshes.push(blockMesh);
             let northFace = [];
             for (let i = 0; i < this.width * 2 + 1; i++) {
                 northFace[i] = [];
@@ -4733,7 +4732,10 @@ class Block extends MinMax {
             else {
                 yield this.tryPushView(scene, northFace, eastFace, southFace, westFace);
             }
-            return blockMesh;
+            let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
+            mergedMesh.material = MinMax.cellShadingMaterial;
+            mergedMesh.layerMask = 1;
+            return mergedMesh;
         });
     }
     tryPushUtil(scene, northFace, eastFace, southFace, westFace) {

@@ -21,7 +21,7 @@ class MinMax {
     public min: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     public max: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
-    private _meshes: BABYLON.Mesh[] = [];
+    protected _meshes: BABYLON.Mesh[] = [];
 
     constructor() {
         MinMax.instances.push(this);
@@ -278,17 +278,21 @@ class Block extends MinMax {
                         face[x + i][y + j] = 2;
                     }
                 }
+                let newMesh: BABYLON.Mesh;
                 if (side === Direction.North) {
-                    await this.pushNorth(scene, elementName, w, h, x, y);
+                    newMesh = await this.pushNorth(scene, elementName, w, h, x, y);
                 }
                 if (side === Direction.East) {
-                    await this.pushEast(scene, elementName, w, h, x, y);
+                    newMesh = await this.pushEast(scene, elementName, w, h, x, y);
                 }
                 if (side === Direction.South) {
-                    await this.pushSouth(scene, elementName, w, h, x, y);
+                    newMesh = await this.pushSouth(scene, elementName, w, h, x, y);
                 }
                 if (side === Direction.West) {
-                    await this.pushWest(scene, elementName, w, h, x, y);
+                    newMesh = await this.pushWest(scene, elementName, w, h, x, y);
+                }
+                if (newMesh) {
+                    this._meshes.push(newMesh);
                 }
             }
         }
@@ -446,6 +450,8 @@ class Block extends MinMax {
         blockMesh.position.z = this.position.z / 2 + 0.25;
         blockMesh.material = MinMax.cellShadingMaterial;
 
+        this._meshes.push(blockMesh);
+
         let northFace: number[][] = [];
         for (let i = 0; i < this.width * 2 + 1; i++) {
             northFace[i] = [];
@@ -513,7 +519,10 @@ class Block extends MinMax {
             await this.tryPushView(scene, northFace, eastFace, southFace, westFace);
         }
 
-        return blockMesh;
+        let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
+        mergedMesh.material = MinMax.cellShadingMaterial;
+        mergedMesh.layerMask = 1;
+        return mergedMesh;
     }
 
     public async tryPushUtil(

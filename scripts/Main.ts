@@ -134,28 +134,6 @@ class Main {
 		new VertexDataLoader(Main.Scene);
 		new MaterialLoader(Main.Scene);
 		new SpaceshipLoader(Main.Scene);
-
-		/*
-		let block = new Block(new BABYLON.Vector3(20, 0, 50), 12, 3, 8);
-        let blocks = [block];
-        for (let i = 0; i < 2; i++) {
-            let newBlocks: Block[] = [];
-            for (let j = 0; j < blocks.length; j++) {
-                newBlocks.push(...blocks[j].tryPop());
-            }
-            blocks = newBlocks;
-        }
-        Block.instances.forEach(
-            async (b) => {
-                await b.instantiate(Main.Scene);
-            }
-        )
-        Way.instances.forEach(
-            async (w) => {
-                await w.instantiate(Main.Scene);
-            }
-		)
-		*/
 	}
 
 	public animate(): void {
