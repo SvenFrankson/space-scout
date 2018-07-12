@@ -271,6 +271,27 @@ class Main {
         new VertexDataLoader(Main.Scene);
         new MaterialLoader(Main.Scene);
         new SpaceshipLoader(Main.Scene);
+        /*
+        let block = new Block(new BABYLON.Vector3(20, 0, 50), 12, 3, 8);
+        let blocks = [block];
+        for (let i = 0; i < 2; i++) {
+            let newBlocks: Block[] = [];
+            for (let j = 0; j < blocks.length; j++) {
+                newBlocks.push(...blocks[j].tryPop());
+            }
+            blocks = newBlocks;
+        }
+        Block.instances.forEach(
+            async (b) => {
+                await b.instantiate(Main.Scene);
+            }
+        )
+        Way.instances.forEach(
+            async (w) => {
+                await w.instantiate(Main.Scene);
+            }
+        )
+        */
     }
     animate() {
         Main.Engine.runRenderLoop(() => {
@@ -4269,6 +4290,7 @@ class MinMax {
     constructor() {
         this.min = BABYLON.Vector3.Zero();
         this.max = BABYLON.Vector3.Zero();
+        this._meshes = [];
         MinMax.instances.push(this);
     }
     static get cellShadingMaterial() {
@@ -4701,6 +4723,37 @@ class Block extends MinMax {
                     }
                 }
             }
+            let r = Math.random();
+            if (r < 0.33) {
+                yield this.tryPushLiving(scene, northFace, eastFace, southFace, westFace);
+            }
+            else if (r < 0.66) {
+                yield this.tryPushUtil(scene, northFace, eastFace, southFace, westFace);
+            }
+            else {
+                yield this.tryPushView(scene, northFace, eastFace, southFace, westFace);
+            }
+            return blockMesh;
+        });
+    }
+    tryPushUtil(scene, northFace, eastFace, southFace, westFace) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let surface = this.width * this.height + this.width * this.depth + this.height * this.depth;
+            let count = Math.ceil(surface / 30);
+            for (let w = 3; w > 0; w--) {
+                yield this.tryPush(scene, northFace, Direction.North, "station-dark", count, w, w);
+                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", count, w, w);
+                yield this.tryPush(scene, southFace, Direction.South, "station-dark", count, w, w);
+                yield this.tryPush(scene, westFace, Direction.West, "station-dark", count, w, w);
+            }
+            yield this.tryPush(scene, northFace, Direction.North, "station-window", count, 3, 3);
+            yield this.tryPush(scene, eastFace, Direction.East, "station-window", count, 3, 3);
+            yield this.tryPush(scene, southFace, Direction.South, "station-window", count, 3, 3);
+            yield this.tryPush(scene, westFace, Direction.West, "station-window", count, 3, 3);
+        });
+    }
+    tryPushLiving(scene, northFace, eastFace, southFace, westFace) {
+        return __awaiter(this, void 0, void 0, function* () {
             let floors = Math.floor(this.height / 3);
             for (let i = 1; i < floors; i++) {
                 yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
@@ -4714,8 +4767,29 @@ class Block extends MinMax {
                 yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
                 yield this.tryPush(scene, westFace, Direction.West, "station-window", 3, 4, 5, i * 6 + 1);
             }
+            yield this.tryPush(scene, northFace, Direction.North, "station-window", 6, 3, 3);
+            yield this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
             yield this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
-            return blockMesh;
+            yield this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
+        });
+    }
+    tryPushView(scene, northFace, eastFace, southFace, westFace) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let floors = Math.floor(this.height / 3);
+            for (let i = 1; i < floors; i++) {
+                yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+                yield this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+                yield this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+            }
+            for (let i = 0; i < floors; i++) {
+                for (let w = 8; w > 0; w -= 2) {
+                    yield this.tryPush(scene, northFace, Direction.North, "station-window", 3, w, 5, i * 6 + 1);
+                    yield this.tryPush(scene, eastFace, Direction.East, "station-window", 3, w, 5, i * 6 + 1);
+                    yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, w, 5, i * 6 + 1);
+                    yield this.tryPush(scene, westFace, Direction.West, "station-window", 3, w, 5, i * 6 + 1);
+                }
+            }
         });
     }
     tryPop() {

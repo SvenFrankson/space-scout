@@ -21,6 +21,8 @@ class MinMax {
     public min: BABYLON.Vector3 = BABYLON.Vector3.Zero();
     public max: BABYLON.Vector3 = BABYLON.Vector3.Zero();
 
+    private _meshes: BABYLON.Mesh[] = [];
+
     constructor() {
         MinMax.instances.push(this);
     }
@@ -500,6 +502,50 @@ class Block extends MinMax {
             }
         }
 
+        let r = Math.random();
+        if (r < 0.33) {
+            await this.tryPushLiving(scene, northFace, eastFace, southFace, westFace);
+        }
+        else if (r < 0.66) {
+            await this.tryPushUtil(scene, northFace, eastFace, southFace, westFace);
+        }
+        else {
+            await this.tryPushView(scene, northFace, eastFace, southFace, westFace);
+        }
+
+        return blockMesh;
+    }
+
+    public async tryPushUtil(
+        scene: BABYLON.Scene,
+        northFace: number[][],
+        eastFace: number[][],
+        southFace: number[][],
+        westFace: number[][]
+    ): Promise<void> {
+        let surface = this.width * this.height + this.width * this.depth + this.height * this.depth;
+        let count = Math.ceil(surface / 30);
+
+        for (let w = 3; w > 0; w--) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", count, w, w);
+            await this.tryPush(scene, eastFace, Direction.East, "station-dark", count, w, w);
+            await this.tryPush(scene, southFace, Direction.South, "station-dark", count, w, w);
+            await this.tryPush(scene, westFace, Direction.West, "station-dark", count, w, w);
+        }
+    
+        await this.tryPush(scene, northFace, Direction.North, "station-window", count, 3, 3);
+        await this.tryPush(scene, eastFace, Direction.East, "station-window", count, 3, 3);
+        await this.tryPush(scene, southFace, Direction.South, "station-window", count, 3, 3);
+        await this.tryPush(scene, westFace, Direction.West, "station-window", count, 3, 3);
+    }
+
+    public async tryPushLiving(
+        scene: BABYLON.Scene,
+        northFace: number[][],
+        eastFace: number[][],
+        southFace: number[][],
+        westFace: number[][]
+    ): Promise<void> {
         let floors = Math.floor(this.height / 3);
         for (let i = 1; i < floors; i++) {
             await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
@@ -513,9 +559,34 @@ class Block extends MinMax {
             await this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
             await this.tryPush(scene, westFace, Direction.West, "station-window", 3, 4, 5, i * 6 + 1);
         }
+        await this.tryPush(scene, northFace, Direction.North, "station-window", 6, 3, 3);
+        await this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
         await this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
+        await this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
+    }
 
-        return blockMesh;
+    public async tryPushView(
+        scene: BABYLON.Scene,
+        northFace: number[][],
+        eastFace: number[][],
+        southFace: number[][],
+        westFace: number[][]
+    ): Promise<void> {
+        let floors = Math.floor(this.height / 3);
+        for (let i = 1; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+        }
+        for (let i = 0; i < floors; i++) {
+            for (let w = 8; w > 0; w -= 2) {
+                await this.tryPush(scene, northFace, Direction.North, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, eastFace, Direction.East, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, southFace, Direction.South, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, westFace, Direction.West, "station-window", 3, w, 5, i * 6 + 1);
+            }
+        }
     }
 
     public tryPop(): Block[] {
