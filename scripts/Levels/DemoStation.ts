@@ -32,6 +32,12 @@ class DemoStation {
         Block.instances.forEach(
             async (b) => {
                 await b.instantiate(Main.Scene);
+                ScreenLoger.instance.log("Nubs count " + Nub.instances.length);
+                Nub.instances.forEach(
+                    async (n) => {
+                        await n.instantiate(Main.Scene);
+                    }
+                )
             }
         )
         Way.instances.forEach(

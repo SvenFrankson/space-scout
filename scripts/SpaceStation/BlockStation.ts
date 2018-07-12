@@ -193,6 +193,69 @@ class Way extends MinMax {
     }
 }
 
+class Nub extends MinMax {
+    
+    public static instances: Nub[] = [];
+
+    constructor(
+        public position: BABYLON.Vector3,
+        public width: number,
+        public height: number,
+        public depth: number
+    ) {
+        super();
+        Nub.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        this.min.x -= width;
+        this.min.z -= depth;
+        this.max.x += width;
+        this.max.y += height;
+        this.max.z += depth;
+    }
+
+    public destroy(): void {
+        super.destroy();
+        let index = Nub.instances.indexOf(this);
+        if (index !== -1) {
+            Nub.instances.splice(index, 1);
+        }
+    }
+    
+    public async instantiate(scene: BABYLON.Scene): Promise<BABYLON.Mesh> {
+        let nubMesh = new BABYLON.Mesh("blockMesh", scene);
+        let data = await VertexDataLoader.instance.get("station-nub");
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0) {
+                data.positions[i] += (this.width - 1) * 0.5;
+            }
+            else {
+                data.positions[i] -= (this.width - 1) * 0.5;
+            }
+            if (data.positions[i + 1] > 0) {
+                data.positions[i + 1] += (this.height - 1) * 0.5;
+            }
+            if (data.positions[i + 2] > 0) {
+                data.positions[i + 2] += (this.depth - 1) * 0.5;
+            }
+            else {
+                data.positions[i + 2] -= (this.depth - 1) * 0.5;
+            }
+        }
+        data.applyToMesh(nubMesh);
+        nubMesh.material = Solid2.cellShadingMaterial;
+        nubMesh.layerMask = 1;
+        nubMesh.position.x = this.position.x / 2 + 0.25;
+        nubMesh.position.y = this.position.y / 2 + 0.25;
+        nubMesh.position.z = this.position.z / 2 + 0.25;
+        nubMesh.material = MinMax.cellShadingMaterial;
+        ScreenLoger.instance.log("Instantiate Nub");
+
+        return nubMesh;
+    }
+} 
+
 class Block extends MinMax {
 
     public static instances: Block[] = [];
@@ -306,7 +369,7 @@ class Block extends MinMax {
         x: number,
         y: number
     ): Promise<BABYLON.Mesh> {
-        ScreenLoger.instance.log("NORTH");
+        //ScreenLoger.instance.log("NORTH");
         let windowMesh = new BABYLON.Mesh("windowMesh", scene);
         let data = await VertexDataLoader.instance.get(elementName);
         data = VertexDataLoader.clone(data);
@@ -336,7 +399,7 @@ class Block extends MinMax {
         x: number,
         y: number
     ): Promise<BABYLON.Mesh> {
-        ScreenLoger.instance.log("EAST");
+        //ScreenLoger.instance.log("EAST");
         let windowMesh = new BABYLON.Mesh("windowMesh", scene);
         let data = await VertexDataLoader.instance.get(elementName);
         data = VertexDataLoader.clone(data);
@@ -366,7 +429,7 @@ class Block extends MinMax {
         x: number,
         y: number
     ): Promise<BABYLON.Mesh> {
-        ScreenLoger.instance.log("SOUTH");
+        //ScreenLoger.instance.log("SOUTH");
         let windowMesh = new BABYLON.Mesh("windowMesh", scene);
         let data = await VertexDataLoader.instance.get(elementName);
         data = VertexDataLoader.clone(data);
@@ -395,7 +458,7 @@ class Block extends MinMax {
         x: number,
         y: number
     ): Promise<BABYLON.Mesh> {
-        ScreenLoger.instance.log("West");
+        //ScreenLoger.instance.log("West");
         let windowMesh = new BABYLON.Mesh("windowMesh", scene);
         let data = await VertexDataLoader.instance.get(elementName);
         data = VertexDataLoader.clone(data);
@@ -555,6 +618,7 @@ class Block extends MinMax {
         southFace: number[][],
         westFace: number[][]
     ): Promise<void> {
+        ScreenLoger.instance.log("New Living");
         let floors = Math.floor(this.height / 3);
         for (let i = 1; i < floors; i++) {
             await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
@@ -572,6 +636,14 @@ class Block extends MinMax {
         await this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
         await this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
         await this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
+        for (let i = 0; i < 2; i++) {
+            ScreenLoger.instance.log("New Nub");
+            let p = this.position.clone();
+            p.y += this.height + 1;
+            p.x += Math.floor((Math.random() - 0.5) * this.width * 2);
+            p.z += Math.floor((Math.random() - 0.5) * this.width * 2);
+            new Way(p, Direction.North, 3, 3, 3);
+        }
     }
 
     public async tryPushView(

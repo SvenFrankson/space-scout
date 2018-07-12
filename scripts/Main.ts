@@ -31,7 +31,7 @@ class Main {
 
 	constructor(canvasElement: string) {
 		Main.Canvas = document.getElementById(canvasElement) as HTMLCanvasElement;
-		Main.Engine = new BABYLON.Engine(Main.Canvas, true);
+		Main.Engine = new BABYLON.Engine(Main.Canvas, true, undefined, true);
 		BABYLON.Engine.ShadersRepository = "./shaders/";
 	}
 
@@ -40,7 +40,7 @@ class Main {
 		this.resize();
 
 		Main.GuiTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("hud");
-		Main.GuiTexture.layer.layerMask = 2;
+		Main.GuiTexture.layer.layerMask = 1 | 2;
 		Main.GuiTexture.idealWidth = 1920;
 
 		Main.Loger = new ScreenLoger(Main.Scene, Main.GuiTexture);
