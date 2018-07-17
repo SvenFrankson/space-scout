@@ -1896,10 +1896,6 @@ class DemoStation {
             }
             Block.instances.forEach((b) => __awaiter(this, void 0, void 0, function* () {
                 yield b.instantiate(Main.Scene);
-                ScreenLoger.instance.log("Nubs count " + Nub.instances.length);
-                Nub.instances.forEach((n) => __awaiter(this, void 0, void 0, function* () {
-                    yield n.instantiate(Main.Scene);
-                }));
             }));
             Way.instances.forEach((w) => __awaiter(this, void 0, void 0, function* () {
                 yield w.instantiate(Main.Scene);
@@ -4481,23 +4477,27 @@ class Nub extends MinMax {
     instantiate(scene) {
         return __awaiter(this, void 0, void 0, function* () {
             let nubMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-nub");
+            let meshIndex = Math.floor(Math.random() * 2 + 1);
+            if (this.height > 2 || this.width < 2 || this.depth < 2) {
+                meshIndex = 1;
+            }
+            let data = yield VertexDataLoader.instance.get("station-nub-" + meshIndex.toFixed(0));
             data = VertexDataLoader.clone(data);
             for (let i = 0; i < data.positions.length; i += 3) {
                 if (data.positions[i] > 0) {
-                    data.positions[i] += (this.width - 1) * 0.5;
+                    data.positions[i] += (this.width - 2) * 0.5;
                 }
                 else {
-                    data.positions[i] -= (this.width - 1) * 0.5;
+                    data.positions[i] -= (this.width - 2) * 0.5;
                 }
                 if (data.positions[i + 1] > 0) {
                     data.positions[i + 1] += (this.height - 1) * 0.5;
                 }
                 if (data.positions[i + 2] > 0) {
-                    data.positions[i + 2] += (this.depth - 1) * 0.5;
+                    data.positions[i + 2] += (this.depth - 2) * 0.5;
                 }
                 else {
-                    data.positions[i + 2] -= (this.depth - 1) * 0.5;
+                    data.positions[i + 2] -= (this.depth - 2) * 0.5;
                 }
             }
             data.applyToMesh(nubMesh);
@@ -4507,7 +4507,6 @@ class Nub extends MinMax {
             nubMesh.position.y = this.position.y / 2 + 0.25;
             nubMesh.position.z = this.position.z / 2 + 0.25;
             nubMesh.material = MinMax.cellShadingMaterial;
-            ScreenLoger.instance.log("Instantiate Nub");
             return nubMesh;
         });
     }
@@ -4520,6 +4519,7 @@ class Block extends MinMax {
         this.width = width;
         this.height = height;
         this.depth = depth;
+        this._nubs = [];
         Block.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -4529,6 +4529,23 @@ class Block extends MinMax {
         this.max.x += width;
         this.max.y += height;
         this.max.z += depth;
+        for (let i = 0; i < 4; i++) {
+            let min = Math.min(this.width, this.depth);
+            let w = Math.floor(Math.random() * (min - 1) + 1);
+            let h = Math.floor(Math.random() * 3 + 1);
+            let d = Math.floor(Math.random() * (min - 1) + 1);
+            let p = this.position.clone();
+            p.y += this.height + 1;
+            p.x += Math.floor((Math.random() - 0.5) * (this.width - w - 2) * 2);
+            p.z += Math.floor((Math.random() - 0.5) * (this.depth - d - 2) * 2);
+            let nub = new Nub(p, w, h, d);
+            if (nub.intersectsAny()) {
+                nub.destroy();
+            }
+            else {
+                this._nubs.push(nub);
+            }
+        }
     }
     slot(direction) {
         let out = this.position.clone();
@@ -4556,6 +4573,9 @@ class Block extends MinMax {
         let index = Block.instances.indexOf(this);
         if (index !== -1) {
             Block.instances.splice(index, 1);
+        }
+        for (let i = 0; i < this._nubs.length; i++) {
+            this._nubs[i].destroy();
         }
     }
     tryPush(scene, face, side, elementName, attempts, w, h, y) {
@@ -4794,6 +4814,11 @@ class Block extends MinMax {
             else {
                 yield this.tryPushView(scene, northFace, eastFace, southFace, westFace);
             }
+            for (let i = 0; i < this._nubs.length; i++) {
+                let nub = this._nubs[i];
+                let nubMesh = yield nub.instantiate(scene);
+                this._meshes.push(nubMesh);
+            }
             let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             mergedMesh.material = MinMax.cellShadingMaterial;
             mergedMesh.layerMask = 1;
@@ -4818,7 +4843,6 @@ class Block extends MinMax {
     }
     tryPushLiving(scene, northFace, eastFace, southFace, westFace) {
         return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("New Living");
             let floors = Math.floor(this.height / 3);
             for (let i = 1; i < floors; i++) {
                 yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
@@ -4836,14 +4860,6 @@ class Block extends MinMax {
             yield this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
             yield this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
             yield this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
-            for (let i = 0; i < 2; i++) {
-                ScreenLoger.instance.log("New Nub");
-                let p = this.position.clone();
-                p.y += this.height + 1;
-                p.x += Math.floor((Math.random() - 0.5) * this.width * 2);
-                p.z += Math.floor((Math.random() - 0.5) * this.width * 2);
-                new Way(p, Direction.North, 3, 3, 3);
-            }
         });
     }
     tryPushView(scene, northFace, eastFace, southFace, westFace) {
