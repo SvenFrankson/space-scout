@@ -4443,7 +4443,6 @@ class Way extends MinMax {
                 }
             }
             data.applyToMesh(wayMesh);
-            wayMesh.material = Solid2.cellShadingMaterial;
             wayMesh.layerMask = 1;
             wayMesh.material = MinMax.cellShadingMaterial;
             return wayMesh;
@@ -4501,7 +4500,6 @@ class Nub extends MinMax {
                 }
             }
             data.applyToMesh(nubMesh);
-            nubMesh.material = Solid2.cellShadingMaterial;
             nubMesh.layerMask = 1;
             nubMesh.position.x = this.position.x / 2 + 0.25;
             nubMesh.position.y = this.position.y / 2 + 0.25;
@@ -4566,7 +4564,6 @@ class Door extends MinMax {
                 }
             }
             data.applyToMesh(doorMesh);
-            doorMesh.material = Solid2.cellShadingMaterial;
             doorMesh.layerMask = 1;
             doorMesh.position.x = this.position.x / 2 + 0.25;
             doorMesh.position.y = this.position.y / 2 + 0.25;
@@ -4646,7 +4643,6 @@ class Platform extends MinMax {
                 data.positions[i + 2] -= 0.25;
             }
             data.applyToMesh(platformMesh);
-            platformMesh.material = Solid2.cellShadingMaterial;
             platformMesh.layerMask = 1;
             platformMesh.position.x = this.position.x / 2 + 0.25;
             platformMesh.position.y = this.position.y / 2 + 0.25;
@@ -4676,6 +4672,7 @@ class Block extends MinMax {
         this._nubs = [];
         this._platforms = [];
         this._doors = [];
+        this._poles = [];
         Block.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -4700,6 +4697,20 @@ class Block extends MinMax {
             }
             else {
                 this._nubs.push(nub);
+            }
+        }
+        for (let i = 0; i < 4; i++) {
+            let p = this.position.clone();
+            p.y -= this.height + 1;
+            p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
+            p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
+            let l = Math.floor(10 + 20 * Math.random());
+            let pole = new Pole(p, 1, l, true);
+            if (pole.intersectsAny()) {
+                pole.destroy();
+            }
+            else {
+                this._poles.push(pole);
             }
         }
         if (Math.random() > 0.9) {
@@ -4862,7 +4873,6 @@ class Block extends MinMax {
             windowMesh.position.x -= x * 0.5;
             windowMesh.position.y += y * 0.5;
             windowMesh.rotation.y = Math.PI;
-            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4886,7 +4896,6 @@ class Block extends MinMax {
             windowMesh.position.y += y * 0.5;
             windowMesh.rotation.y = -Math.PI / 2;
             windowMesh.position.z += x * 0.5;
-            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4909,7 +4918,6 @@ class Block extends MinMax {
             windowMesh.position.copyFrom(this.min).scaleInPlace(0.5);
             windowMesh.position.x += x * 0.5;
             windowMesh.position.y += y * 0.5;
-            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4933,7 +4941,6 @@ class Block extends MinMax {
             windowMesh.position.y += y * 0.5;
             windowMesh.rotation.y = Math.PI / 2;
             windowMesh.position.z -= x * 0.5;
-            windowMesh.material = Solid2.cellShadingMaterial;
             windowMesh.layerMask = 1;
             return windowMesh;
         });
@@ -4965,7 +4972,6 @@ class Block extends MinMax {
             }
             data.applyToMesh(blockMesh);
             blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
-            blockMesh.material = Solid2.cellShadingMaterial;
             blockMesh.layerMask = 1;
             blockMesh.position.x = this.position.x / 2 + 0.25;
             blockMesh.position.y = this.position.y / 2 + 0.25;
@@ -5048,6 +5054,11 @@ class Block extends MinMax {
                 let door = this._doors[i];
                 let doorMesh = yield door.instantiate(scene);
                 this._meshes.push(doorMesh);
+            }
+            for (let i = 0; i < this._poles.length; i++) {
+                let pole = this._poles[i];
+                let poleMesh = yield pole.instantiate(scene);
+                this._meshes.push(poleMesh);
             }
             let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             mergedMesh.material = MinMax.cellShadingMaterial;
@@ -5209,364 +5220,137 @@ class Block extends MinMax {
     }
 }
 Block.instances = [];
-class Solid2 {
-    constructor() {
-        this.position = BABYLON.Vector3.Zero();
-        this.size = BABYLON.Vector3.One();
-    }
-    static get cellShadingMaterial() {
-        if (!SpaceShipFactory._cellShadingMaterial) {
-            SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
-            SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
-        }
-        return SpaceShipFactory._cellShadingMaterial;
-    }
-    intersects(i, j, k) {
-        if (i >= this.position.x && i < this.position.x + this.size.x) {
-            if (j >= this.position.y && j < this.position.y + this.size.y) {
-                if (k >= this.position.z && k < this.position.z + this.size.z) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-    static intersectsAny(i, j, k) {
-        for (let b = 0; b < Block2.Instances.length; b++) {
-            if (Block2.Instances[b].intersects(i, j, k)) {
-                return true;
-            }
-        }
-        for (let w = 0; w < Way2.Instances.length; w++) {
-            if (Way2.Instances[w].intersects(i, j, k)) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
-class Block2 extends Solid2 {
-    constructor() {
+class Pole extends MinMax {
+    constructor(position, width, length, down = false) {
         super();
-        Block2.Instances.push(this);
-    }
-    northOrigin() {
-        return new BABYLON.Vector3(this.position.x + Math.floor(this.size.x / 2), this.position.y + 1, this.position.z + this.size.z);
-    }
-    southOrigin() {
-        return new BABYLON.Vector3(this.position.x + Math.floor(this.size.x / 2), this.position.y + 1, this.position.z);
-    }
-    eastOrigin() {
-        return new BABYLON.Vector3(this.position.x + this.size.x, this.position.y + 1, this.position.z + Math.floor(this.size.z / 2));
-    }
-    westOrigin() {
-        return new BABYLON.Vector3(this.position.x, this.position.y + 1, this.position.z + Math.floor(this.size.z / 2));
-    }
-    tryPush(scene, face, side, attempts, w, h, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let randomizeY = false;
-            if (y === undefined) {
-                randomizeY = true;
-            }
-            for (let n = 0; n < attempts; n++) {
-                let x = Math.floor(Math.random() * (face.length - w - 1) + 1);
-                if (randomizeY) {
-                    y = Math.floor(Math.random() * (face[0].length - h - 1) + 1);
-                }
-                let ok = true;
-                for (let i = 0; i < w; i++) {
-                    for (let j = 0; j < h; j++) {
-                        if (face[x + i][y + j] > 0) {
-                            ok = false;
-                        }
-                    }
-                }
-                if (ok) {
-                    for (let i = 0; i < w; i++) {
-                        for (let j = 0; j < h; j++) {
-                            face[x + i][y + j] = 2;
-                        }
-                    }
-                    if (side === "north") {
-                        yield this.pushNorth(scene, w, h, x, y);
-                    }
-                    if (side === "east") {
-                        yield this.pushEast(scene, w, h, x, y);
-                    }
-                    if (side === "south") {
-                        yield this.pushSouth(scene, w, h, x, y);
-                    }
-                    if (side === "west") {
-                        yield this.pushWest(scene, w, h, x, y);
-                    }
-                }
-            }
-        });
-    }
-    pushNorth(scene, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("NORTH");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-window");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
-            }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats((this.position.x + this.size.x - x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z) * 0.5);
-            windowMesh.rotation.y = Math.PI;
-            windowMesh.material = Solid2.cellShadingMaterial;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
-    }
-    pushEast(scene, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("EAST");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-window");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
-            }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats((this.position.x + this.size.x) * 0.5, (this.position.y + y) * 0.5, (this.position.z + x) * 0.5);
-            windowMesh.rotation.y = -Math.PI / 2;
-            windowMesh.material = Solid2.cellShadingMaterial;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
-    }
-    pushSouth(scene, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("SOUTH");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-window");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
-            }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats((this.position.x + x) * 0.5, (this.position.y + y) * 0.5, this.position.z * 0.5);
-            windowMesh.material = Solid2.cellShadingMaterial;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
-    }
-    pushWest(scene, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("WEST");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-window");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
-            }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats(this.position.x * 0.5, (this.position.y + y) * 0.5, (this.position.z + this.size.z - x) * 0.5);
-            windowMesh.rotation.y = Math.PI / 2;
-            windowMesh.material = Solid2.cellShadingMaterial;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
-    }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let block2Mesh = new BABYLON.Mesh("block2Mesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-block2");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += this.size.x * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += this.size.y * 0.5 - 1;
-                }
-                if (data.positions[i + 2] > 0.5) {
-                    data.positions[i + 2] += this.size.z * 0.5 - 1;
-                }
-            }
-            data.applyToMesh(block2Mesh);
-            block2Mesh.position.copyFrom(this.position).scaleInPlace(0.5);
-            block2Mesh.material = Solid2.cellShadingMaterial;
-            block2Mesh.layerMask = 1;
-            let eastFace = [];
-            for (let i = 0; i < this.size.z; i++) {
-                eastFace[i] = [];
-                for (let j = 0; j < this.size.y; j++) {
-                    eastFace[i][j] = 0;
-                    let I = this.position.x + this.size.x;
-                    let J = this.position.y + j;
-                    let K = this.position.z + i;
-                    if (Solid2.intersectsAny(I, J, K)) {
-                        eastFace[i][j] = 1;
-                    }
-                }
-            }
-            let southFace = [];
-            for (let i = 0; i < this.size.x; i++) {
-                southFace[i] = [];
-                for (let j = 0; j < this.size.y; j++) {
-                    southFace[i][j] = 0;
-                    let I = this.position.x + i;
-                    let J = this.position.y + j;
-                    let K = this.position.z - 1;
-                    if (Solid2.intersectsAny(I, J, K)) {
-                        southFace[i][j] = 1;
-                    }
-                }
-            }
-            let westFace = [];
-            for (let i = 0; i < this.size.z; i++) {
-                westFace[i] = [];
-                for (let j = 0; j < this.size.y; j++) {
-                    westFace[i][j] = 0;
-                    let I = this.position.x - 1;
-                    let J = this.position.y + j;
-                    let K = this.position.z + this.size.z - i - 1;
-                    if (Solid2.intersectsAny(I, J, K)) {
-                        westFace[i][j] = 1;
-                    }
-                }
-            }
-            let northFace = [];
-            for (let i = 0; i < this.size.x; i++) {
-                northFace[i] = [];
-                for (let j = 0; j < this.size.y; j++) {
-                    northFace[i][j] = 0;
-                    let I = this.position.x + this.size.x - i - 1;
-                    let J = this.position.y + j;
-                    let K = this.position.z + this.size.z;
-                    if (Solid2.intersectsAny(I, J, K)) {
-                        northFace[i][j] = 1;
-                    }
-                }
-            }
-            yield this.tryPush(scene, eastFace, "east", 3, 2, 4, 1);
-            yield this.tryPush(scene, eastFace, "east", 2, 1, 4, 1);
-            yield this.tryPush(scene, eastFace, "east", 10, 2, 2, 1);
-            yield this.tryPush(scene, eastFace, "east", 10, 2, 2, 3);
-            yield this.tryPush(scene, eastFace, "east", 20, 1, 1);
-            yield this.tryPush(scene, southFace, "south", 3, 2, 4, 1);
-            yield this.tryPush(scene, southFace, "south", 2, 1, 4, 1);
-            yield this.tryPush(scene, southFace, "south", 10, 2, 2, 1);
-            yield this.tryPush(scene, southFace, "south", 10, 2, 2, 3);
-            yield this.tryPush(scene, southFace, "south", 20, 1, 1);
-            yield this.tryPush(scene, westFace, "west", 3, 2, 4, 1);
-            yield this.tryPush(scene, westFace, "west", 2, 1, 4, 1);
-            yield this.tryPush(scene, westFace, "west", 10, 2, 2, 1);
-            yield this.tryPush(scene, westFace, "west", 10, 2, 2, 3);
-            yield this.tryPush(scene, westFace, "west", 20, 1, 1);
-            yield this.tryPush(scene, northFace, "north", 3, 2, 4, 1);
-            yield this.tryPush(scene, northFace, "north", 2, 1, 4, 1);
-            yield this.tryPush(scene, northFace, "north", 10, 2, 2, 1);
-            yield this.tryPush(scene, northFace, "north", 10, 2, 2, 3);
-            yield this.tryPush(scene, northFace, "north", 20, 1, 1);
-            return block2Mesh;
-        });
-    }
-}
-Block2.Instances = [];
-class Way2 extends Solid2 {
-    constructor(origin, direction, width, height, length) {
-        super();
-        this.origin = origin;
-        this.direction = direction;
+        this.position = position;
         this.width = width;
-        this.height = height;
         this.length = length;
-        if (direction === "north") {
-            this.position.copyFrom(origin);
-            this.size.copyFromFloats(width, height, length);
+        this.down = down;
+        Pole.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        this.min.x -= this.width;
+        this.min.z -= this.width;
+        this.max.x += this.width;
+        this.max.z += this.width;
+        if (this.down) {
+            this.min.y -= this.length;
         }
-        if (direction === "east") {
-            this.position.copyFrom(origin);
-            this.position.z -= this.width;
-            this.size.copyFromFloats(length, height, width);
+        else {
+            this.max.y += this.length;
         }
-        if (direction === "west") {
-            this.position.copyFrom(origin);
-            this.position.x -= this.length;
-            this.size.copyFromFloats(length, height, width);
-        }
-        if (direction === "south") {
-            this.position.copyFrom(origin);
-            this.position.x -= this.width;
-            this.position.z -= this.length;
-            this.size.copyFromFloats(width, height, length);
-        }
-        Way2.Instances.push(this);
     }
-    outPoint() {
-        let out = this.origin.clone();
-        if (this.direction === "north") {
-            out.z += this.length;
+    static PushPoleParts(positions, indices, colors, d0, d1, length, y0, y1, color, cutsCount, cutsHeight) {
+        let cutLength = (y1 - y0) / cutsCount;
+        for (let i = 0; i < cutsCount; i++) {
+            if (Math.random() < 0.5) {
+                Pole.PushPolePart(positions, indices, colors, d0, d1, length, y0 + cutLength * i + cutsHeight * 0.5, y0 + cutLength * (i + 1) - cutsHeight * 0.5, color);
+            }
         }
-        if (this.direction === "east") {
-            out.x += this.length;
+    }
+    static PushPolePart(positions, indices, colors, d0, d1, length, y0, y1, color) {
+        let r0 = y0 / length;
+        r0 = r0 * d1 + (1 - r0) * d0;
+        r0 *= 0.5;
+        let r1 = y1 / length;
+        r1 = r1 * d1 + (1 - r1) * d0;
+        r1 *= 0.5;
+        let l = positions.length / 3;
+        positions.push(0, y0, 0);
+        positions.push(Pole._p0.x * r0, y0, Pole._p0.z * r0);
+        positions.push(Pole._p1.x * r0, y0, Pole._p1.z * r0);
+        positions.push(Pole._p2.x * r0, y0, Pole._p2.z * r0);
+        positions.push(Pole._p3.x * r0, y0, Pole._p3.z * r0);
+        positions.push(Pole._p4.x * r0, y0, Pole._p4.z * r0);
+        positions.push(Pole._p5.x * r0, y0, Pole._p5.z * r0);
+        positions.push(0, y1, 0);
+        positions.push(Pole._p0.x * r1, y1, Pole._p0.z * r1);
+        positions.push(Pole._p1.x * r1, y1, Pole._p1.z * r1);
+        positions.push(Pole._p2.x * r1, y1, Pole._p2.z * r1);
+        positions.push(Pole._p3.x * r1, y1, Pole._p3.z * r1);
+        positions.push(Pole._p4.x * r1, y1, Pole._p4.z * r1);
+        positions.push(Pole._p5.x * r1, y1, Pole._p5.z * r1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        colors.push(color.r, color.g, color.b, 1);
+        indices.push(1 + l, 2 + l, 8 + l);
+        indices.push(8 + l, 2 + l, 9 + l);
+        indices.push(2 + l, 3 + l, 9 + l);
+        indices.push(9 + l, 3 + l, 10 + l);
+        indices.push(3 + l, 4 + l, 10 + l);
+        indices.push(10 + l, 4 + l, 11 + l);
+        indices.push(4 + l, 5 + l, 11 + l);
+        indices.push(11 + l, 5 + l, 12 + l);
+        indices.push(5 + l, 6 + l, 12 + l);
+        indices.push(12 + l, 6 + l, 13 + l);
+        indices.push(6 + l, 1 + l, 13 + l);
+        indices.push(13 + l, 1 + l, 8 + l);
+        indices.push(0 + l, 2 + l, 1 + l);
+        indices.push(0 + l, 3 + l, 2 + l);
+        indices.push(0 + l, 4 + l, 3 + l);
+        indices.push(0 + l, 5 + l, 4 + l);
+        indices.push(0 + l, 6 + l, 5 + l);
+        indices.push(0 + l, 1 + l, 6 + l);
+        indices.push(7 + l, 8 + l, 9 + l);
+        indices.push(7 + l, 9 + l, 10 + l);
+        indices.push(7 + l, 10 + l, 11 + l);
+        indices.push(7 + l, 11 + l, 12 + l);
+        indices.push(7 + l, 12 + l, 13 + l);
+        indices.push(7 + l, 13 + l, 8 + l);
+    }
+    destroy() {
+        super.destroy();
+        let index = Pole.instances.indexOf(this);
+        if (index !== -1) {
+            Pole.instances.splice(index, 1);
         }
-        if (this.direction === "south") {
-            out.z -= this.length;
-        }
-        if (this.direction === "west") {
-            out.x -= this.length;
-        }
-        return out;
     }
     instantiate(scene) {
         return __awaiter(this, void 0, void 0, function* () {
-            let block2Mesh = new BABYLON.Mesh("way2Mesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-way2");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += this.width * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 1.5) {
-                    data.positions[i + 1] += this.height * 0.5 - 2;
-                }
-                if (data.positions[i + 2] > 0.5) {
-                    data.positions[i + 2] += this.length * 0.5 - 1;
-                }
+            let poleMesh = new BABYLON.Mesh("blockMesh", scene);
+            let positions = [];
+            let indices = [];
+            let colors = [];
+            Pole.PushPoleParts(positions, indices, colors, this.width + 0.5, 0.5, this.length * 0.5 + 0.5, 0, this.length * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2), Math.floor(this.length * 0.5 + 0.5), 0.2);
+            Pole.PushPolePart(positions, indices, colors, this.width + 0.1, 0.1, this.length * 0.5 + 0.5, 0.1, this.length * 0.5 + 0.5 - 0.2, new BABYLON.Color3(1, 1, 1));
+            let data = new BABYLON.VertexData();
+            data.positions = positions;
+            data.indices = indices;
+            data.colors = colors;
+            data.normals = [];
+            BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+            data.applyToMesh(poleMesh);
+            poleMesh.layerMask = 1;
+            poleMesh.position.x = this.position.x / 2 + 0.25;
+            poleMesh.position.y = this.position.y / 2 + 0.25;
+            poleMesh.position.z = this.position.z / 2 + 0.25;
+            if (this.down) {
+                poleMesh.rotation.x = Math.PI;
             }
-            data.applyToMesh(block2Mesh);
-            block2Mesh.position.copyFrom(this.origin).scaleInPlace(0.5);
-            if (this.direction === "east") {
-                block2Mesh.rotation.y = Math.PI / 2;
-            }
-            if (this.direction === "west") {
-                block2Mesh.rotation.y = -Math.PI / 2;
-            }
-            if (this.direction === "south") {
-                block2Mesh.rotation.y = Math.PI;
-            }
-            block2Mesh.material = Solid2.cellShadingMaterial;
-            block2Mesh.layerMask = 1;
-            return block2Mesh;
+            poleMesh.material = MinMax.cellShadingMaterial;
+            return poleMesh;
         });
     }
 }
-Way2.Instances = [];
+Pole.instances = [];
+Pole._p0 = new BABYLON.Vector3(0.5, 0, 0);
+Pole._p1 = new BABYLON.Vector3(0.25, 0, Math.sqrt(3) * 0.25);
+Pole._p2 = new BABYLON.Vector3(-0.25, 0, Math.sqrt(3) * 0.25);
+Pole._p3 = new BABYLON.Vector3(-0.5, 0, 0);
+Pole._p4 = new BABYLON.Vector3(-0.25, 0, -Math.sqrt(3) * 0.25);
+Pole._p5 = new BABYLON.Vector3(0.25, 0, -Math.sqrt(3) * 0.25);
 class SectionLevel {
     constructor(section) {
         this.name = "NewLevel";

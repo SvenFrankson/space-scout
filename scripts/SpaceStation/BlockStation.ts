@@ -186,7 +186,6 @@ class Way extends MinMax {
             }
         }
         data.applyToMesh(wayMesh);
-        wayMesh.material = Solid2.cellShadingMaterial;
         wayMesh.layerMask = 1;
         wayMesh.material = MinMax.cellShadingMaterial;
         return wayMesh;
@@ -248,7 +247,6 @@ class Nub extends MinMax {
             }
         }
         data.applyToMesh(nubMesh);
-        nubMesh.material = Solid2.cellShadingMaterial;
         nubMesh.layerMask = 1;
         nubMesh.position.x = this.position.x / 2 + 0.25;
         nubMesh.position.y = this.position.y / 2 + 0.25;
@@ -318,7 +316,6 @@ class Door extends MinMax {
             }
         }
         data.applyToMesh(doorMesh);
-        doorMesh.material = Solid2.cellShadingMaterial;
         doorMesh.layerMask = 1;
         doorMesh.position.x = this.position.x / 2 + 0.25;
         doorMesh.position.y = this.position.y / 2 + 0.25;
@@ -403,7 +400,6 @@ class Platform extends MinMax {
             data.positions[i + 2] -= 0.25;
         }
         data.applyToMesh(platformMesh);
-        platformMesh.material = Solid2.cellShadingMaterial;
         platformMesh.layerMask = 1;
         platformMesh.position.x = this.position.x / 2 + 0.25;
         platformMesh.position.y = this.position.y / 2 + 0.25;
@@ -429,6 +425,7 @@ class Block extends MinMax {
     private _nubs: Nub[] = [];
     private _platforms: Platform[] = [];
     private _doors: Door[] = [];
+    private _poles: Pole[] = [];
 
     constructor(
         public position: BABYLON.Vector3,
@@ -462,6 +459,21 @@ class Block extends MinMax {
             }
             else {
                 this._nubs.push(nub);
+            }
+        }
+
+        for (let i = 0; i < 4; i++) {
+            let p = this.position.clone();
+            p.y -= this.height + 1;
+            p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
+            p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
+            let l = Math.floor(10 + 20 * Math.random());
+            let pole = new Pole(p, 1, l, true);
+            if (pole.intersectsAny()) {
+                pole.destroy();
+            }
+            else {
+                this._poles.push(pole);
             }
         }
 
@@ -643,7 +655,6 @@ class Block extends MinMax {
         windowMesh.position.x -= x * 0.5;
         windowMesh.position.y += y * 0.5;
         windowMesh.rotation.y = Math.PI;
-        windowMesh.material = Solid2.cellShadingMaterial;
         windowMesh.layerMask = 1;
         return windowMesh;
     }
@@ -673,7 +684,6 @@ class Block extends MinMax {
         windowMesh.position.y += y * 0.5;
         windowMesh.rotation.y = - Math.PI / 2;
         windowMesh.position.z += x * 0.5;
-        windowMesh.material = Solid2.cellShadingMaterial;
         windowMesh.layerMask = 1;
         return windowMesh;
     }
@@ -702,7 +712,6 @@ class Block extends MinMax {
         windowMesh.position.copyFrom(this.min).scaleInPlace(0.5);
         windowMesh.position.x += x * 0.5;
         windowMesh.position.y += y * 0.5;
-        windowMesh.material = Solid2.cellShadingMaterial;
         windowMesh.layerMask = 1;
         return windowMesh;
     }
@@ -732,7 +741,6 @@ class Block extends MinMax {
         windowMesh.position.y += y * 0.5;
         windowMesh.rotation.y = Math.PI / 2;
         windowMesh.position.z -= x * 0.5;
-        windowMesh.material = Solid2.cellShadingMaterial;
         windowMesh.layerMask = 1;
         return windowMesh;
     }
@@ -763,7 +771,6 @@ class Block extends MinMax {
         }
         data.applyToMesh(blockMesh);
         blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
-        blockMesh.material = Solid2.cellShadingMaterial;
         blockMesh.layerMask = 1;
         blockMesh.position.x = this.position.x / 2 + 0.25;
         blockMesh.position.y = this.position.y / 2 + 0.25;
@@ -855,6 +862,12 @@ class Block extends MinMax {
             let door = this._doors[i];
             let doorMesh = await door.instantiate(scene)
             this._meshes.push(doorMesh);
+        }
+
+        for (let i = 0; i < this._poles.length; i++) {
+            let pole = this._poles[i];
+            let poleMesh = await pole.instantiate(scene)
+            this._meshes.push(poleMesh);
         }
 
         let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
