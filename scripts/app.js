@@ -4512,6 +4512,80 @@ class Nub extends MinMax {
     }
 }
 Nub.instances = [];
+class Door extends MinMax {
+    constructor(position, width, direction) {
+        super();
+        this.position = position;
+        this.width = width;
+        this.direction = direction;
+        Door.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        if (this.direction === Direction.North) {
+            this.min.x -= width;
+            this.max.x += width;
+            this.max.z += 1;
+        }
+        if (this.direction === Direction.South) {
+            this.min.x -= width;
+            this.min.z -= 1;
+            this.max.x += width;
+        }
+        if (this.direction === Direction.East) {
+            this.min.z -= width;
+            this.max.x += 1;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.West) {
+            this.min.x -= 1;
+            this.min.z -= width;
+            this.max.z += width;
+        }
+        this.max.y += 4;
+    }
+    destroy() {
+        super.destroy();
+        let index = Door.instances.indexOf(this);
+        if (index !== -1) {
+            Door.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-door");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i + 1] < -0.2 || data.positions[i + 1] > 1.5) {
+                    if (data.positions[i] > 0) {
+                        data.positions[i] += (this.width - 1) * 0.5;
+                    }
+                    else if (data.positions[i] < 0) {
+                        data.positions[i] -= (this.width - 1) * 0.5;
+                    }
+                }
+            }
+            data.applyToMesh(doorMesh);
+            doorMesh.material = Solid2.cellShadingMaterial;
+            doorMesh.layerMask = 1;
+            doorMesh.position.x = this.position.x / 2 + 0.25;
+            doorMesh.position.y = this.position.y / 2 + 0.25;
+            doorMesh.position.z = this.position.z / 2 + 0.25;
+            if (this.direction === Direction.South) {
+                doorMesh.rotation.y = Math.PI;
+            }
+            if (this.direction === Direction.East) {
+                doorMesh.rotation.y = Math.PI * 0.5;
+            }
+            if (this.direction === Direction.West) {
+                doorMesh.rotation.y = -Math.PI * 0.5;
+            }
+            doorMesh.material = MinMax.cellShadingMaterial;
+            return doorMesh;
+        });
+    }
+}
+Door.instances = [];
 class Platform extends MinMax {
     constructor(position, width, direction) {
         super();
@@ -4601,6 +4675,7 @@ class Block extends MinMax {
         this.depth = depth;
         this._nubs = [];
         this._platforms = [];
+        this._doors = [];
         Block.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -4637,6 +4712,10 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
+                let pp = p.clone();
+                pp.y += 1;
+                let door = new Door(pp, 2, Direction.North);
+                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4649,6 +4728,10 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
+                let pp = p.clone();
+                pp.y += 1;
+                let door = new Door(pp, 2, Direction.South);
+                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4661,6 +4744,10 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
+                let pp = p.clone();
+                pp.y += 1;
+                let door = new Door(pp, 2, Direction.East);
+                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4673,6 +4760,10 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
+                let pp = p.clone();
+                pp.y += 1;
+                let door = new Door(pp, 2, Direction.West);
+                this._doors.push(door);
             }
         }
     }
@@ -4952,6 +5043,11 @@ class Block extends MinMax {
                 let platform = this._platforms[i];
                 let platformMesh = yield platform.instantiate(scene);
                 this._meshes.push(platformMesh);
+            }
+            for (let i = 0; i < this._doors.length; i++) {
+                let door = this._doors[i];
+                let doorMesh = yield door.instantiate(scene);
+                this._meshes.push(doorMesh);
             }
             let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             mergedMesh.material = MinMax.cellShadingMaterial;
