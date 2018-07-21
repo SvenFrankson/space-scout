@@ -4699,13 +4699,17 @@ class Block extends MinMax {
                 this._nubs.push(nub);
             }
         }
-        for (let i = 0; i < 4; i++) {
+        let s = this.width * this.depth;
+        let lMax = Math.max(150 - this.position.length(), 0) * 0.5;
+        lMax = Math.floor(lMax) + 10;
+        for (let i = 0; i < s / 80; i++) {
             let p = this.position.clone();
             p.y -= this.height + 1;
             p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
             p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
-            let l = Math.floor(10 + 20 * Math.random());
-            let pole = new Pole(p, 1, l, true);
+            let l = Math.floor(10 + lMax * Math.random());
+            let w = 1 + Math.floor(Math.random() * 2);
+            let pole = new Pole(p, w, l, true);
             if (pole.intersectsAny()) {
                 pole.destroy();
             }
