@@ -3,7 +3,7 @@ class DemoStation {
     private static _demoCamera: BABYLON.ArcRotateCamera;
 
     public static async Start(): Promise<void> {
-        DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+        DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
         DemoStation._demoCamera.attachControl(Main.Canvas);
         DemoStation._demoCamera.minZ = 0.5;
         DemoStation._demoCamera.maxZ = 2000;

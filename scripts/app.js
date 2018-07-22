@@ -1871,7 +1871,7 @@ Demo._wingsIndex = 0;
 class DemoStation {
     static Start() {
         return __awaiter(this, void 0, void 0, function* () {
-            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
             DemoStation._demoCamera.attachControl(Main.Canvas);
             DemoStation._demoCamera.minZ = 0.5;
             DemoStation._demoCamera.maxZ = 2000;
@@ -4330,7 +4330,7 @@ class Antenna {
             let positions = [];
             let indices = [];
             let colors = [];
-            Pole.PushPolePart(positions, indices, colors, 1, 0.5, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
+            Pole.PushPolePart(positions, indices, colors, (1 + this.size * 0.5) * 0.25, (1 + this.size * 0.5) * 0.1, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
             let data = new BABYLON.VertexData();
             data.positions = positions;
             data.indices = indices;
@@ -4339,13 +4339,13 @@ class Antenna {
             BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
             data.applyToMesh(poleMesh);
             let antennaMesh = new BABYLON.Mesh("antennaMesh", scene);
-            let antennaMeshData = yield VertexDataLoader.instance.getColorized("antenna", "#c4c4c4", "#1ece50");
+            let antennaIndex = Math.floor(2 * Math.random() + 1);
+            let antennaMeshData = yield VertexDataLoader.instance.getColorized("antenna-" + antennaIndex.toFixed(0), "#7f7f7f", "#1ece50");
             antennaMeshData.applyToMesh(antennaMesh);
-            antennaMesh.scaling.copyFromFloats(this.size, this.size, this.size);
+            antennaMesh.scaling.copyFromFloats(1 + this.size * 0.5, 1 + this.size * 0.5, 1 + this.size * 0.5);
             antennaMesh.position.y = this.height * 0.5 + 0.5;
-            antennaMesh.rotation.x = Math.random() * Math.PI / 3;
-            antennaMesh.rotation.y = Math.random() * Math.PI / 3;
-            antennaMesh.rotation.z = Math.random() * Math.PI / 3;
+            antennaMesh.rotation.x = Math.PI / 4 + (Math.random() * 2 - 1) * Math.PI / 8;
+            antennaMesh.rotation.y = Math.random() * Math.PI * 2;
             antennaMesh.computeWorldMatrix(true);
             antennaMesh = BABYLON.Mesh.MergeMeshes([poleMesh, antennaMesh], true);
             antennaMesh.layerMask = 1;
@@ -4729,7 +4729,7 @@ class Block extends MinMax {
         p.y += this.height + 1;
         p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
         p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
-        let antenna = new Antenna(p, Math.floor(0.5 + Math.random() * 4), Math.floor(0.5 + Math.random() * 6));
+        let antenna = new Antenna(p, Math.floor(1 + Math.random() * 6), Math.floor(2 + Math.random() * 6));
         this._antennas.push(antenna);
         if (Math.random() > 0.9) {
             let p = this.position.clone();

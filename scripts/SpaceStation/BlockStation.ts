@@ -402,7 +402,7 @@ class Block extends MinMax {
         p.y += this.height + 1;
         p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
         p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
-        let antenna = new Antenna(p, Math.floor(0.5 + Math.random() * 4), Math.floor(0.5 + Math.random() * 6));
+        let antenna = new Antenna(p, Math.floor(1 + Math.random() * 6), Math.floor(2 + Math.random() * 6));
         this._antennas.push(antenna);
 
         if (Math.random() > 0.9) {
