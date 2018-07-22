@@ -342,6 +342,7 @@ class Block extends MinMax {
     private _platforms: Platform[] = [];
     private _doors: Door[] = [];
     private _poles: Pole[] = [];
+    private _antennas: Antenna[] = [];
 
     constructor(
         public position: BABYLON.Vector3,
@@ -396,6 +397,13 @@ class Block extends MinMax {
                 this._poles.push(pole);
             }
         }
+
+        let p = this.position.clone();
+        p.y += this.height + 1;
+        p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
+        p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
+        let antenna = new Antenna(p, Math.floor(0.5 + Math.random() * 4), Math.floor(0.5 + Math.random() * 6));
+        this._antennas.push(antenna);
 
         if (Math.random() > 0.9) {
             let p = this.position.clone();
@@ -788,6 +796,12 @@ class Block extends MinMax {
             let pole = this._poles[i];
             let poleMesh = await pole.instantiate(scene)
             this._meshes.push(poleMesh);
+        }
+
+        for (let i = 0; i < this._antennas.length; i++) {
+            let antenna = this._antennas[i];
+            let antennaMesh = await antenna.instantiate(scene)
+            this._meshes.push(antennaMesh);
         }
 
         let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);

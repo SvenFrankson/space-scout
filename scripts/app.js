@@ -2494,6 +2494,16 @@ class VertexDataLoader {
                     }
                 }
             }
+            else {
+                let colors = [];
+                for (let i = 0; i < data.positions.length / 3; i++) {
+                    colors[4 * i] = baseColor3.r;
+                    colors[4 * i + 1] = baseColor3.g;
+                    colors[4 * i + 2] = baseColor3.b;
+                    colors[4 * i + 3] = 1;
+                }
+                data.colors = colors;
+            }
             return data;
         });
     }
@@ -4302,6 +4312,52 @@ class WingManAI extends SpaceShipAI {
         }
     }
 }
+class Antenna {
+    constructor(position, size, height) {
+        this.position = position;
+        this.size = size;
+        this.height = height;
+    }
+    destroy() {
+        let index = Antenna.instances.indexOf(this);
+        if (index !== -1) {
+            Antenna.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let poleMesh = new BABYLON.Mesh("blockMesh", scene);
+            let positions = [];
+            let indices = [];
+            let colors = [];
+            Pole.PushPolePart(positions, indices, colors, 1, 0.5, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
+            let data = new BABYLON.VertexData();
+            data.positions = positions;
+            data.indices = indices;
+            data.colors = colors;
+            data.normals = [];
+            BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+            data.applyToMesh(poleMesh);
+            let antennaMesh = new BABYLON.Mesh("antennaMesh", scene);
+            let antennaMeshData = yield VertexDataLoader.instance.getColorized("antenna", "#c4c4c4", "#1ece50");
+            antennaMeshData.applyToMesh(antennaMesh);
+            antennaMesh.scaling.copyFromFloats(this.size, this.size, this.size);
+            antennaMesh.position.y = this.height * 0.5 + 0.5;
+            antennaMesh.rotation.x = Math.random() * Math.PI / 3;
+            antennaMesh.rotation.y = Math.random() * Math.PI / 3;
+            antennaMesh.rotation.z = Math.random() * Math.PI / 3;
+            antennaMesh.computeWorldMatrix(true);
+            antennaMesh = BABYLON.Mesh.MergeMeshes([poleMesh, antennaMesh], true);
+            antennaMesh.layerMask = 1;
+            antennaMesh.position.x = this.position.x / 2 + 0.25;
+            antennaMesh.position.y = this.position.y / 2 + 0.25;
+            antennaMesh.position.z = this.position.z / 2 + 0.25;
+            antennaMesh.material = MinMax.cellShadingMaterial;
+            return antennaMesh;
+        });
+    }
+}
+Antenna.instances = [];
 var Direction;
 (function (Direction) {
     Direction[Direction["North"] = 0] = "North";
@@ -4624,6 +4680,7 @@ class Block extends MinMax {
         this._platforms = [];
         this._doors = [];
         this._poles = [];
+        this._antennas = [];
         Block.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -4668,6 +4725,12 @@ class Block extends MinMax {
                 this._poles.push(pole);
             }
         }
+        let p = this.position.clone();
+        p.y += this.height + 1;
+        p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
+        p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
+        let antenna = new Antenna(p, Math.floor(0.5 + Math.random() * 4), Math.floor(0.5 + Math.random() * 6));
+        this._antennas.push(antenna);
         if (Math.random() > 0.9) {
             let p = this.position.clone();
             p.y -= this.height - 1;
@@ -5014,6 +5077,11 @@ class Block extends MinMax {
                 let pole = this._poles[i];
                 let poleMesh = yield pole.instantiate(scene);
                 this._meshes.push(poleMesh);
+            }
+            for (let i = 0; i < this._antennas.length; i++) {
+                let antenna = this._antennas[i];
+                let antennaMesh = yield antenna.instantiate(scene);
+                this._meshes.push(antennaMesh);
             }
             let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             mergedMesh.material = MinMax.cellShadingMaterial;

@@ -78,6 +78,16 @@ class VertexDataLoader {
 				}
 			}
         }
+        else {
+            let colors: number[] = [];
+            for (let i = 0; i < data.positions.length / 3; i++) {
+                colors[4 * i] = baseColor3.r;
+                colors[4 * i + 1] = baseColor3.g;
+                colors[4 * i + 2] = baseColor3.b;
+                colors[4 * i + 3] = 1;
+            }
+            data.colors = colors;
+        }
         return data;
     }
 }
