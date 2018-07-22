@@ -2467,6 +2467,36 @@ class VertexDataLoader {
             });
         });
     }
+    getColorized(name, baseColor, detailColor) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+            let data = VertexDataLoader.clone(yield VertexDataLoader.instance.get(name));
+            if (data.colors) {
+                for (let i = 0; i < data.colors.length / 4; i++) {
+                    let r = data.colors[4 * i];
+                    let g = data.colors[4 * i + 1];
+                    let b = data.colors[4 * i + 2];
+                    if (r === 1 && g === 0 && b === 0) {
+                        data.colors[4 * i] = detailColor3.r;
+                        data.colors[4 * i + 1] = detailColor3.g;
+                        data.colors[4 * i + 2] = detailColor3.b;
+                    }
+                    else if (r === 1 && g === 1 && b === 1) {
+                        data.colors[4 * i] = baseColor3.r;
+                        data.colors[4 * i + 1] = baseColor3.g;
+                        data.colors[4 * i + 2] = baseColor3.b;
+                    }
+                    else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                        data.colors[4 * i] = baseColor3.r * 0.5;
+                        data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                        data.colors[4 * i + 2] = baseColor3.b * 0.5;
+                    }
+                }
+            }
+            return data;
+        });
+    }
 }
 class Flash {
     constructor() {
@@ -4583,85 +4613,6 @@ class Door extends MinMax {
     }
 }
 Door.instances = [];
-class Platform extends MinMax {
-    constructor(position, width, direction) {
-        super();
-        this.position = position;
-        this.width = width;
-        this.direction = direction;
-        Platform.instances.push(this);
-        this.min.copyFrom(position);
-        this.max.copyFrom(position);
-        if (this.direction === Direction.North) {
-            this.min.x -= width;
-            this.max.x += width;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.South) {
-            this.min.x -= width;
-            this.min.z -= width;
-            this.max.x += width;
-        }
-        if (this.direction === Direction.East) {
-            this.min.z -= width;
-            this.max.x += width;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.West) {
-            this.min.x -= width;
-            this.min.z -= width;
-            this.max.z += width;
-        }
-    }
-    destroy() {
-        super.destroy();
-        let index = Platform.instances.indexOf(this);
-        if (index !== -1) {
-            Platform.instances.splice(index, 1);
-        }
-    }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let platformMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-platform");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                let x = data.positions[i];
-                let y = data.positions[i + 1];
-                let z = data.positions[i + 2];
-                let ll = x * x + z * z;
-                if (ll > 0) {
-                    if (y > 0.15 || y < -0.15) {
-                        data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
-                        data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
-                    }
-                    else {
-                        data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
-                        data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
-                    }
-                }
-                data.positions[i + 2] -= 0.25;
-            }
-            data.applyToMesh(platformMesh);
-            platformMesh.layerMask = 1;
-            platformMesh.position.x = this.position.x / 2 + 0.25;
-            platformMesh.position.y = this.position.y / 2 + 0.25;
-            platformMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.South) {
-                platformMesh.rotation.y = Math.PI;
-            }
-            if (this.direction === Direction.East) {
-                platformMesh.rotation.y = Math.PI * 0.5;
-            }
-            if (this.direction === Direction.West) {
-                platformMesh.rotation.y = -Math.PI * 0.5;
-            }
-            platformMesh.material = MinMax.cellShadingMaterial;
-            return platformMesh;
-        });
-    }
-}
-Platform.instances = [];
 class Block extends MinMax {
     constructor(position, width, height, depth) {
         super();
@@ -5224,6 +5175,92 @@ class Block extends MinMax {
     }
 }
 Block.instances = [];
+class Platform extends MinMax {
+    constructor(position, width, direction) {
+        super();
+        this.position = position;
+        this.width = width;
+        this.direction = direction;
+        Platform.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        if (this.direction === Direction.North) {
+            this.min.x -= width;
+            this.max.x += width;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.South) {
+            this.min.x -= width;
+            this.min.z -= width;
+            this.max.x += width;
+        }
+        if (this.direction === Direction.East) {
+            this.min.z -= width;
+            this.max.x += width;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.West) {
+            this.min.x -= width;
+            this.min.z -= width;
+            this.max.z += width;
+        }
+    }
+    destroy() {
+        super.destroy();
+        let index = Platform.instances.indexOf(this);
+        if (index !== -1) {
+            Platform.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let platformMesh = new BABYLON.Mesh("blockMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-platform");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                let x = data.positions[i];
+                let y = data.positions[i + 1];
+                let z = data.positions[i + 2];
+                let ll = x * x + z * z;
+                if (ll > 0) {
+                    if (y > 0.15 || y < -0.15) {
+                        data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
+                        data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
+                    }
+                    else {
+                        data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
+                        data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
+                    }
+                }
+                data.positions[i + 2] -= 0.25;
+            }
+            data.applyToMesh(platformMesh);
+            let lightMesh = new BABYLON.Mesh("lightMesh", scene);
+            let lightMeshData = yield VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
+            lightMeshData.applyToMesh(lightMesh);
+            lightMesh.position.z = (this.width - 1) * 0.5;
+            lightMesh.position.y = 0.5;
+            lightMesh.computeWorldMatrix(true);
+            let newPlatformMesh = BABYLON.Mesh.MergeMeshes([platformMesh, lightMesh], true);
+            newPlatformMesh.layerMask = 1;
+            newPlatformMesh.position.x = this.position.x / 2 + 0.25;
+            newPlatformMesh.position.y = this.position.y / 2 + 0.25;
+            newPlatformMesh.position.z = this.position.z / 2 + 0.25;
+            if (this.direction === Direction.South) {
+                newPlatformMesh.rotation.y = Math.PI;
+            }
+            if (this.direction === Direction.East) {
+                newPlatformMesh.rotation.y = Math.PI * 0.5;
+            }
+            if (this.direction === Direction.West) {
+                newPlatformMesh.rotation.y = -Math.PI * 0.5;
+            }
+            newPlatformMesh.material = MinMax.cellShadingMaterial;
+            return newPlatformMesh;
+        });
+    }
+}
+Platform.instances = [];
 class Pole extends MinMax {
     constructor(position, width, length, down = false) {
         super();
