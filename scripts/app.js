@@ -563,6 +563,14 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
         */
     }
 }
+class Tools {
+    static RandomSign() {
+        return (Math.random() > 0.5) ? 1 : -1;
+    }
+    static RandomRangeInt(min, max) {
+        return Math.round(Math.random() * (max - min) + min);
+    }
+}
 class TrailMesh extends BABYLON.Mesh {
     constructor(name, generator, scene, diameter = 1, length = 60) {
         super(name, scene);
@@ -1885,9 +1893,9 @@ class DemoStation {
                 effect.setFloat("height", Main.Engine.getRenderHeight());
             };
             Main.Scene.activeCamera = DemoStation._demoCamera;
-            let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
+            let block = new Block(new BABYLON.Vector3(0, 0, 0), 12, 3, 8);
             let blocks = [block];
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 3; i++) {
                 let newBlocks = [];
                 for (let j = 0; j < blocks.length; j++) {
                     newBlocks.push(...blocks[j].tryPop());
@@ -4596,79 +4604,7 @@ class Nub extends MinMax {
     }
 }
 Nub.instances = [];
-class Door extends MinMax {
-    constructor(position, width, direction) {
-        super();
-        this.position = position;
-        this.width = width;
-        this.direction = direction;
-        Door.instances.push(this);
-        this.min.copyFrom(position);
-        this.max.copyFrom(position);
-        if (this.direction === Direction.North) {
-            this.min.x -= width;
-            this.max.x += width;
-            this.max.z += 1;
-        }
-        if (this.direction === Direction.South) {
-            this.min.x -= width;
-            this.min.z -= 1;
-            this.max.x += width;
-        }
-        if (this.direction === Direction.East) {
-            this.min.z -= width;
-            this.max.x += 1;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.West) {
-            this.min.x -= 1;
-            this.min.z -= width;
-            this.max.z += width;
-        }
-        this.max.y += 4;
-    }
-    destroy() {
-        super.destroy();
-        let index = Door.instances.indexOf(this);
-        if (index !== -1) {
-            Door.instances.splice(index, 1);
-        }
-    }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-door");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i + 1] < -0.2 || data.positions[i + 1] > 1.5) {
-                    if (data.positions[i] > 0) {
-                        data.positions[i] += (this.width - 1) * 0.5;
-                    }
-                    else if (data.positions[i] < 0) {
-                        data.positions[i] -= (this.width - 1) * 0.5;
-                    }
-                }
-            }
-            data.applyToMesh(doorMesh);
-            doorMesh.layerMask = 1;
-            doorMesh.position.x = this.position.x / 2 + 0.25;
-            doorMesh.position.y = this.position.y / 2 + 0.25;
-            doorMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.South) {
-                doorMesh.rotation.y = Math.PI;
-            }
-            if (this.direction === Direction.East) {
-                doorMesh.rotation.y = Math.PI * 0.5;
-            }
-            if (this.direction === Direction.West) {
-                doorMesh.rotation.y = -Math.PI * 0.5;
-            }
-            doorMesh.material = MinMax.cellShadingMaterial;
-            return doorMesh;
-        });
-    }
-}
-Door.instances = [];
+/// <reference path="./BlockStation.ts"/>
 class Block extends MinMax {
     constructor(position, width, height, depth) {
         super();
@@ -4678,7 +4614,6 @@ class Block extends MinMax {
         this.depth = depth;
         this._nubs = [];
         this._platforms = [];
-        this._doors = [];
         this._poles = [];
         this._antennas = [];
         Block.instances.push(this);
@@ -4741,10 +4676,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.North);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4757,10 +4688,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.South);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4773,10 +4700,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.East);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4789,10 +4712,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.West);
-                this._doors.push(door);
             }
         }
     }
@@ -5068,11 +4987,6 @@ class Block extends MinMax {
                 let platformMesh = yield platform.instantiate(scene);
                 this._meshes.push(platformMesh);
             }
-            for (let i = 0; i < this._doors.length; i++) {
-                let door = this._doors[i];
-                let doorMesh = yield door.instantiate(scene);
-                this._meshes.push(doorMesh);
-            }
             for (let i = 0; i < this._poles.length; i++) {
                 let pole = this._poles[i];
                 let poleMesh = yield pole.instantiate(scene);
@@ -5243,12 +5157,59 @@ class Block extends MinMax {
     }
 }
 Block.instances = [];
+class Door {
+    constructor(position, width) {
+        this.position = position;
+        this.width = width;
+        Door.instances.push(this);
+    }
+    destroy() {
+        let index = Door.instances.indexOf(this);
+        if (index !== -1) {
+            Door.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
+            let doorIndex = Math.floor(2 * Math.random() + 1);
+            if (this.width > 3) {
+                doorIndex = 2;
+            }
+            let data = yield VertexDataLoader.instance.get("station-door-" + doorIndex.toFixed(0));
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += (this.width - 2) * 0.5;
+                }
+                else if (data.positions[i] < -0.5) {
+                    data.positions[i] -= (this.width - 2) * 0.5;
+                }
+            }
+            data.applyToMesh(doorMesh);
+            doorMesh.layerMask = 1;
+            doorMesh.material = MinMax.cellShadingMaterial;
+            return doorMesh;
+        });
+    }
+    intersects(other) {
+        if (this.position.x + this.width < other.position.x - other.width) {
+            return false;
+        }
+        if (other.position.x + other.width < this.position.x - this.width) {
+            return false;
+        }
+        return true;
+    }
+}
+Door.instances = [];
 class Platform extends MinMax {
     constructor(position, width, direction) {
         super();
         this.position = position;
         this.width = width;
         this.direction = direction;
+        this._doors = [];
         Platform.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -5272,12 +5233,27 @@ class Platform extends MinMax {
             this.min.z -= width;
             this.max.z += width;
         }
+        this.max.y += 4;
+        let w = Tools.RandomRangeInt(2, 4);
+        let door = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(-this.width + w, this.width - w), 0, 0), w);
+        this._doors.push(door);
+        w = Tools.RandomRangeInt(2, 4);
+        let otherDoor = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(-this.width + w, this.width - w), 0, 0), w);
+        if (door.intersects(otherDoor)) {
+            otherDoor.destroy();
+        }
+        else {
+            this._doors.push(otherDoor);
+        }
     }
     destroy() {
         super.destroy();
         let index = Platform.instances.indexOf(this);
         if (index !== -1) {
             Platform.instances.splice(index, 1);
+        }
+        while (this._doors.length > 0) {
+            this._doors.pop().destroy();
         }
     }
     instantiate(scene) {
@@ -5303,13 +5279,24 @@ class Platform extends MinMax {
                 data.positions[i + 2] -= 0.25;
             }
             data.applyToMesh(platformMesh);
+            platformMesh.computeWorldMatrix(true);
+            this._meshes.push(platformMesh);
             let lightMesh = new BABYLON.Mesh("lightMesh", scene);
             let lightMeshData = yield VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
             lightMeshData.applyToMesh(lightMesh);
             lightMesh.position.z = (this.width - 1) * 0.5;
             lightMesh.position.y = 0.5;
             lightMesh.computeWorldMatrix(true);
-            let newPlatformMesh = BABYLON.Mesh.MergeMeshes([platformMesh, lightMesh], true);
+            this._meshes.push(lightMesh);
+            for (let i = 0; i < this._doors.length; i++) {
+                let door = this._doors[i];
+                let doorMesh = yield door.instantiate(scene);
+                doorMesh.position.x = door.position.x * 0.5;
+                doorMesh.position.y = 0.5;
+                doorMesh.computeWorldMatrix(true);
+                this._meshes.push(doorMesh);
+            }
+            let newPlatformMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             newPlatformMesh.layerMask = 1;
             newPlatformMesh.position.x = this.position.x / 2 + 0.25;
             newPlatformMesh.position.y = this.position.y / 2 + 0.25;

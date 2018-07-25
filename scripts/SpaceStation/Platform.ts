@@ -2,6 +2,8 @@ class Platform extends MinMax {
     
     public static instances: Platform[] = [];
 
+    private _doors: Door[] = [];
+
     constructor(
         public position: BABYLON.Vector3,
         public width: number,
@@ -31,6 +33,18 @@ class Platform extends MinMax {
             this.min.z -= width;
             this.max.z += width;
         }
+        this.max.y += 4;
+        let w = Tools.RandomRangeInt(2, 4);
+        let door = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(- this.width + w, this.width - w), 0, 0), w);
+        this._doors.push(door);
+        w = Tools.RandomRangeInt(2, 4);
+        let otherDoor = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(- this.width + w, this.width - w), 0, 0), w);
+        if (door.intersects(otherDoor)) {
+            otherDoor.destroy();
+        }
+        else {
+            this._doors.push(otherDoor);
+        }
     }
 
     public destroy(): void {
@@ -38,6 +52,9 @@ class Platform extends MinMax {
         let index = Platform.instances.indexOf(this);
         if (index !== -1) {
             Platform.instances.splice(index, 1);
+        }
+        while (this._doors.length > 0) {
+            this._doors.pop().destroy();
         }
     }
     
@@ -63,6 +80,8 @@ class Platform extends MinMax {
             data.positions[i + 2] -= 0.25;
         }
         data.applyToMesh(platformMesh);
+        platformMesh.computeWorldMatrix(true);
+        this._meshes.push(platformMesh);
 
         let lightMesh = new BABYLON.Mesh("lightMesh", scene);
         let lightMeshData = await VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
@@ -70,8 +89,18 @@ class Platform extends MinMax {
         lightMesh.position.z = (this.width - 1) * 0.5;
         lightMesh.position.y = 0.5;
         lightMesh.computeWorldMatrix(true);
+        this._meshes.push(lightMesh);
 
-        let newPlatformMesh = BABYLON.Mesh.MergeMeshes([platformMesh, lightMesh], true);
+        for (let i = 0; i < this._doors.length; i++) {
+            let door = this._doors[i];
+            let doorMesh = await door.instantiate(scene);
+            doorMesh.position.x = door.position.x * 0.5;
+            doorMesh.position.y = 0.5;
+            doorMesh.computeWorldMatrix(true);
+            this._meshes.push(doorMesh);
+        }
+
+        let newPlatformMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
 
         newPlatformMesh.layerMask = 1;
         newPlatformMesh.position.x = this.position.x / 2 + 0.25;
