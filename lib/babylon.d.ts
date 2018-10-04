@@ -6428,8 +6428,8 @@ declare var VRDisplay: {
     new (): VRDisplay;
 };
 interface VRLayer {
-    leftBounds?: number[] | null;
-    rightBounds?: number[] | null;
+    leftBounds?: number[] | Float32Array;
+    rightBounds?: number[] | Float32Array;
     source?: HTMLCanvasElement | null;
 }
 interface VRDisplayCapabilities {

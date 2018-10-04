@@ -18,5 +18,10 @@ class Route {
             $("#page").hide();
 			Main.Play();
         }
+        if (hash === "demo-battle") {
+            await DemoBattle.Start();
+            $("#page").hide();
+			Main.Play();
+        }
     }
 }

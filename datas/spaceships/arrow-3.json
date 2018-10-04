@@ -1,0 +1,40 @@
+{
+    "model": {
+        "type": "root",
+        "name": "body-1",
+        "children": [{
+                "type": "wingL",
+                "name": "wing-2",
+                "children": [{
+                    "type": "weapon",
+                    "name": "canon-1"
+                }]
+            },
+            {
+                "type": "wingR",
+                "name": "wing-2",
+                "children": [{
+                    "type": "weapon",
+                    "name": "canon-1"
+                }]
+            },
+            {
+                "type": "engine",
+                "name": "engine-1"
+            }
+        ]
+    },
+    "stamina": 50,
+    "enginePower": 5,
+    "rollPower": 1.5,
+    "yawPower": 1.5,
+    "pitchPower": 1.5,
+    "frontDrag": 0.01,
+    "backDrag": 1,
+    "rollDrag": 2,
+    "yawDrag": 2,
+    "pitchDrag": 2,
+    "shootPower": 10,
+    "shootCooldown": 0.3,
+    "shootSpeed": 200
+}

@@ -7,9 +7,13 @@ enum ISquadRole {
 interface ISpaceshipInstanceData {
 	name: string;
 	url: string;
-	x: number;
-	y: number;
-	z: number;
+	x?: number;
+	y?: number;
+	z?: number;
+	rx?: number;
+	ry?: number;
+	rz?: number;
+	rw?: number;
 	team: number;
 	role: ISquadRole;
 }
@@ -53,7 +57,12 @@ class SpaceShipFactory {
 		);
 		let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
 		spaceShip.attachControler(spaceshipAI);
-		spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+		if (isFinite(data.x) && isFinite(data.y) && isFinite(data.z)) {
+			spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+		}
+		if (isFinite(data.rx) && isFinite(data.ry) && isFinite(data.rz) && isFinite(data.rw)) {
+			spaceShip.rotationQuaternion.copyFromFloats(data.rx, data.ry, data.rz, data.rw);
+		}
 		RuntimeUtils.NextFrame(
 			Main.Scene,
 			() => {

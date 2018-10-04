@@ -1,13 +1,8 @@
 /// <reference path="./SpaceShipAI.ts"/>
 
 class AggroTableCell {
-    public spaceShipControler: SpaceShipControler;
-    public aggro: number;
 
-    constructor(spaceShipControler: SpaceShipControler, aggro: number = 0) {
-        this.spaceShipControler = spaceShipControler;
-        this.aggro = aggro;
-    }
+    constructor(public target: IWoundable, public aggro: number = 0) {}
 }
 
 class AggroTable {
@@ -22,13 +17,13 @@ class AggroTable {
         return this.cells.length;
     }
 
-    public push(spaceShipControler: SpaceShipControler, aggro: number = 0) {
-        this.cells.push(new AggroTableCell(spaceShipControler, aggro));
+    public push(target: IWoundable, aggro: number = 0) {
+        this.cells.push(new AggroTableCell(target, aggro));
     }
 
-    public get(spaceShipControler: SpaceShipControler): AggroTableCell {
+    public get(target: IWoundable): AggroTableCell {
         for (let i = 0; i < this.cells.length; i++) {
-            if (this.cells[i].spaceShipControler === spaceShipControler) {
+            if (this.cells[i].target === target) {
                 return this.cells[i];
             }
         }
@@ -38,8 +33,8 @@ class AggroTable {
         return this.cells[i];
     }
 
-    public remove(spaceShipControler: SpaceShipControler) {
-        let index = this.indexOf(spaceShipControler);
+    public remove(target: IWoundable) {
+        let index = this.indexOf(target);
         if (index !== -1) {
             this.removeAt(index);
         }
@@ -49,9 +44,9 @@ class AggroTable {
         this.cells.splice(i, 1);
     }
 
-    public indexOf(spaceShipControler: SpaceShipControler): number {
+    public indexOf(target: IWoundable): number {
         for (let i = 0; i < this.cells.length; i++) {
-            if (this.cells[i].spaceShipControler === spaceShipControler) {
+            if (this.cells[i].target === target) {
                 return i;
             }
         }
@@ -88,26 +83,36 @@ class DefaultAI extends SpaceShipAI {
         this._aggroTable = new AggroTable();
         this.patrolPositions = patrolPositions;
         spaceShip.onWoundObservable.add(this._onWound);
+        Spawner.onAnySpawnerSpawnObservable.add(this._onAnySpawn);
     }
 
     private _updateAggroTable = () => {
         SpaceShipControler.Instances.forEach(
             (spaceShipControler) => {
                 if (spaceShipControler.team !== this.team) {
-                    if (this._aggroTable.indexOf(spaceShipControler) === -1) {
+                    if (this._aggroTable.indexOf(spaceShipControler.spaceShip) === -1) {
                         if (spaceShipControler instanceof SpaceShipInputs) {
-                            this._aggroTable.push(spaceShipControler, 0);
+                            this._aggroTable.push(spaceShipControler.spaceShip, 0);
                         }
                         else {
-                            this._aggroTable.push(spaceShipControler, 10);
+                            this._aggroTable.push(spaceShipControler.spaceShip, 10 * Math.random());
                         }
+                    }
+                }
+            }
+        )
+        Spawner.Instances.forEach(
+            (spawner) => {
+                if (spawner.team !== this.team) {
+                    if (this._aggroTable.indexOf(spawner) === -1) {
+                        this._aggroTable.push(spawner, 10 * Math.random());
                     }
                 }
             }
         )
         let i = 0;
         while (i < this._aggroTable.length) {
-            if (!this._aggroTable.getAt(i).spaceShipControler.spaceShip.isAlive) {
+            if (!this._aggroTable.getAt(i).target.isAlive) {
                 this._aggroTable.removeAt(i);
             }
             else {
@@ -117,11 +122,11 @@ class DefaultAI extends SpaceShipAI {
         this._aggroTable.sortStep();
     }
 
-    public findTarget(): SpaceShipControler {
+    public findTarget(): IWoundable {
         this._updateAggroTable();
         let cell = this._aggroTable.getAt(0);
         if (cell) {
-            return cell.spaceShipControler;
+            return cell.target;
         }
     }
 
@@ -170,7 +175,7 @@ class DefaultAI extends SpaceShipAI {
     public checkInputs(dt: number): void {
         let target = this.findTarget();
         if (target) {
-            let futureTargetPosition = DefaultAI.FuturePosition(target.spaceShip, this.spaceShip.projectileDurationTo(target.spaceShip));
+            let futureTargetPosition = DefaultAI.FuturePosition(target, this.spaceShip.projectileDurationTo(target));
             let sqrDistanceToTarget = BABYLON.Vector3.DistanceSquared(this.spaceShip.position, futureTargetPosition);
             this._tmpDirection.copyFrom(futureTargetPosition).subtractInPlace(this.spaceShip.position).normalize();
             let angleToTarget = Math.acos(BABYLON.Vector3.Dot(this._tmpDirection, this.spaceShip.localZ));
@@ -182,13 +187,13 @@ class DefaultAI extends SpaceShipAI {
                 }
                 if (sqrDistanceToTarget > 20 * 20) {
                     this.behaviour = "Track";
-                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._inputToDirection(this._tmpDirection, target.localY);
                     this._inputToPosition(target.position);
                 }
                 else {
                     this.behaviour = "Escape";
                     this._tmpDirection.scaleInPlace(-1);
-                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._inputToDirection(this._tmpDirection, target.localY);
                     this._fullThrust();
                 }
             }
@@ -197,13 +202,13 @@ class DefaultAI extends SpaceShipAI {
                 this._tmpEscapeDistance -= this.escapeDistance / 5 * dt;
                 if (sqrDistanceToTarget > this._tmpEscapeDistance * this._tmpEscapeDistance) {
                     this.behaviour = "Track";
-                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._inputToDirection(this._tmpDirection, target.localY);
                     this._inputToPosition(target.position);
                 }
                 else {
                     this._tmpDirection.scaleInPlace(-1);
                     this.behaviour = "Escape";
-                    this._inputToDirection(this._tmpDirection, target.spaceShip.localY);
+                    this._inputToDirection(this._tmpDirection, target.localY);
                     this._fullThrust();
                 }
             }
@@ -274,9 +279,18 @@ class DefaultAI extends SpaceShipAI {
     }
 
     private _onWound = (projectile: Projectile) => {
-        let aggroCell = this._aggroTable.get(projectile.shooter.controler);
+        let aggroCell = this._aggroTable.get(projectile.shooter);
         if (aggroCell) {
             aggroCell.aggro += projectile.power;
+        }
+    }
+
+    private _onAnySpawn = (spawner: Spawner) => {
+        if (spawner.team !== this.team) {
+            let aggroCell = this._aggroTable.get(spawner);
+            if (aggroCell) {
+                aggroCell.aggro += 5;
+            }
         }
     }
 }

@@ -60,7 +60,7 @@ class Projectile extends BABYLON.Mesh {
         BABYLON.Quaternion.RotationQuaternionFromAxisToRef(xAxis, yAxis, zAxis, this.rotationQuaternion);
     }
 
-    private _collide(dt: number): SpaceShip {
+    private _collide(dt: number): IWoundable {
         this._displacementRay.length = this.shotSpeed * dt;
         for (let i = 0; i < SpaceShipControler.Instances.length; i++) {
             let spaceship = SpaceShipControler.Instances[i].spaceShip;
@@ -68,6 +68,16 @@ class Projectile extends BABYLON.Mesh {
                 let hitInfo = this._displacementRay.intersectsMesh(spaceship.shield, false);
                 if (hitInfo.hit) {
                     return spaceship;
+                }
+            }
+        }
+        for (let i = 0; i < Spawner.Instances.length; i++) {
+            let spawner = Spawner.Instances[i];
+            if (spawner.team !== this.shooter.controler.team) {
+                let hitInfo = this._displacementRay.intersectsMesh(spawner, false);
+                if (hitInfo.hit) {
+                    ScreenLoger.instance.log("!!!");
+                    return spawner;
                 }
             }
         }

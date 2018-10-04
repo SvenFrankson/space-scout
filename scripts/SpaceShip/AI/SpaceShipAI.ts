@@ -21,10 +21,10 @@ abstract class SpaceShipAI extends SpaceShipControler {
 
 	public abstract checkInputs(dt: number): void;
 
-	public static FuturePosition(spaceship: SpaceShip, delay: number): BABYLON.Vector3 {
-		let futurePosition = spaceship.localZ.clone();
-		futurePosition.scaleInPlace(spaceship.speed * delay);
-		futurePosition.addInPlace(spaceship.position);
+	public static FuturePosition(target: IWoundable, delay: number): BABYLON.Vector3 {
+		let futurePosition = target.localZ.clone();
+		futurePosition.scaleInPlace(target.speed * delay);
+		futurePosition.addInPlace(target.position);
 		return futurePosition;
 	}
 }

@@ -105,19 +105,19 @@ class SpaceShip extends BABYLON.Mesh {
 	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
 		super("spaceship", scene);
 		
-		this.stamina = data.stamina;
-		this._enginePower = data.enginePower;
-		this._rollPower = data.rollPower;
-		this._yawPower = data.yawPower;
-		this._pitchPower = data.pitchPower;
-		this._frontDrag = data.frontDrag;
-		this._backDrag = data.backDrag;
-		this._rollDrag = data.rollDrag;
-		this._yawDrag = data.yawDrag;
-		this._pitchDrag = data.pitchDrag;
-		this.shootPower = data.shootPower;
-		this.shootCoolDown = data.shootCooldown;
-		this.shootSpeed = data.shootSpeed;
+		this.stamina = data.stamina * (0.95 + 0.1 * Math.random());
+		this._enginePower = data.enginePower * (0.95 + 0.1 * Math.random());
+		this._rollPower = data.rollPower * (0.95 + 0.1 * Math.random());
+		this._yawPower = data.yawPower * (0.95 + 0.1 * Math.random());
+		this._pitchPower = data.pitchPower * (0.95 + 0.1 * Math.random());
+		this._frontDrag = data.frontDrag * (0.95 + 0.1 * Math.random());
+		this._backDrag = data.backDrag * (0.95 + 0.1 * Math.random());
+		this._rollDrag = data.rollDrag * (0.95 + 0.1 * Math.random());
+		this._yawDrag = data.yawDrag * (0.95 + 0.1 * Math.random());
+		this._pitchDrag = data.pitchDrag * (0.95 + 0.1 * Math.random());
+		this.shootPower = data.shootPower * (0.95 + 0.1 * Math.random());
+		this.shootCoolDown = data.shootCooldown * (0.95 + 0.1 * Math.random());
+		this.shootSpeed = data.shootSpeed * (0.95 + 0.1 * Math.random());
 
 		this._localX = new BABYLON.Vector3(1, 0, 0);
 		this._localY = new BABYLON.Vector3(0, 1, 0);
@@ -151,8 +151,8 @@ class SpaceShip extends BABYLON.Mesh {
 		this.wingTipRight.parent = this;
 		this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
 		this.trailMeshes = [
-			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.07, 120),
-			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.07, 120)
+			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.07, 60),
+			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.07, 60)
 		];
 		this.hitPoint = this.stamina;
 		this.createColliders();
@@ -187,7 +187,6 @@ class SpaceShip extends BABYLON.Mesh {
 			this._canonNodes[i].computeWorldMatrix(true);
 			BABYLON.Vector3.TransformCoordinatesToRef(this._canonNodes[i].absolutePosition, invWorldMatrix, canonPoint);
 			this.canons.push(canonPoint);
-			ScreenLoger.instance.log("Canon Point " + canonPoint);
 		}
 		this.mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
 		this.mesh.layerMask = 1;
@@ -399,8 +398,8 @@ class SpaceShip extends BABYLON.Mesh {
 		}
 	}
 
-    public projectileDurationTo(spaceship: SpaceShip): number {
-        let dist = BABYLON.Vector3.Distance(this.position, spaceship.position);
+    public projectileDurationTo(target: IWoundable): number {
+        let dist = BABYLON.Vector3.Distance(this.position, target.position);
         return dist / this.shootSpeed;
     }
 
