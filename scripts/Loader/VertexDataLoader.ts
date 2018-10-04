@@ -47,4 +47,47 @@ class VertexDataLoader {
             }
         )
     }
+
+    public async getColorized(
+        name: string, 
+		baseColor: string,
+        detailColor: string
+    ): Promise<BABYLON.VertexData> {
+        let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+		let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+        let data = VertexDataLoader.clone(await VertexDataLoader.instance.get(name));
+        if (data.colors) {
+			for (let i = 0; i < data.colors.length / 4; i++) {
+				let r = data.colors[4 * i];
+				let g = data.colors[4 * i + 1];
+				let b = data.colors[4 * i + 2];
+				if (r === 1 && g === 0 && b === 0) {
+					data.colors[4 * i] = detailColor3.r;
+					data.colors[4 * i + 1] = detailColor3.g;
+					data.colors[4 * i + 2] = detailColor3.b;
+				}
+				else if (r === 1 && g === 1 && b === 1) {
+					data.colors[4 * i] = baseColor3.r;
+					data.colors[4 * i + 1] = baseColor3.g;
+					data.colors[4 * i + 2] = baseColor3.b;
+				}
+				else if (r === 0.502 && g === 0.502 && b === 0.502) {
+					data.colors[4 * i] = baseColor3.r * 0.5;
+					data.colors[4 * i + 1] = baseColor3.g * 0.5;
+					data.colors[4 * i + 2] = baseColor3.b * 0.5;
+				}
+			}
+        }
+        else {
+            let colors: number[] = [];
+            for (let i = 0; i < data.positions.length / 3; i++) {
+                colors[4 * i] = baseColor3.r;
+                colors[4 * i + 1] = baseColor3.g;
+                colors[4 * i + 2] = baseColor3.b;
+                colors[4 * i + 3] = 1;
+            }
+            data.colors = colors;
+        }
+        return data;
+    }
 }

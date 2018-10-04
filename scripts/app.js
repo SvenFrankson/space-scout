@@ -574,6 +574,14 @@ class SpaceShipCamera extends BABYLON.FreeCamera {
         */
     }
 }
+class Tools {
+    static RandomSign() {
+        return (Math.random() > 0.5) ? 1 : -1;
+    }
+    static RandomRangeInt(min, max) {
+        return Math.round(Math.random() * (max - min) + min);
+    }
+}
 class TrailMesh extends BABYLON.Mesh {
     constructor(name, generator, scene, diameter = 1, length = 60) {
         super(name, scene);
@@ -1913,7 +1921,7 @@ class DemoBattle {
 class DemoStation {
     static Start() {
         return __awaiter(this, void 0, void 0, function* () {
-            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
             DemoStation._demoCamera.attachControl(Main.Canvas);
             DemoStation._demoCamera.minZ = 0.5;
             DemoStation._demoCamera.maxZ = 2000;
@@ -1927,9 +1935,9 @@ class DemoStation {
                 effect.setFloat("height", Main.Engine.getRenderHeight());
             };
             Main.Scene.activeCamera = DemoStation._demoCamera;
-            let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
+            let block = new Block(new BABYLON.Vector3(0, 0, 0), 12, 3, 8);
             let blocks = [block];
-            for (let i = 0; i < 4; i++) {
+            for (let i = 0; i < 3; i++) {
                 let newBlocks = [];
                 for (let j = 0; j < blocks.length; j++) {
                     newBlocks.push(...blocks[j].tryPop());
@@ -2512,6 +2520,46 @@ class VertexDataLoader {
                     resolve(this._vertexDatas.get(name));
                 });
             });
+        });
+    }
+    getColorized(name, baseColor, detailColor) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+            let data = VertexDataLoader.clone(yield VertexDataLoader.instance.get(name));
+            if (data.colors) {
+                for (let i = 0; i < data.colors.length / 4; i++) {
+                    let r = data.colors[4 * i];
+                    let g = data.colors[4 * i + 1];
+                    let b = data.colors[4 * i + 2];
+                    if (r === 1 && g === 0 && b === 0) {
+                        data.colors[4 * i] = detailColor3.r;
+                        data.colors[4 * i + 1] = detailColor3.g;
+                        data.colors[4 * i + 2] = detailColor3.b;
+                    }
+                    else if (r === 1 && g === 1 && b === 1) {
+                        data.colors[4 * i] = baseColor3.r;
+                        data.colors[4 * i + 1] = baseColor3.g;
+                        data.colors[4 * i + 2] = baseColor3.b;
+                    }
+                    else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                        data.colors[4 * i] = baseColor3.r * 0.5;
+                        data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                        data.colors[4 * i + 2] = baseColor3.b * 0.5;
+                    }
+                }
+            }
+            else {
+                let colors = [];
+                for (let i = 0; i < data.positions.length / 3; i++) {
+                    colors[4 * i] = baseColor3.r;
+                    colors[4 * i + 1] = baseColor3.g;
+                    colors[4 * i + 2] = baseColor3.b;
+                    colors[4 * i + 3] = 1;
+                }
+                data.colors = colors;
+            }
+            return data;
         });
     }
 }
@@ -4350,6 +4398,52 @@ class WingManAI extends SpaceShipAI {
         }
     }
 }
+class Antenna {
+    constructor(position, size, height) {
+        this.position = position;
+        this.size = size;
+        this.height = height;
+    }
+    destroy() {
+        let index = Antenna.instances.indexOf(this);
+        if (index !== -1) {
+            Antenna.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let poleMesh = new BABYLON.Mesh("blockMesh", scene);
+            let positions = [];
+            let indices = [];
+            let colors = [];
+            Pole.PushPolePart(positions, indices, colors, (1 + this.size * 0.5) * 0.25, (1 + this.size * 0.5) * 0.1, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
+            let data = new BABYLON.VertexData();
+            data.positions = positions;
+            data.indices = indices;
+            data.colors = colors;
+            data.normals = [];
+            BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+            data.applyToMesh(poleMesh);
+            let antennaMesh = new BABYLON.Mesh("antennaMesh", scene);
+            let antennaIndex = Math.floor(2 * Math.random() + 1);
+            let antennaMeshData = yield VertexDataLoader.instance.getColorized("antenna-" + antennaIndex.toFixed(0), "#7f7f7f", "#1ece50");
+            antennaMeshData.applyToMesh(antennaMesh);
+            antennaMesh.scaling.copyFromFloats(1 + this.size * 0.5, 1 + this.size * 0.5, 1 + this.size * 0.5);
+            antennaMesh.position.y = this.height * 0.5 + 0.5;
+            antennaMesh.rotation.x = Math.PI / 4 + (Math.random() * 2 - 1) * Math.PI / 8;
+            antennaMesh.rotation.y = Math.random() * Math.PI * 2;
+            antennaMesh.computeWorldMatrix(true);
+            antennaMesh = BABYLON.Mesh.MergeMeshes([poleMesh, antennaMesh], true);
+            antennaMesh.layerMask = 1;
+            antennaMesh.position.x = this.position.x / 2 + 0.25;
+            antennaMesh.position.y = this.position.y / 2 + 0.25;
+            antennaMesh.position.z = this.position.z / 2 + 0.25;
+            antennaMesh.material = MinMax.cellShadingMaterial;
+            return antennaMesh;
+        });
+    }
+}
+Antenna.instances = [];
 var Direction;
 (function (Direction) {
     Direction[Direction["North"] = 0] = "North";
@@ -4588,158 +4682,7 @@ class Nub extends MinMax {
     }
 }
 Nub.instances = [];
-class Door extends MinMax {
-    constructor(position, width, direction) {
-        super();
-        this.position = position;
-        this.width = width;
-        this.direction = direction;
-        Door.instances.push(this);
-        this.min.copyFrom(position);
-        this.max.copyFrom(position);
-        if (this.direction === Direction.North) {
-            this.min.x -= width;
-            this.max.x += width;
-            this.max.z += 1;
-        }
-        if (this.direction === Direction.South) {
-            this.min.x -= width;
-            this.min.z -= 1;
-            this.max.x += width;
-        }
-        if (this.direction === Direction.East) {
-            this.min.z -= width;
-            this.max.x += 1;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.West) {
-            this.min.x -= 1;
-            this.min.z -= width;
-            this.max.z += width;
-        }
-        this.max.y += 4;
-    }
-    destroy() {
-        super.destroy();
-        let index = Door.instances.indexOf(this);
-        if (index !== -1) {
-            Door.instances.splice(index, 1);
-        }
-    }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-door");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i + 1] < -0.2 || data.positions[i + 1] > 1.5) {
-                    if (data.positions[i] > 0) {
-                        data.positions[i] += (this.width - 1) * 0.5;
-                    }
-                    else if (data.positions[i] < 0) {
-                        data.positions[i] -= (this.width - 1) * 0.5;
-                    }
-                }
-            }
-            data.applyToMesh(doorMesh);
-            doorMesh.layerMask = 1;
-            doorMesh.position.x = this.position.x / 2 + 0.25;
-            doorMesh.position.y = this.position.y / 2 + 0.25;
-            doorMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.South) {
-                doorMesh.rotation.y = Math.PI;
-            }
-            if (this.direction === Direction.East) {
-                doorMesh.rotation.y = Math.PI * 0.5;
-            }
-            if (this.direction === Direction.West) {
-                doorMesh.rotation.y = -Math.PI * 0.5;
-            }
-            doorMesh.material = MinMax.cellShadingMaterial;
-            return doorMesh;
-        });
-    }
-}
-Door.instances = [];
-class Platform extends MinMax {
-    constructor(position, width, direction) {
-        super();
-        this.position = position;
-        this.width = width;
-        this.direction = direction;
-        Platform.instances.push(this);
-        this.min.copyFrom(position);
-        this.max.copyFrom(position);
-        if (this.direction === Direction.North) {
-            this.min.x -= width;
-            this.max.x += width;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.South) {
-            this.min.x -= width;
-            this.min.z -= width;
-            this.max.x += width;
-        }
-        if (this.direction === Direction.East) {
-            this.min.z -= width;
-            this.max.x += width;
-            this.max.z += width;
-        }
-        if (this.direction === Direction.West) {
-            this.min.x -= width;
-            this.min.z -= width;
-            this.max.z += width;
-        }
-    }
-    destroy() {
-        super.destroy();
-        let index = Platform.instances.indexOf(this);
-        if (index !== -1) {
-            Platform.instances.splice(index, 1);
-        }
-    }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let platformMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-platform");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                let x = data.positions[i];
-                let y = data.positions[i + 1];
-                let z = data.positions[i + 2];
-                let ll = x * x + z * z;
-                if (ll > 0) {
-                    if (y > 0.15 || y < -0.15) {
-                        data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
-                        data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
-                    }
-                    else {
-                        data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
-                        data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
-                    }
-                }
-                data.positions[i + 2] -= 0.25;
-            }
-            data.applyToMesh(platformMesh);
-            platformMesh.layerMask = 1;
-            platformMesh.position.x = this.position.x / 2 + 0.25;
-            platformMesh.position.y = this.position.y / 2 + 0.25;
-            platformMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.South) {
-                platformMesh.rotation.y = Math.PI;
-            }
-            if (this.direction === Direction.East) {
-                platformMesh.rotation.y = Math.PI * 0.5;
-            }
-            if (this.direction === Direction.West) {
-                platformMesh.rotation.y = -Math.PI * 0.5;
-            }
-            platformMesh.material = MinMax.cellShadingMaterial;
-            return platformMesh;
-        });
-    }
-}
-Platform.instances = [];
+/// <reference path="./BlockStation.ts"/>
 class Block extends MinMax {
     constructor(position, width, height, depth) {
         super();
@@ -4749,8 +4692,8 @@ class Block extends MinMax {
         this.depth = depth;
         this._nubs = [];
         this._platforms = [];
-        this._doors = [];
         this._poles = [];
+        this._antennas = [];
         Block.instances.push(this);
         this.min.copyFrom(position);
         this.max.copyFrom(position);
@@ -4777,13 +4720,17 @@ class Block extends MinMax {
                 this._nubs.push(nub);
             }
         }
-        for (let i = 0; i < 4; i++) {
+        let s = this.width * this.depth;
+        let lMax = Math.max(150 - this.position.length(), 0) * 0.5;
+        lMax = Math.floor(lMax) + 10;
+        for (let i = 0; i < s / 80; i++) {
             let p = this.position.clone();
             p.y -= this.height + 1;
             p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
             p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
-            let l = Math.floor(10 + 20 * Math.random());
-            let pole = new Pole(p, 1, l, true);
+            let l = Math.floor(10 + lMax * Math.random());
+            let w = 1 + Math.floor(Math.random() * 2);
+            let pole = new Pole(p, w, l, true);
             if (pole.intersectsAny()) {
                 pole.destroy();
             }
@@ -4791,6 +4738,12 @@ class Block extends MinMax {
                 this._poles.push(pole);
             }
         }
+        let p = this.position.clone();
+        p.y += this.height + 1;
+        p.x += Math.floor((Math.random() - 0.5) * (this.width - 2) * 2);
+        p.z += Math.floor((Math.random() - 0.5) * (this.depth - 2) * 2);
+        let antenna = new Antenna(p, Math.floor(1 + Math.random() * 6), Math.floor(2 + Math.random() * 6));
+        this._antennas.push(antenna);
         if (Math.random() > 0.9) {
             let p = this.position.clone();
             p.y -= this.height - 1;
@@ -4801,10 +4754,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.North);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4817,10 +4766,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.South);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4833,10 +4778,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.East);
-                this._doors.push(door);
             }
         }
         if (Math.random() > 0.9) {
@@ -4849,10 +4790,6 @@ class Block extends MinMax {
             }
             else {
                 this._platforms.push(platform);
-                let pp = p.clone();
-                pp.y += 1;
-                let door = new Door(pp, 2, Direction.West);
-                this._doors.push(door);
             }
         }
     }
@@ -5128,15 +5065,15 @@ class Block extends MinMax {
                 let platformMesh = yield platform.instantiate(scene);
                 this._meshes.push(platformMesh);
             }
-            for (let i = 0; i < this._doors.length; i++) {
-                let door = this._doors[i];
-                let doorMesh = yield door.instantiate(scene);
-                this._meshes.push(doorMesh);
-            }
             for (let i = 0; i < this._poles.length; i++) {
                 let pole = this._poles[i];
                 let poleMesh = yield pole.instantiate(scene);
                 this._meshes.push(poleMesh);
+            }
+            for (let i = 0; i < this._antennas.length; i++) {
+                let antenna = this._antennas[i];
+                let antennaMesh = yield antenna.instantiate(scene);
+                this._meshes.push(antennaMesh);
             }
             let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
             mergedMesh.material = MinMax.cellShadingMaterial;
@@ -5298,6 +5235,165 @@ class Block extends MinMax {
     }
 }
 Block.instances = [];
+class Door {
+    constructor(position, width) {
+        this.position = position;
+        this.width = width;
+        Door.instances.push(this);
+    }
+    destroy() {
+        let index = Door.instances.indexOf(this);
+        if (index !== -1) {
+            Door.instances.splice(index, 1);
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
+            let doorIndex = Math.floor(2 * Math.random() + 1);
+            if (this.width > 3) {
+                doorIndex = 2;
+            }
+            let data = yield VertexDataLoader.instance.get("station-door-" + doorIndex.toFixed(0));
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                if (data.positions[i] > 0.5) {
+                    data.positions[i] += (this.width - 2) * 0.5;
+                }
+                else if (data.positions[i] < -0.5) {
+                    data.positions[i] -= (this.width - 2) * 0.5;
+                }
+            }
+            data.applyToMesh(doorMesh);
+            doorMesh.layerMask = 1;
+            doorMesh.material = MinMax.cellShadingMaterial;
+            return doorMesh;
+        });
+    }
+    intersects(other) {
+        if (this.position.x + this.width < other.position.x - other.width) {
+            return false;
+        }
+        if (other.position.x + other.width < this.position.x - this.width) {
+            return false;
+        }
+        return true;
+    }
+}
+Door.instances = [];
+class Platform extends MinMax {
+    constructor(position, width, direction) {
+        super();
+        this.position = position;
+        this.width = width;
+        this.direction = direction;
+        this._doors = [];
+        Platform.instances.push(this);
+        this.min.copyFrom(position);
+        this.max.copyFrom(position);
+        if (this.direction === Direction.North) {
+            this.min.x -= width;
+            this.max.x += width;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.South) {
+            this.min.x -= width;
+            this.min.z -= width;
+            this.max.x += width;
+        }
+        if (this.direction === Direction.East) {
+            this.min.z -= width;
+            this.max.x += width;
+            this.max.z += width;
+        }
+        if (this.direction === Direction.West) {
+            this.min.x -= width;
+            this.min.z -= width;
+            this.max.z += width;
+        }
+        this.max.y += 4;
+        let w = Tools.RandomRangeInt(2, 4);
+        let door = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(-this.width + w, this.width - w), 0, 0), w);
+        this._doors.push(door);
+        w = Tools.RandomRangeInt(2, 4);
+        let otherDoor = new Door(new BABYLON.Vector3(Tools.RandomRangeInt(-this.width + w, this.width - w), 0, 0), w);
+        if (door.intersects(otherDoor)) {
+            otherDoor.destroy();
+        }
+        else {
+            this._doors.push(otherDoor);
+        }
+    }
+    destroy() {
+        super.destroy();
+        let index = Platform.instances.indexOf(this);
+        if (index !== -1) {
+            Platform.instances.splice(index, 1);
+        }
+        while (this._doors.length > 0) {
+            this._doors.pop().destroy();
+        }
+    }
+    instantiate(scene) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let platformMesh = new BABYLON.Mesh("blockMesh", scene);
+            let data = yield VertexDataLoader.instance.get("station-platform");
+            data = VertexDataLoader.clone(data);
+            for (let i = 0; i < data.positions.length; i += 3) {
+                let x = data.positions[i];
+                let y = data.positions[i + 1];
+                let z = data.positions[i + 2];
+                let ll = x * x + z * z;
+                if (ll > 0) {
+                    if (y > 0.15 || y < -0.15) {
+                        data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
+                        data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
+                    }
+                    else {
+                        data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
+                        data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
+                    }
+                }
+                data.positions[i + 2] -= 0.25;
+            }
+            data.applyToMesh(platformMesh);
+            platformMesh.computeWorldMatrix(true);
+            this._meshes.push(platformMesh);
+            let lightMesh = new BABYLON.Mesh("lightMesh", scene);
+            let lightMeshData = yield VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
+            lightMeshData.applyToMesh(lightMesh);
+            lightMesh.position.z = (this.width - 1) * 0.5;
+            lightMesh.position.y = 0.5;
+            lightMesh.computeWorldMatrix(true);
+            this._meshes.push(lightMesh);
+            for (let i = 0; i < this._doors.length; i++) {
+                let door = this._doors[i];
+                let doorMesh = yield door.instantiate(scene);
+                doorMesh.position.x = door.position.x * 0.5;
+                doorMesh.position.y = 0.5;
+                doorMesh.computeWorldMatrix(true);
+                this._meshes.push(doorMesh);
+            }
+            let newPlatformMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
+            newPlatformMesh.layerMask = 1;
+            newPlatformMesh.position.x = this.position.x / 2 + 0.25;
+            newPlatformMesh.position.y = this.position.y / 2 + 0.25;
+            newPlatformMesh.position.z = this.position.z / 2 + 0.25;
+            if (this.direction === Direction.South) {
+                newPlatformMesh.rotation.y = Math.PI;
+            }
+            if (this.direction === Direction.East) {
+                newPlatformMesh.rotation.y = Math.PI * 0.5;
+            }
+            if (this.direction === Direction.West) {
+                newPlatformMesh.rotation.y = -Math.PI * 0.5;
+            }
+            newPlatformMesh.material = MinMax.cellShadingMaterial;
+            return newPlatformMesh;
+        });
+    }
+}
+Platform.instances = [];
 class Pole extends MinMax {
     constructor(position, width, length, down = false) {
         super();

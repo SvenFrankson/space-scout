@@ -3,7 +3,7 @@ class DemoStation {
     private static _demoCamera: BABYLON.ArcRotateCamera;
 
     public static async Start(): Promise<void> {
-        DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+        DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
         DemoStation._demoCamera.attachControl(Main.Canvas);
         DemoStation._demoCamera.minZ = 0.5;
         DemoStation._demoCamera.maxZ = 2000;
@@ -20,9 +20,9 @@ class DemoStation {
         
         Main.Scene.activeCamera = DemoStation._demoCamera;
 
-        let block = new Block(new BABYLON.Vector3(20, 0, 20), 12, 3, 8);
+        let block = new Block(new BABYLON.Vector3(0, 0, 0), 12, 3, 8);
         let blocks = [block];
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 3; i++) {
             let newBlocks: Block[] = [];
             for (let j = 0; j < blocks.length; j++) {
                 newBlocks.push(...blocks[j].tryPop());
