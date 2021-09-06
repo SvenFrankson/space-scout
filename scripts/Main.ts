@@ -252,12 +252,17 @@ class Main {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-	let game: Main = new Main("render-canvas");
-	game.createScene();
-	game.animate();
+	if (window.location.pathname.indexOf("hud-test") != -1) {
 
-	window.addEventListener("hashchange", Route.route);
-	return Route.route();
+	}
+	else {
+		let game: Main = new Main("render-canvas");
+		game.createScene();
+		game.animate();
+	
+		window.addEventListener("hashchange", Route.route);
+		return Route.route();
+	}
 
 	/*
 	Home.RegisterToUI();

@@ -88,19 +88,19 @@ class PlayerControler {
     }
 
     private _pointerObserver = (eventData: BABYLON.PointerInfo, eventState: BABYLON.EventState) => {
-        if (eventData.type === BABYLON.PointerEventTypes._POINTERDOWN) {
+        if (eventData.type === BABYLON.PointerEventTypes.POINTERDOWN) {
             this._rotating = true;
         }
-        else if (eventData.type === BABYLON.PointerEventTypes._POINTERUP) {
+        else if (eventData.type === BABYLON.PointerEventTypes.POINTERUP) {
             this._rotating = false;
         }
-        else if (eventData.type === BABYLON.PointerEventTypes._POINTERMOVE) {
+        else if (eventData.type === BABYLON.PointerEventTypes.POINTERMOVE) {
             if (this._rotating) {
                 this._deltaX += eventData.event.movementX;
                 this._deltaY += eventData.event.movementY;
             }
         }
-        else if (eventData.type === BABYLON.PointerEventTypes._POINTERWHEEL) {
+        else if (eventData.type === BABYLON.PointerEventTypes.POINTERWHEEL) {
             
         }
     }

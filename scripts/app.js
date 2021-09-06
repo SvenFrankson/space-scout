@@ -1,11 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 class BeaconEmiter extends BABYLON.Mesh {
     constructor(name, scene) {
         super(name, scene);
@@ -320,60 +312,54 @@ class Main {
         Main.State = State.GameOver;
         Layout.GameOverLayout();
     }
-    static TMPCreatePlayer() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let spaceshipData = yield SpaceshipLoader.instance.get("scout-2");
-            Main._tmpPlayer = new SpaceShip(spaceshipData, Main.Scene);
-            Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
-            Main.GameCamera.attachSpaceShipControl(Main.Canvas);
-            Main.GameCamera.setEnabled(false);
-            Main.GameCamera.minZ = 0.5;
-            Main.GameCamera.maxZ = 2000;
-            Main.GameCamera.layerMask = 1;
-            let depthMap = Main.Scene.enableDepthRenderer(Main.GameCamera).getDepthMap();
-            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.GameCamera);
-            postProcess.onApply = (effect) => {
-                effect.setTexture("depthSampler", depthMap);
-                effect.setFloat("width", Main.Engine.getRenderWidth());
-                effect.setFloat("height", Main.Engine.getRenderHeight());
-            };
-            Main.GUICamera.parent = Main.GameCamera;
-            Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
-            Main.PlayerMesh = yield Main._tmpPlayer.initialize(spaceshipData.model, "#ffffff", "#00ff00");
-            let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
-            Main._tmpPlayer.attachControler(playerControl);
-            playerControl.attachControl(Main.Canvas);
-        });
+    static async TMPCreatePlayer() {
+        let spaceshipData = await SpaceshipLoader.instance.get("scout-2");
+        Main._tmpPlayer = new SpaceShip(spaceshipData, Main.Scene);
+        Main.GameCamera = new SpaceShipCamera(BABYLON.Vector3.Zero(), Main.Scene, Main._tmpPlayer);
+        Main.GameCamera.attachSpaceShipControl(Main.Canvas);
+        Main.GameCamera.setEnabled(false);
+        Main.GameCamera.minZ = 0.5;
+        Main.GameCamera.maxZ = 2000;
+        Main.GameCamera.layerMask = 1;
+        let depthMap = Main.Scene.enableDepthRenderer(Main.GameCamera).getDepthMap();
+        var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Main.GameCamera);
+        postProcess.onApply = (effect) => {
+            effect.setTexture("depthSampler", depthMap);
+            effect.setFloat("width", Main.Engine.getRenderWidth());
+            effect.setFloat("height", Main.Engine.getRenderHeight());
+        };
+        Main.GUICamera.parent = Main.GameCamera;
+        Main.Scene.activeCameras = [Main.GameCamera, Main.GUICamera];
+        Main.PlayerMesh = await Main._tmpPlayer.initialize(spaceshipData.model, "#ffffff", "#00ff00");
+        let playerControl = new SpaceShipInputs(Main._tmpPlayer, Main.Scene);
+        Main._tmpPlayer.attachControler(playerControl);
+        playerControl.attachControl(Main.Canvas);
     }
     static TMPResetPlayer() {
         Main._tmpPlayer.position.copyFromFloats(0, 0, 0);
         Main._tmpPlayer.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
-    static TMPCreateWingMan() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return SpaceShipFactory.AddSpaceShipToScene({
-                name: "Wingman",
-                url: "scout-1",
-                x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
-                team: 0,
-                role: ISquadRole.Default
-            }, Main.Scene);
-        });
+    static async TMPCreateWingMan() {
+        return SpaceShipFactory.AddSpaceShipToScene({
+            name: "Wingman",
+            url: "scout-1",
+            x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
+            team: 0,
+            role: ISquadRole.Default
+        }, Main.Scene);
     }
     static TMPResetWingMan() {
         Main._tmpWingMan.position.copyFromFloats(0, 0, 30);
         Main._tmpWingMan.rotationQuaternion = BABYLON.Quaternion.Identity();
     }
-    static TMPCreateRogue() {
-        return __awaiter(this, void 0, void 0, function* () {
-            return SpaceShipFactory.AddSpaceShipToScene({
-                name: "Rogue",
-                url: "arrow-1",
-                x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
-                team: 1,
-                role: ISquadRole.Default
-            }, Main.Scene);
-        });
+    static async TMPCreateRogue() {
+        return SpaceShipFactory.AddSpaceShipToScene({
+            name: "Rogue",
+            url: "arrow-1",
+            x: -100 + 200 * Math.random(), y: -50 + 100 * Math.random(), z: 200,
+            team: 1,
+            role: ISquadRole.Default
+        }, Main.Scene);
     }
     static TMPResetRogue() {
         Main._tmpRogue.position.copyFromFloats(0, 0, 100);
@@ -382,12 +368,16 @@ class Main {
 }
 Main._state = State.Menu;
 Main.playStart = 0;
-window.addEventListener("DOMContentLoaded", () => __awaiter(this, void 0, void 0, function* () {
-    let game = new Main("render-canvas");
-    game.createScene();
-    game.animate();
-    window.addEventListener("hashchange", Route.route);
-    return Route.route();
+window.addEventListener("DOMContentLoaded", async () => {
+    if (window.location.pathname.indexOf("hud-test") != -1) {
+    }
+    else {
+        let game = new Main("render-canvas");
+        game.createScene();
+        game.animate();
+        window.addEventListener("hashchange", Route.route);
+        return Route.route();
+    }
     /*
     Home.RegisterToUI();
     Intro.RunIntro();
@@ -402,7 +392,7 @@ window.addEventListener("DOMContentLoaded", () => __awaiter(this, void 0, void 0
     await Main.TMPCreateRogue();
     Loader.LoadScene("level-0", Main.Scene);
     */
-}));
+});
 class SpaceMath {
     static ProjectPerpendicularAt(v, at) {
         let p = BABYLON.Vector3.Zero();
@@ -1442,6 +1432,8 @@ class HUDSpaceshipInfo extends BABYLON.TransformNode {
         this.hud.onLockedTargetChangedObservable.removeCallback(this._updateLock);
     }
 }
+class HUDTest {
+}
 class MapIcon extends BABYLON.GUI.Image {
     constructor(object, map) {
         super("mapIcon-" + object.name, "./datas/textures/hud/map-icon-blue.png");
@@ -1638,94 +1630,90 @@ class Layout {
     }
 }
 class Demo {
-    static Start() {
-        return __awaiter(this, void 0, void 0, function* () {
-            Demo._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
-            Demo._demoCamera.attachControl(Main.Canvas);
-            Demo._demoCamera.minZ = 0.5;
-            Demo._demoCamera.maxZ = 2000;
-            Demo._demoCamera.layerMask = 1 | 2;
-            Demo._demoCamera.wheelPrecision = 20;
-            let depthMap = Main.Scene.enableDepthRenderer(Demo._demoCamera).getDepthMap();
-            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Demo._demoCamera);
-            postProcess.onApply = (effect) => {
-                effect.setTexture("depthSampler", depthMap);
-                effect.setFloat("width", Main.Engine.getRenderWidth());
-                effect.setFloat("height", Main.Engine.getRenderHeight());
-            };
-            Main.Scene.activeCamera = Demo._demoCamera;
-            Demo._bodyIndex = Math.floor(Math.random() * 3);
-            Demo._wingsIndex = Math.floor(Math.random() * 3);
-            Demo._baseColor = new BABYLON.Color3(1, 1, 1);
-            Demo._detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
-            Demo._CreateUI();
-            Demo._UpdateUI();
-            yield Demo._ResetSpaceship();
-        });
+    static async Start() {
+        Demo._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 10, BABYLON.Vector3.Zero(), Main.Scene);
+        Demo._demoCamera.attachControl(Main.Canvas);
+        Demo._demoCamera.minZ = 0.5;
+        Demo._demoCamera.maxZ = 2000;
+        Demo._demoCamera.layerMask = 1 | 2;
+        Demo._demoCamera.wheelPrecision = 20;
+        let depthMap = Main.Scene.enableDepthRenderer(Demo._demoCamera).getDepthMap();
+        var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, Demo._demoCamera);
+        postProcess.onApply = (effect) => {
+            effect.setTexture("depthSampler", depthMap);
+            effect.setFloat("width", Main.Engine.getRenderWidth());
+            effect.setFloat("height", Main.Engine.getRenderHeight());
+        };
+        Main.Scene.activeCamera = Demo._demoCamera;
+        Demo._bodyIndex = Math.floor(Math.random() * 3);
+        Demo._wingsIndex = Math.floor(Math.random() * 3);
+        Demo._baseColor = new BABYLON.Color3(1, 1, 1);
+        Demo._detailColor = new BABYLON.Color3(Math.random(), Math.random(), Math.random());
+        Demo._CreateUI();
+        Demo._UpdateUI();
+        await Demo._ResetSpaceship();
     }
-    static _ResetSpaceship() {
-        return __awaiter(this, void 0, void 0, function* () {
-            clearInterval(Demo._shootLoop);
-            clearInterval(Demo._woundLood);
-            if (this._demoSpaceship) {
-                this._demoSpaceship.destroy();
-            }
-            let spaceshipData = yield SpaceshipLoader.instance.get("arrow-1");
-            Demo._demoSpaceship = new SpaceShip(spaceshipData, Main.Scene);
-            Demo._demoSpaceship.name = "Demo";
-            yield Demo._demoSpaceship.initialize({
-                type: "root",
-                name: "body-" + (Demo._bodyIndex + 1).toFixed(0),
-                children: [
-                    {
-                        type: "wingL",
-                        name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
-                        children: [
-                            {
-                                type: "weapon",
-                                name: "canon-1"
-                            }
-                        ]
-                    },
-                    {
-                        type: "wingR",
-                        name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
-                        children: [
-                            {
-                                type: "weapon",
-                                name: "canon-1"
-                            }
-                        ]
-                    },
-                    {
-                        type: "engine",
-                        name: "engine-1"
-                    },
-                    {
-                        type: "drone",
-                        name: "repair-drone"
-                    }
-                ]
-            }, Demo._baseColor.toHexString(), Demo._detailColor.toHexString());
-            let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(60, 0, 60), new BABYLON.Vector3(-60, 0, -60)]);
-            Demo._demoSpaceship.attachControler(spaceshipAI);
-            RuntimeUtils.NextFrame(Main.Scene, () => {
-                Demo._demoSpaceship.trailMeshes.forEach((t) => {
-                    t.foldToGenerator();
-                });
+    static async _ResetSpaceship() {
+        clearInterval(Demo._shootLoop);
+        clearInterval(Demo._woundLood);
+        if (this._demoSpaceship) {
+            this._demoSpaceship.destroy();
+        }
+        let spaceshipData = await SpaceshipLoader.instance.get("arrow-1");
+        Demo._demoSpaceship = new SpaceShip(spaceshipData, Main.Scene);
+        Demo._demoSpaceship.name = "Demo";
+        await Demo._demoSpaceship.initialize({
+            type: "root",
+            name: "body-" + (Demo._bodyIndex + 1).toFixed(0),
+            children: [
+                {
+                    type: "wingL",
+                    name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
+                    children: [
+                        {
+                            type: "weapon",
+                            name: "canon-1"
+                        }
+                    ]
+                },
+                {
+                    type: "wingR",
+                    name: "wing-" + (Demo._wingsIndex + 1).toFixed(0),
+                    children: [
+                        {
+                            type: "weapon",
+                            name: "canon-1"
+                        }
+                    ]
+                },
+                {
+                    type: "engine",
+                    name: "engine-1"
+                },
+                {
+                    type: "drone",
+                    name: "repair-drone"
+                }
+            ]
+        }, Demo._baseColor.toHexString(), Demo._detailColor.toHexString());
+        let spaceshipAI = new DefaultAI(Demo._demoSpaceship, ISquadRole.Default, 0, Main.Scene, [new BABYLON.Vector3(60, 0, 60), new BABYLON.Vector3(-60, 0, -60)]);
+        Demo._demoSpaceship.attachControler(spaceshipAI);
+        RuntimeUtils.NextFrame(Main.Scene, () => {
+            Demo._demoSpaceship.trailMeshes.forEach((t) => {
+                t.foldToGenerator();
             });
-            Demo._demoCamera.setTarget(Demo._demoSpaceship);
-            Demo._demoCamera.alpha = 1;
-            Demo._demoCamera.beta = 1;
-            Demo._demoCamera.radius = 10;
-            Demo._shootLoop = setInterval(() => {
-                Demo._demoSpaceship.shoot(Demo._demoSpaceship.localZ);
-            }, 200);
-            Demo._demoSpaceship.hitPoint -= 5 * Math.random();
-            Demo._woundLood = setInterval(() => {
-                Demo._demoSpaceship.hitPoint -= 5 * Math.random();
-            }, 10000);
         });
+        Demo._demoCamera.setTarget(Demo._demoSpaceship);
+        Demo._demoCamera.alpha = 1;
+        Demo._demoCamera.beta = 1;
+        Demo._demoCamera.radius = 10;
+        Demo._shootLoop = setInterval(() => {
+            Demo._demoSpaceship.shoot(Demo._demoSpaceship.localZ);
+        }, 200);
+        Demo._demoSpaceship.hitPoint -= 5 * Math.random();
+        Demo._woundLood = setInterval(() => {
+            Demo._demoSpaceship.hitPoint -= 5 * Math.random();
+        }, 10000);
     }
     static _CreateUI() {
         let size = 60;
@@ -1888,68 +1876,64 @@ Demo._wingsButtons = [];
 Demo._bodyIndex = 0;
 Demo._wingsIndex = 0;
 class DemoBattle {
-    static Start() {
-        return __awaiter(this, void 0, void 0, function* () {
-            DemoBattle._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
-            DemoBattle._demoCamera.attachControl(Main.Canvas);
-            DemoBattle._demoCamera.minZ = 0.5;
-            DemoBattle._demoCamera.maxZ = 2000;
-            DemoBattle._demoCamera.layerMask = 1 | 2;
-            /*
-            let depthMap = Main.Scene.enableDepthRenderer(DemoBattle._demoCamera).getDepthMap();
-            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, DemoBattle._demoCamera);
-            postProcess.onApply = (effect) => {
-                effect.setTexture("depthSampler", depthMap);
-                effect.setFloat("width", Main.Engine.getRenderWidth());
-                effect.setFloat("height", Main.Engine.getRenderHeight());
-            };
-            */
-            Main.Scene.activeCamera = DemoBattle._demoCamera;
-            new Spawner(0, Main.Scene, new BABYLON.Vector3(0, 0, 50), BABYLON.Quaternion.Identity());
-            new Spawner(0, Main.Scene, new BABYLON.Vector3(20, 0, 60), BABYLON.Quaternion.Identity());
-            new Spawner(0, Main.Scene, new BABYLON.Vector3(-20, 0, 60), BABYLON.Quaternion.Identity());
-            new Spawner(0, Main.Scene, new BABYLON.Vector3(0, 10, 70), BABYLON.Quaternion.Identity());
-            new Spawner(0, Main.Scene, new BABYLON.Vector3(0, -10, 70), BABYLON.Quaternion.Identity());
-            new Spawner(1, Main.Scene, new BABYLON.Vector3(0, 0, -50), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
-            new Spawner(1, Main.Scene, new BABYLON.Vector3(20, 0, -60), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
-            new Spawner(1, Main.Scene, new BABYLON.Vector3(-20, 0, -60), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
-            new Spawner(1, Main.Scene, new BABYLON.Vector3(0, 10, -70), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
-            new Spawner(1, Main.Scene, new BABYLON.Vector3(0, -10, -70), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
-        });
+    static async Start() {
+        DemoBattle._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
+        DemoBattle._demoCamera.attachControl(Main.Canvas);
+        DemoBattle._demoCamera.minZ = 0.5;
+        DemoBattle._demoCamera.maxZ = 2000;
+        DemoBattle._demoCamera.layerMask = 1 | 2;
+        /*
+        let depthMap = Main.Scene.enableDepthRenderer(DemoBattle._demoCamera).getDepthMap();
+        var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, DemoBattle._demoCamera);
+        postProcess.onApply = (effect) => {
+            effect.setTexture("depthSampler", depthMap);
+            effect.setFloat("width", Main.Engine.getRenderWidth());
+            effect.setFloat("height", Main.Engine.getRenderHeight());
+        };
+        */
+        Main.Scene.activeCamera = DemoBattle._demoCamera;
+        new Spawner(0, Main.Scene, new BABYLON.Vector3(0, 0, 50), BABYLON.Quaternion.Identity());
+        new Spawner(0, Main.Scene, new BABYLON.Vector3(20, 0, 60), BABYLON.Quaternion.Identity());
+        new Spawner(0, Main.Scene, new BABYLON.Vector3(-20, 0, 60), BABYLON.Quaternion.Identity());
+        new Spawner(0, Main.Scene, new BABYLON.Vector3(0, 10, 70), BABYLON.Quaternion.Identity());
+        new Spawner(0, Main.Scene, new BABYLON.Vector3(0, -10, 70), BABYLON.Quaternion.Identity());
+        new Spawner(1, Main.Scene, new BABYLON.Vector3(0, 0, -50), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
+        new Spawner(1, Main.Scene, new BABYLON.Vector3(20, 0, -60), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
+        new Spawner(1, Main.Scene, new BABYLON.Vector3(-20, 0, -60), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
+        new Spawner(1, Main.Scene, new BABYLON.Vector3(0, 10, -70), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
+        new Spawner(1, Main.Scene, new BABYLON.Vector3(0, -10, -70), BABYLON.Quaternion.RotationAxis(BABYLON.Axis.Y, Math.PI));
     }
 }
 class DemoStation {
-    static Start() {
-        return __awaiter(this, void 0, void 0, function* () {
-            DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
-            DemoStation._demoCamera.attachControl(Main.Canvas);
-            DemoStation._demoCamera.minZ = 0.5;
-            DemoStation._demoCamera.maxZ = 2000;
-            DemoStation._demoCamera.layerMask = 1 | 2;
-            DemoStation._demoCamera.wheelPrecision = 20;
-            let depthMap = Main.Scene.enableDepthRenderer(DemoStation._demoCamera).getDepthMap();
-            var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, DemoStation._demoCamera);
-            postProcess.onApply = (effect) => {
-                effect.setTexture("depthSampler", depthMap);
-                effect.setFloat("width", Main.Engine.getRenderWidth());
-                effect.setFloat("height", Main.Engine.getRenderHeight());
-            };
-            Main.Scene.activeCamera = DemoStation._demoCamera;
-            let block = new Block(new BABYLON.Vector3(0, 0, 0), 12, 3, 8);
-            let blocks = [block];
-            for (let i = 0; i < 3; i++) {
-                let newBlocks = [];
-                for (let j = 0; j < blocks.length; j++) {
-                    newBlocks.push(...blocks[j].tryPop());
-                }
-                blocks = newBlocks;
+    static async Start() {
+        DemoStation._demoCamera = new BABYLON.ArcRotateCamera("demoCamera", 1, 1, 100, BABYLON.Vector3.Zero(), Main.Scene);
+        DemoStation._demoCamera.attachControl(Main.Canvas);
+        DemoStation._demoCamera.minZ = 0.5;
+        DemoStation._demoCamera.maxZ = 2000;
+        DemoStation._demoCamera.layerMask = 1 | 2;
+        DemoStation._demoCamera.wheelPrecision = 20;
+        let depthMap = Main.Scene.enableDepthRenderer(DemoStation._demoCamera).getDepthMap();
+        var postProcess = new BABYLON.PostProcess("Edge", "Edge", ["width", "height"], ["depthSampler"], 1, DemoStation._demoCamera);
+        postProcess.onApply = (effect) => {
+            effect.setTexture("depthSampler", depthMap);
+            effect.setFloat("width", Main.Engine.getRenderWidth());
+            effect.setFloat("height", Main.Engine.getRenderHeight());
+        };
+        Main.Scene.activeCamera = DemoStation._demoCamera;
+        let block = new Block(new BABYLON.Vector3(0, 0, 0), 12, 3, 8);
+        let blocks = [block];
+        for (let i = 0; i < 3; i++) {
+            let newBlocks = [];
+            for (let j = 0; j < blocks.length; j++) {
+                newBlocks.push(...blocks[j].tryPop());
             }
-            Block.instances.forEach((b) => __awaiter(this, void 0, void 0, function* () {
-                yield b.instantiate(Main.Scene);
-            }));
-            Way.instances.forEach((w) => __awaiter(this, void 0, void 0, function* () {
-                yield w.instantiate(Main.Scene);
-            }));
+            blocks = newBlocks;
+        }
+        Block.instances.forEach(async (b) => {
+            await b.instantiate(Main.Scene);
+        });
+        Way.instances.forEach(async (w) => {
+            await w.instantiate(Main.Scene);
         });
     }
 }
@@ -2040,14 +2024,14 @@ class Level0 {
             success: (data) => {
                 $("#page").fadeOut(500, "linear", () => {
                     document.getElementById("page").innerHTML = data;
-                    $("#page").fadeIn(500, "linear", () => __awaiter(this, void 0, void 0, function* () {
-                        yield Main.TMPCreatePlayer();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateWingMan();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
-                        yield Main.TMPCreateRogue();
+                    $("#page").fadeIn(500, "linear", async () => {
+                        await Main.TMPCreatePlayer();
+                        await Main.TMPCreateWingMan();
+                        await Main.TMPCreateWingMan();
+                        await Main.TMPCreateWingMan();
+                        await Main.TMPCreateRogue();
+                        await Main.TMPCreateRogue();
+                        await Main.TMPCreateRogue();
                         Loader.LoadScene("level-0", Main.Scene);
                         let block = new Block(new BABYLON.Vector3(20, 0, 50), 12, 3, 8);
                         let blocks = [block];
@@ -2058,13 +2042,13 @@ class Level0 {
                             }
                             blocks = newBlocks;
                         }
-                        Block.instances.forEach((b) => __awaiter(this, void 0, void 0, function* () {
-                            yield b.instantiate(Main.Scene);
-                        }));
-                        Way.instances.forEach((w) => __awaiter(this, void 0, void 0, function* () {
-                            yield w.instantiate(Main.Scene);
-                        }));
-                    }));
+                        Block.instances.forEach(async (b) => {
+                            await b.instantiate(Main.Scene);
+                        });
+                        Way.instances.forEach(async (w) => {
+                            await w.instantiate(Main.Scene);
+                        });
+                    });
                 });
             }
         });
@@ -2132,28 +2116,24 @@ class Level0 {
     }
 }
 class Loader {
-    static _sleep(delay) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => {
-                setTimeout(resolve, delay);
-            });
+    static async _sleep(delay) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, delay);
         });
     }
-    static LoadScene(name, scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            Main.Level = new Level0();
-            return new Promise((resolve) => {
-                $.ajax({
-                    url: "./datas/scenes/" + name + ".json",
-                    success: (data) => __awaiter(this, void 0, void 0, function* () {
-                        Main.Scene.activeCamera = Main.MenuCamera;
-                        Main.MenuCamera.position = new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam);
-                        Loader.RunCinematic(data.cinematic);
-                        yield Loader._loadSceneData(data, scene);
-                        yield Main.Level.LoadLevel(scene);
-                        resolve();
-                    })
-                });
+    static async LoadScene(name, scene) {
+        Main.Level = new Level0();
+        return new Promise((resolve) => {
+            $.ajax({
+                url: "./datas/scenes/" + name + ".json",
+                success: async (data) => {
+                    Main.Scene.activeCamera = Main.MenuCamera;
+                    Main.MenuCamera.position = new BABYLON.Vector3(data.cinematic.xCam, data.cinematic.yCam, data.cinematic.zCam);
+                    Loader.RunCinematic(data.cinematic);
+                    await Loader._loadSceneData(data, scene);
+                    await Main.Level.LoadLevel(scene);
+                    resolve();
+                }
             });
         });
     }
@@ -2182,33 +2162,29 @@ class Loader {
         // note : This should actually be "Loading Layout", and auto skip once level is fully loaded.
         Layout.ReadyLayout();
     }
-    static _loadSceneData(data, scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield Loader.AddStaticsIntoScene(data.statics, scene, Config.sceneLoaderDelay);
-        });
+    static async _loadSceneData(data, scene) {
+        await Loader.AddStaticsIntoScene(data.statics, scene, Config.sceneLoaderDelay);
     }
-    static _loadStatic(name, scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve) => {
-                BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, (meshes, particleSystems, skeletons) => {
-                    Loader.LoadedStatics.set(name, []);
-                    for (let i = 0; i < meshes.length; i++) {
-                        if (meshes[i] instanceof BABYLON.Mesh) {
-                            let mesh = meshes[i];
-                            mesh.layerMask = 1;
-                            Loader.LoadedStatics.get(name).push(mesh);
-                            Loader._loadMaterial(mesh.material, name, scene);
-                            for (let j = 0; j < mesh.instances.length; j++) {
-                                Loader.LoadedStatics.get(name).push(mesh.instances[j]);
-                                mesh.instances[j].isVisible = false;
-                                mesh.instances[j].isPickable = false;
-                            }
-                            mesh.isVisible = false;
-                            mesh.isPickable = false;
+    static async _loadStatic(name, scene) {
+        return new Promise((resolve) => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/" + name + ".babylon", "", scene, (meshes, particleSystems, skeletons) => {
+                Loader.LoadedStatics.set(name, []);
+                for (let i = 0; i < meshes.length; i++) {
+                    if (meshes[i] instanceof BABYLON.Mesh) {
+                        let mesh = meshes[i];
+                        mesh.layerMask = 1;
+                        Loader.LoadedStatics.get(name).push(mesh);
+                        Loader._loadMaterial(mesh.material, name, scene);
+                        for (let j = 0; j < mesh.instances.length; j++) {
+                            Loader.LoadedStatics.get(name).push(mesh.instances[j]);
+                            mesh.instances[j].isVisible = false;
+                            mesh.instances[j].isPickable = false;
                         }
+                        mesh.isVisible = false;
+                        mesh.isPickable = false;
                     }
-                    resolve(Loader.LoadedStatics.get(name));
-                });
+                }
+                resolve(Loader.LoadedStatics.get(name));
             });
         });
     }
@@ -2251,26 +2227,22 @@ class Loader {
             callback();
         }
     }
-    static AddStaticsIntoScene(datas, scene, delay = 1) {
-        return __awaiter(this, void 0, void 0, function* () {
-            for (let i = 0; i < datas.length; i++) {
-                yield Loader.AddStaticIntoScene(datas[i], scene);
-                if (delay > 0) {
-                    yield Loader._sleep(delay);
-                }
+    static async AddStaticsIntoScene(datas, scene, delay = 1) {
+        for (let i = 0; i < datas.length; i++) {
+            await Loader.AddStaticIntoScene(datas[i], scene);
+            if (delay > 0) {
+                await Loader._sleep(delay);
             }
-        });
+        }
     }
-    static AddStaticIntoScene(data, scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (Loader.LoadedStatics.get(data.name)) {
-                Loader._cloneStaticIntoScene(Loader.LoadedStatics.get(data.name), data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
-            }
-            else {
-                let loadedMeshes = yield Loader._loadStatic(data.name, scene);
-                Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
-            }
-        });
+    static async AddStaticIntoScene(data, scene) {
+        if (Loader.LoadedStatics.get(data.name)) {
+            Loader._cloneStaticIntoScene(Loader.LoadedStatics.get(data.name), data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
+        }
+        else {
+            let loadedMeshes = await Loader._loadStatic(data.name, scene);
+            Loader._cloneStaticIntoScene(loadedMeshes, data.x, data.y, data.z, data.s, data.rX, data.rY, data.rZ);
+        }
     }
     static UnloadScene() {
         Loader.LoadedStatics.forEach((v, index) => {
@@ -2337,31 +2309,29 @@ class RandomGenerator {
     }
 }
 class Route {
-    static route() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let hash = window.location.hash.slice(1) || "home";
-            if (hash === "home") {
-                Home.Start();
-            }
-            if (hash === "level-0") {
-                Level0.Start();
-            }
-            if (hash === "test") {
-                yield Demo.Start();
-                $("#page").hide();
-                Main.Play();
-            }
-            if (hash === "demo-station") {
-                yield DemoStation.Start();
-                $("#page").hide();
-                Main.Play();
-            }
-            if (hash === "demo-battle") {
-                yield DemoBattle.Start();
-                $("#page").hide();
-                Main.Play();
-            }
-        });
+    static async route() {
+        let hash = window.location.hash.slice(1) || "home";
+        if (hash === "home") {
+            Home.Start();
+        }
+        if (hash === "level-0") {
+            Level0.Start();
+        }
+        if (hash === "test") {
+            await Demo.Start();
+            $("#page").hide();
+            Main.Play();
+        }
+        if (hash === "demo-station") {
+            await DemoStation.Start();
+            $("#page").hide();
+            Main.Play();
+        }
+        if (hash === "demo-battle") {
+            await DemoBattle.Start();
+            $("#page").hide();
+            Main.Play();
+        }
     }
 }
 class MaterialLoader {
@@ -2370,33 +2340,31 @@ class MaterialLoader {
         this._materials = new Map();
         MaterialLoader.instance = this;
     }
-    get(name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this._materials.get(name)) {
-                return this._materials.get(name);
-            }
-            return new Promise((resolve) => {
-                $.getJSON("./datas/materials/" + name + ".json", (rawData) => {
-                    let material = new BABYLON.PBRSpecularGlossinessMaterial(name, this.scene);
-                    if (rawData.diffuseColor) {
-                        material.diffuseColor = BABYLON.Color3.FromHexString(rawData.diffuseColor);
-                    }
-                    if (rawData.specularColor) {
-                        material.specularColor = BABYLON.Color3.FromHexString(rawData.specularColor);
-                    }
-                    if (rawData.emissiveColor) {
-                        material.emissiveColor = BABYLON.Color3.FromHexString(rawData.emissiveColor);
-                    }
-                    if (rawData.diffuseTexture) {
-                        material.diffuseTexture = new BABYLON.Texture("./datas/textures/" + rawData.diffuseTexture, this.scene);
-                        material.diffuseTexture.hasAlpha = true;
-                    }
-                    if (rawData.emissiveTexture) {
-                        material.emissiveTexture = new BABYLON.Texture("./datas/textures/" + rawData.emissiveTexture, this.scene);
-                    }
-                    this._materials.set(name, material);
-                    resolve(this._materials.get(name));
-                });
+    async get(name) {
+        if (this._materials.get(name)) {
+            return this._materials.get(name);
+        }
+        return new Promise((resolve) => {
+            $.getJSON("./datas/materials/" + name + ".json", (rawData) => {
+                let material = new BABYLON.PBRSpecularGlossinessMaterial(name, this.scene);
+                if (rawData.diffuseColor) {
+                    material.diffuseColor = BABYLON.Color3.FromHexString(rawData.diffuseColor);
+                }
+                if (rawData.specularColor) {
+                    material.specularColor = BABYLON.Color3.FromHexString(rawData.specularColor);
+                }
+                if (rawData.emissiveColor) {
+                    material.emissiveColor = BABYLON.Color3.FromHexString(rawData.emissiveColor);
+                }
+                if (rawData.diffuseTexture) {
+                    material.diffuseTexture = new BABYLON.Texture("./datas/textures/" + rawData.diffuseTexture, this.scene);
+                    material.diffuseTexture.hasAlpha = true;
+                }
+                if (rawData.emissiveTexture) {
+                    material.emissiveTexture = new BABYLON.Texture("./datas/textures/" + rawData.emissiveTexture, this.scene);
+                }
+                this._materials.set(name, material);
+                resolve(this._materials.get(name));
             });
         });
     }
@@ -2470,16 +2438,14 @@ class SpaceshipLoader {
         this._spaceshipDatas = new Map();
         SpaceshipLoader.instance = this;
     }
-    get(name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this._spaceshipDatas.get(name)) {
-                return this._spaceshipDatas.get(name);
-            }
-            return new Promise((resolve) => {
-                $.getJSON("./datas/spaceships/" + name + ".json", (data) => {
-                    this._spaceshipDatas.set(name, data);
-                    resolve(this._spaceshipDatas.get(name));
-                });
+    async get(name) {
+        if (this._spaceshipDatas.get(name)) {
+            return this._spaceshipDatas.get(name);
+        }
+        return new Promise((resolve) => {
+            $.getJSON("./datas/spaceships/" + name + ".json", (data) => {
+                this._spaceshipDatas.set(name, data);
+                resolve(this._spaceshipDatas.get(name));
             });
         });
     }
@@ -2503,64 +2469,60 @@ class VertexDataLoader {
         }
         return clonedData;
     }
-    get(name) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this._vertexDatas.get(name)) {
-                return this._vertexDatas.get(name);
-            }
-            return new Promise((resolve) => {
-                $.getJSON("./datas/vertexData/" + name + ".babylon", (rawData) => {
-                    let data = new BABYLON.VertexData();
-                    data.positions = rawData.meshes[0].positions;
-                    data.indices = rawData.meshes[0].indices;
-                    data.normals = rawData.meshes[0].normals;
-                    data.uvs = rawData.meshes[0].uvs;
-                    data.colors = rawData.meshes[0].colors;
-                    this._vertexDatas.set(name, data);
-                    resolve(this._vertexDatas.get(name));
-                });
+    async get(name) {
+        if (this._vertexDatas.get(name)) {
+            return this._vertexDatas.get(name);
+        }
+        return new Promise((resolve) => {
+            $.getJSON("./datas/vertexData/" + name + ".babylon", (rawData) => {
+                let data = new BABYLON.VertexData();
+                data.positions = rawData.meshes[0].positions;
+                data.indices = rawData.meshes[0].indices;
+                data.normals = rawData.meshes[0].normals;
+                data.uvs = rawData.meshes[0].uvs;
+                data.colors = rawData.meshes[0].colors;
+                this._vertexDatas.set(name, data);
+                resolve(this._vertexDatas.get(name));
             });
         });
     }
-    getColorized(name, baseColor, detailColor) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
-            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
-            let data = VertexDataLoader.clone(yield VertexDataLoader.instance.get(name));
-            if (data.colors) {
-                for (let i = 0; i < data.colors.length / 4; i++) {
-                    let r = data.colors[4 * i];
-                    let g = data.colors[4 * i + 1];
-                    let b = data.colors[4 * i + 2];
-                    if (r === 1 && g === 0 && b === 0) {
-                        data.colors[4 * i] = detailColor3.r;
-                        data.colors[4 * i + 1] = detailColor3.g;
-                        data.colors[4 * i + 2] = detailColor3.b;
-                    }
-                    else if (r === 1 && g === 1 && b === 1) {
-                        data.colors[4 * i] = baseColor3.r;
-                        data.colors[4 * i + 1] = baseColor3.g;
-                        data.colors[4 * i + 2] = baseColor3.b;
-                    }
-                    else if (r === 0.502 && g === 0.502 && b === 0.502) {
-                        data.colors[4 * i] = baseColor3.r * 0.5;
-                        data.colors[4 * i + 1] = baseColor3.g * 0.5;
-                        data.colors[4 * i + 2] = baseColor3.b * 0.5;
-                    }
+    async getColorized(name, baseColor, detailColor) {
+        let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+        let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+        let data = VertexDataLoader.clone(await VertexDataLoader.instance.get(name));
+        if (data.colors) {
+            for (let i = 0; i < data.colors.length / 4; i++) {
+                let r = data.colors[4 * i];
+                let g = data.colors[4 * i + 1];
+                let b = data.colors[4 * i + 2];
+                if (r === 1 && g === 0 && b === 0) {
+                    data.colors[4 * i] = detailColor3.r;
+                    data.colors[4 * i + 1] = detailColor3.g;
+                    data.colors[4 * i + 2] = detailColor3.b;
+                }
+                else if (r === 1 && g === 1 && b === 1) {
+                    data.colors[4 * i] = baseColor3.r;
+                    data.colors[4 * i + 1] = baseColor3.g;
+                    data.colors[4 * i + 2] = baseColor3.b;
+                }
+                else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                    data.colors[4 * i] = baseColor3.r * 0.5;
+                    data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                    data.colors[4 * i + 2] = baseColor3.b * 0.5;
                 }
             }
-            else {
-                let colors = [];
-                for (let i = 0; i < data.positions.length / 3; i++) {
-                    colors[4 * i] = baseColor3.r;
-                    colors[4 * i + 1] = baseColor3.g;
-                    colors[4 * i + 2] = baseColor3.b;
-                    colors[4 * i + 3] = 1;
-                }
-                data.colors = colors;
+        }
+        else {
+            let colors = [];
+            for (let i = 0; i < data.positions.length / 3; i++) {
+                colors[4 * i] = baseColor3.r;
+                colors[4 * i + 1] = baseColor3.g;
+                colors[4 * i + 2] = baseColor3.b;
+                colors[4 * i + 3] = 1;
             }
-            return data;
-        });
+            data.colors = colors;
+        }
+        return data;
     }
 }
 class Flash {
@@ -2812,17 +2774,15 @@ class Projectile extends BABYLON.Mesh {
         this._displacementRay = new BABYLON.Ray(this.position, this._direction.clone());
         this.getScene().onBeforeRenderObservable.add(this._update);
     }
-    instantiate() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let vertexData = yield VertexDataLoader.instance.get("blaster-trail");
-            if (vertexData && !this.isDisposed()) {
-                vertexData.applyToMesh(this);
-            }
-            let material = yield MaterialLoader.instance.get("red");
-            if (material && !this.isDisposed()) {
-                this.material = material;
-            }
-        });
+    async instantiate() {
+        let vertexData = await VertexDataLoader.instance.get("blaster-trail");
+        if (vertexData && !this.isDisposed()) {
+            vertexData.applyToMesh(this);
+        }
+        let material = await MaterialLoader.instance.get("red");
+        if (material && !this.isDisposed()) {
+            this.material = material;
+        }
     }
     destroy() {
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
@@ -2958,206 +2918,202 @@ class RepairDrone extends BABYLON.TransformNode {
         this.dispose();
         this.getScene().onBeforeRenderObservable.removeCallback(this._update);
     }
-    initialize(baseColor, detailColor) {
-        return __awaiter(this, void 0, void 0, function* () {
-            this.container = new BABYLON.TransformNode("container", this.getScene());
-            this.container.parent = this;
-            return new Promise((resolve) => {
-                BABYLON.SceneLoader.ImportMesh("", "./datas/models/repair-drone.babylon", "", this.getScene(), (meshes) => {
-                    for (let i = 0; i < meshes.length; i++) {
-                        let mesh = meshes[i];
-                        if (mesh instanceof BABYLON.Mesh) {
-                            let data = BABYLON.VertexData.ExtractFromMesh(mesh);
-                            if (data.colors) {
-                                let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
-                                let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
-                                for (let i = 0; i < data.colors.length / 4; i++) {
-                                    let r = data.colors[4 * i];
-                                    let g = data.colors[4 * i + 1];
-                                    let b = data.colors[4 * i + 2];
-                                    if (r === 1 && g === 0 && b === 0) {
-                                        data.colors[4 * i] = detailColor3.r;
-                                        data.colors[4 * i + 1] = detailColor3.g;
-                                        data.colors[4 * i + 2] = detailColor3.b;
-                                    }
-                                    else if (r === 1 && g === 1 && b === 1) {
-                                        data.colors[4 * i] = baseColor3.r;
-                                        data.colors[4 * i + 1] = baseColor3.g;
-                                        data.colors[4 * i + 2] = baseColor3.b;
-                                    }
-                                    else if (r === 0.502 && g === 0.502 && b === 0.502) {
-                                        data.colors[4 * i] = baseColor3.r * 0.5;
-                                        data.colors[4 * i + 1] = baseColor3.g * 0.5;
-                                        data.colors[4 * i + 2] = baseColor3.b * 0.5;
-                                    }
+    async initialize(baseColor, detailColor) {
+        this.container = new BABYLON.TransformNode("container", this.getScene());
+        this.container.parent = this;
+        return new Promise((resolve) => {
+            BABYLON.SceneLoader.ImportMesh("", "./datas/models/repair-drone.babylon", "", this.getScene(), (meshes) => {
+                for (let i = 0; i < meshes.length; i++) {
+                    let mesh = meshes[i];
+                    if (mesh instanceof BABYLON.Mesh) {
+                        let data = BABYLON.VertexData.ExtractFromMesh(mesh);
+                        if (data.colors) {
+                            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+                            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+                            for (let i = 0; i < data.colors.length / 4; i++) {
+                                let r = data.colors[4 * i];
+                                let g = data.colors[4 * i + 1];
+                                let b = data.colors[4 * i + 2];
+                                if (r === 1 && g === 0 && b === 0) {
+                                    data.colors[4 * i] = detailColor3.r;
+                                    data.colors[4 * i + 1] = detailColor3.g;
+                                    data.colors[4 * i + 2] = detailColor3.b;
+                                }
+                                else if (r === 1 && g === 1 && b === 1) {
+                                    data.colors[4 * i] = baseColor3.r;
+                                    data.colors[4 * i + 1] = baseColor3.g;
+                                    data.colors[4 * i + 2] = baseColor3.b;
+                                }
+                                else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                                    data.colors[4 * i] = baseColor3.r * 0.5;
+                                    data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                                    data.colors[4 * i + 2] = baseColor3.b * 0.5;
                                 }
                             }
-                            data.applyToMesh(mesh);
-                            if (mesh.name === "antenna") {
-                                this.antenna = mesh;
-                            }
-                            else if (mesh.name === "body-top") {
-                                this.bodyTop = mesh;
-                            }
-                            else if (mesh.name === "body-bottom") {
-                                this.bodyBottom = mesh;
-                            }
-                            else if (mesh.name === "arm-L") {
-                                this.armL = mesh;
-                            }
-                            else if (mesh.name === "arm-R") {
-                                this.armR = mesh;
-                            }
-                            else if (mesh.name === "wing-L") {
-                                this.wingL = mesh;
-                            }
-                            else if (mesh.name === "wing-R") {
-                                this.wingR = mesh;
-                            }
-                            else if (mesh.name === "laser") {
-                                this.laser = mesh;
-                            }
-                            mesh.material = SpaceShipFactory.cellShadingMaterial;
-                            mesh.layerMask = 1;
-                            ScreenLoger.instance.log(mesh.name);
-                            mesh.parent = this.container;
                         }
+                        data.applyToMesh(mesh);
+                        if (mesh.name === "antenna") {
+                            this.antenna = mesh;
+                        }
+                        else if (mesh.name === "body-top") {
+                            this.bodyTop = mesh;
+                        }
+                        else if (mesh.name === "body-bottom") {
+                            this.bodyBottom = mesh;
+                        }
+                        else if (mesh.name === "arm-L") {
+                            this.armL = mesh;
+                        }
+                        else if (mesh.name === "arm-R") {
+                            this.armR = mesh;
+                        }
+                        else if (mesh.name === "wing-L") {
+                            this.wingL = mesh;
+                        }
+                        else if (mesh.name === "wing-R") {
+                            this.wingR = mesh;
+                        }
+                        else if (mesh.name === "laser") {
+                            this.laser = mesh;
+                        }
+                        mesh.material = SpaceShipFactory.cellShadingMaterial;
+                        mesh.layerMask = 1;
+                        ScreenLoger.instance.log(mesh.name);
+                        mesh.parent = this.container;
                     }
-                    this.armL.parent = this.bodyBottom;
-                    this.armR.parent = this.bodyBottom;
-                    this.armRTip = new BABYLON.TransformNode("armRTip", this.getScene());
-                    this.armRTip.parent = this.armR;
-                    this.armRTip.position.copyFromFloats(0, 0, 0.65);
-                    this.laser.parent = this.spaceship.mesh;
-                    this.laser.isVisible = false;
-                    this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
-                    this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
-                    this.armR.scaling.copyFrom(RepairDrone.ArmLFoldScaling);
-                    this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
-                    this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
-                    this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
-                    this._isBased = true;
-                    let particleMaterial = new BABYLON.StandardMaterial(name + "-material", this.getScene());
-                    particleMaterial.diffuseTexture = new BABYLON.Texture("./datas/textures/impact-white.png", this.getScene());
-                    particleMaterial.diffuseTexture.hasAlpha = true;
-                    particleMaterial.specularColor.copyFromFloats(0, 0, 0);
-                    particleMaterial.emissiveTexture = particleMaterial.diffuseTexture;
-                    // SPS creation
-                    var plane = BABYLON.Mesh.CreatePlane("plane", 5, this.getScene());
-                    this.repairParticle = new BABYLON.SolidParticleSystem('SPS', this.getScene());
-                    this.repairParticle.addShape(plane, 20);
-                    var mesh = this.repairParticle.buildMesh();
-                    mesh.material = particleMaterial;
-                    mesh.position.y = -50;
-                    plane.dispose(); // free memory
-                    // SPS behavior definition
-                    var speed = 0.08;
-                    var gravity = -0.005;
-                    // init
-                    this.repairParticle.initParticles = () => {
-                        // just recycle everything
-                        for (var p = 0; p < this.repairParticle.nbParticles; p++) {
-                            this.repairParticle.recycleParticle(this.repairParticle.particles[p]);
-                        }
-                    };
-                    // recycle
-                    this.repairParticle.recycleParticle = (particle) => {
-                        // Set particle new velocity, scale and rotation
-                        // As this function is called for each particle, we don't allocate new
-                        // memory by using "new BABYLON.Vector3()" but we set directly the
-                        // x, y, z particle properties instead
-                        particle.position.x = 0;
-                        particle.position.y = 0;
-                        particle.position.z = 0;
-                        particle.velocity.x = (Math.random() - 0.5) * speed;
-                        particle.velocity.y = Math.random() * speed;
-                        particle.velocity.z = (Math.random() - 0.5) * speed;
-                        var scale = 0.015 + Math.random() * 0.055;
-                        particle.scale.x = scale;
-                        particle.scale.y = scale;
-                        particle.scale.z = scale;
-                        particle.rotation.x = Math.random() * 3.5;
-                        particle.rotation.y = Math.random() * 3.5;
-                        particle.rotation.z = Math.random() * 3.5;
-                        particle.color.r = Math.random() * 0.4 + 0.3;
-                        particle.color.g = 1;
-                        particle.color.b = particle.color.r;
-                        particle.color.a = 1;
-                        return particle;
-                    };
-                    // update : will be called by setParticles()
-                    this.repairParticle.updateParticle = (particle) => {
-                        // some physics here 
-                        if (particle.position.y < 0) {
-                            this.repairParticle.recycleParticle(particle);
-                        }
-                        particle.velocity.y += gravity; // apply gravity to y
-                        (particle.position).addInPlace(particle.velocity); // update particle new position
-                        particle.position.y += speed / 2;
-                        particle.scale.scaleInPlace(0.9);
-                        return particle;
-                    };
-                    // init all particle values and set them once to apply textures, colors, etc
-                    this.repairParticle.initParticles();
-                    this.repairParticle.setParticles();
-                    // Tuning : plane particles facing, so billboard and no rotation computation
-                    // colors not changing then, neither textures
-                    this.repairParticle.billboard = true;
-                    this.repairParticle.computeParticleRotation = false;
-                    this.repairParticle.computeParticleColor = false;
-                    this.repairParticle.computeParticleTexture = false;
-                    //scene.debugLayer.show();
-                    // animation
-                    this.parent = this.spaceship.mesh;
-                    this.position.copyFrom(this.basePosition);
-                    this.getScene().onBeforeRenderObservable.add(this._update);
-                    this.repairCycle();
-                    ScreenLoger.instance.log("RepairDrone initialized.");
-                    resolve();
-                });
+                }
+                this.armL.parent = this.bodyBottom;
+                this.armR.parent = this.bodyBottom;
+                this.armRTip = new BABYLON.TransformNode("armRTip", this.getScene());
+                this.armRTip.parent = this.armR;
+                this.armRTip.position.copyFromFloats(0, 0, 0.65);
+                this.laser.parent = this.spaceship.mesh;
+                this.laser.isVisible = false;
+                this.bodyBottom.position.copyFrom(RepairDrone.BodyBottomFoldPosition);
+                this.antenna.scaling.copyFrom(RepairDrone.AntennaFoldScaling);
+                this.armR.scaling.copyFrom(RepairDrone.ArmLFoldScaling);
+                this.armL.scaling.copyFrom(RepairDrone.ArmRFoldScaling);
+                this.wingL.rotation.copyFrom(RepairDrone.WingLFoldRotation);
+                this.wingR.rotation.copyFrom(RepairDrone.WingRFoldRotation);
+                this._isBased = true;
+                let particleMaterial = new BABYLON.StandardMaterial(name + "-material", this.getScene());
+                particleMaterial.diffuseTexture = new BABYLON.Texture("./datas/textures/impact-white.png", this.getScene());
+                particleMaterial.diffuseTexture.hasAlpha = true;
+                particleMaterial.specularColor.copyFromFloats(0, 0, 0);
+                particleMaterial.emissiveTexture = particleMaterial.diffuseTexture;
+                // SPS creation
+                var plane = BABYLON.Mesh.CreatePlane("plane", 5, this.getScene());
+                this.repairParticle = new BABYLON.SolidParticleSystem('SPS', this.getScene());
+                this.repairParticle.addShape(plane, 20);
+                var mesh = this.repairParticle.buildMesh();
+                mesh.material = particleMaterial;
+                mesh.position.y = -50;
+                plane.dispose(); // free memory
+                // SPS behavior definition
+                var speed = 0.08;
+                var gravity = -0.005;
+                // init
+                this.repairParticle.initParticles = () => {
+                    // just recycle everything
+                    for (var p = 0; p < this.repairParticle.nbParticles; p++) {
+                        this.repairParticle.recycleParticle(this.repairParticle.particles[p]);
+                    }
+                };
+                // recycle
+                this.repairParticle.recycleParticle = (particle) => {
+                    // Set particle new velocity, scale and rotation
+                    // As this function is called for each particle, we don't allocate new
+                    // memory by using "new BABYLON.Vector3()" but we set directly the
+                    // x, y, z particle properties instead
+                    particle.position.x = 0;
+                    particle.position.y = 0;
+                    particle.position.z = 0;
+                    particle.velocity.x = (Math.random() - 0.5) * speed;
+                    particle.velocity.y = Math.random() * speed;
+                    particle.velocity.z = (Math.random() - 0.5) * speed;
+                    var scale = 0.015 + Math.random() * 0.055;
+                    particle.scale.x = scale;
+                    particle.scale.y = scale;
+                    particle.scale.z = scale;
+                    particle.rotation.x = Math.random() * 3.5;
+                    particle.rotation.y = Math.random() * 3.5;
+                    particle.rotation.z = Math.random() * 3.5;
+                    particle.color.r = Math.random() * 0.4 + 0.3;
+                    particle.color.g = 1;
+                    particle.color.b = particle.color.r;
+                    particle.color.a = 1;
+                    return particle;
+                };
+                // update : will be called by setParticles()
+                this.repairParticle.updateParticle = (particle) => {
+                    // some physics here 
+                    if (particle.position.y < 0) {
+                        this.repairParticle.recycleParticle(particle);
+                    }
+                    particle.velocity.y += gravity; // apply gravity to y
+                    (particle.position).addInPlace(particle.velocity); // update particle new position
+                    particle.position.y += speed / 2;
+                    particle.scale.scaleInPlace(0.9);
+                    return particle;
+                };
+                // init all particle values and set them once to apply textures, colors, etc
+                this.repairParticle.initParticles();
+                this.repairParticle.setParticles();
+                // Tuning : plane particles facing, so billboard and no rotation computation
+                // colors not changing then, neither textures
+                this.repairParticle.billboard = true;
+                this.repairParticle.computeParticleRotation = false;
+                this.repairParticle.computeParticleColor = false;
+                this.repairParticle.computeParticleTexture = false;
+                //scene.debugLayer.show();
+                // animation
+                this.parent = this.spaceship.mesh;
+                this.position.copyFrom(this.basePosition);
+                this.getScene().onBeforeRenderObservable.add(this._update);
+                this.repairCycle();
+                ScreenLoger.instance.log("RepairDrone initialized.");
+                resolve();
             });
         });
     }
-    repairCycle() {
-        return __awaiter(this, void 0, void 0, function* () {
-            while (!this.isDisposed()) {
-                if (this._isBased) {
-                    yield RuntimeUtils.RunCoroutine(this._sleep(3));
-                    this._basedTime += 3;
-                }
-                if (this._basedTime > this.cooldown) {
-                    if (this.spaceship.hitPoint < this.spaceship.stamina) {
-                        ScreenLoger.instance.log("SpaceShip is wounded, start repair routine.");
-                        for (let i = 0; i < this.repairStepsMax; i++) {
-                            if (this.spaceship.hitPoint < this.spaceship.stamina) {
-                                ScreenLoger.instance.log("New Repair Step.");
-                                let A = this.position.clone();
-                                let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
-                                B.normalize().scaleInPlace(10);
-                                let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
-                                ray = BABYLON.Ray.Transform(ray, this.spaceship.mesh.getWorldMatrix());
-                                let hit = ray.intersectsMesh(this.spaceship.mesh);
-                                if (hit.hit) {
-                                    let p = hit.pickedPoint;
-                                    B = BABYLON.Vector3.TransformCoordinates(p, this.spaceship.mesh.getWorldMatrix().clone().invert());
-                                    B = B.addInPlace(BABYLON.Vector3.Normalize(B));
-                                }
-                                yield RuntimeUtils.RunCoroutine(this._repairStep(A, B));
+    async repairCycle() {
+        while (!this.isDisposed()) {
+            if (this._isBased) {
+                await RuntimeUtils.RunCoroutine(this._sleep(3));
+                this._basedTime += 3;
+            }
+            if (this._basedTime > this.cooldown) {
+                if (this.spaceship.hitPoint < this.spaceship.stamina) {
+                    ScreenLoger.instance.log("SpaceShip is wounded, start repair routine.");
+                    for (let i = 0; i < this.repairStepsMax; i++) {
+                        if (this.spaceship.hitPoint < this.spaceship.stamina) {
+                            ScreenLoger.instance.log("New Repair Step.");
+                            let A = this.position.clone();
+                            let B = new BABYLON.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5);
+                            B.normalize().scaleInPlace(10);
+                            let ray = new BABYLON.Ray(B, B.scale(-1).normalize());
+                            ray = BABYLON.Ray.Transform(ray, this.spaceship.mesh.getWorldMatrix());
+                            let hit = ray.intersectsMesh(this.spaceship.mesh);
+                            if (hit.hit) {
+                                let p = hit.pickedPoint;
+                                B = BABYLON.Vector3.TransformCoordinates(p, this.spaceship.mesh.getWorldMatrix().clone().invert());
+                                B = B.addInPlace(BABYLON.Vector3.Normalize(B));
                             }
-                            ScreenLoger.instance.log("Repair Step Done.");
+                            await RuntimeUtils.RunCoroutine(this._repairStep(A, B));
                         }
-                        ScreenLoger.instance.log("Back To Base Step.");
-                        let A = this.position.clone();
-                        let B = this.basePosition.clone();
-                        yield RuntimeUtils.RunCoroutine(this._baseStep(A, B));
-                        ScreenLoger.instance.log("Back To Base Step done.");
+                        ScreenLoger.instance.log("Repair Step Done.");
                     }
-                    else {
-                        yield RuntimeUtils.RunCoroutine(this._sleep(3));
-                    }
+                    ScreenLoger.instance.log("Back To Base Step.");
+                    let A = this.position.clone();
+                    let B = this.basePosition.clone();
+                    await RuntimeUtils.RunCoroutine(this._baseStep(A, B));
+                    ScreenLoger.instance.log("Back To Base Step done.");
+                }
+                else {
+                    await RuntimeUtils.RunCoroutine(this._sleep(3));
                 }
             }
-        });
+        }
     }
     *_sleep(t) {
         let timer = 0;
@@ -3462,82 +3418,78 @@ class SpaceShip extends BABYLON.Mesh {
         this.shootFlashParticle.destroy();
         this.onDestroyObservable.notifyObservers(undefined);
     }
-    initialize(model, baseColor, detailColor) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let meshes = [];
-            yield SpaceShip._InitializeRecursively(model, baseColor, detailColor, this, meshes);
-            let invWorldMatrix = this.computeWorldMatrix(true).clone().invert();
-            for (let i = 0; i < meshes.length; i++) {
-                meshes[i].computeWorldMatrix(true);
-            }
-            for (let i = 0; i < this._canonNodes.length; i++) {
-                let canonPoint = BABYLON.Vector3.Zero();
-                this._canonNodes[i].computeWorldMatrix(true);
-                BABYLON.Vector3.TransformCoordinatesToRef(this._canonNodes[i].absolutePosition, invWorldMatrix, canonPoint);
-                this.canons.push(canonPoint);
-            }
-            this.mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
-            this.mesh.layerMask = 1;
-            this.mesh.parent = this;
-            this.wingTipLeft.parent = this.mesh;
-            this.wingTipRight.parent = this.mesh;
-            this.shield.parent = this.mesh;
-            return this.mesh;
-        });
+    async initialize(model, baseColor, detailColor) {
+        let meshes = [];
+        await SpaceShip._InitializeRecursively(model, baseColor, detailColor, this, meshes);
+        let invWorldMatrix = this.computeWorldMatrix(true).clone().invert();
+        for (let i = 0; i < meshes.length; i++) {
+            meshes[i].computeWorldMatrix(true);
+        }
+        for (let i = 0; i < this._canonNodes.length; i++) {
+            let canonPoint = BABYLON.Vector3.Zero();
+            this._canonNodes[i].computeWorldMatrix(true);
+            BABYLON.Vector3.TransformCoordinatesToRef(this._canonNodes[i].absolutePosition, invWorldMatrix, canonPoint);
+            this.canons.push(canonPoint);
+        }
+        this.mesh = BABYLON.Mesh.MergeMeshes(meshes, true);
+        this.mesh.layerMask = 1;
+        this.mesh.parent = this;
+        this.wingTipLeft.parent = this.mesh;
+        this.wingTipRight.parent = this.mesh;
+        this.shield.parent = this.mesh;
+        return this.mesh;
     }
-    static _InitializeRecursively(elementData, baseColor, detailColor, spaceship, meshes) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let e = yield SpaceShipFactory.LoadSpaceshipPart(elementData.name, Main.Scene, baseColor, detailColor);
-            if (meshes) {
-                meshes.push(e);
-            }
-            if (elementData.children) {
-                for (let i = 0; i < elementData.children.length; i++) {
-                    let childData = elementData.children[i];
-                    let slot = SpaceShipSlots.getSlot(elementData.name, childData.type);
-                    if (slot) {
-                        if (childData.type === "drone") {
-                            if (childData.name === "repair-drone") {
-                                let drone = new RepairDrone(spaceship);
-                                drone.basePosition = slot.pos;
-                                drone.initialize(baseColor, detailColor);
-                                return drone;
-                            }
+    static async _InitializeRecursively(elementData, baseColor, detailColor, spaceship, meshes) {
+        let e = await SpaceShipFactory.LoadSpaceshipPart(elementData.name, Main.Scene, baseColor, detailColor);
+        if (meshes) {
+            meshes.push(e);
+        }
+        if (elementData.children) {
+            for (let i = 0; i < elementData.children.length; i++) {
+                let childData = elementData.children[i];
+                let slot = SpaceShipSlots.getSlot(elementData.name, childData.type);
+                if (slot) {
+                    if (childData.type === "drone") {
+                        if (childData.name === "repair-drone") {
+                            let drone = new RepairDrone(spaceship);
+                            drone.basePosition = slot.pos;
+                            drone.initialize(baseColor, detailColor);
+                            return drone;
                         }
-                        else {
-                            let child = yield SpaceShip._InitializeRecursively(childData, baseColor, detailColor, spaceship, meshes);
-                            child.parent = e;
-                            child.position = slot.pos;
-                            child.rotation = slot.rot;
-                            if (slot.mirror) {
-                                child.scaling.x = -1;
+                    }
+                    else {
+                        let child = await SpaceShip._InitializeRecursively(childData, baseColor, detailColor, spaceship, meshes);
+                        child.parent = e;
+                        child.position = slot.pos;
+                        child.rotation = slot.rot;
+                        if (slot.mirror) {
+                            child.scaling.x = -1;
+                        }
+                        if (child instanceof BABYLON.Mesh) {
+                            if (childData.type === "weapon") {
+                                let canonTip = MeshUtils.getZMaxVertex(child);
+                                let canonTipNode = new BABYLON.TransformNode("_tmpCanonTipNode", spaceship.getScene());
+                                canonTipNode.parent = child;
+                                canonTipNode.position.copyFrom(canonTip);
+                                canonTipNode.computeWorldMatrix(true);
+                                spaceship._canonNodes.push(canonTipNode);
                             }
-                            if (child instanceof BABYLON.Mesh) {
-                                if (childData.type === "weapon") {
-                                    let canonTip = MeshUtils.getZMaxVertex(child);
-                                    let canonTipNode = new BABYLON.TransformNode("_tmpCanonTipNode", spaceship.getScene());
-                                    canonTipNode.parent = child;
-                                    canonTipNode.position.copyFrom(canonTip);
-                                    canonTipNode.computeWorldMatrix(true);
-                                    spaceship._canonNodes.push(canonTipNode);
+                            if (childData.type.startsWith("wing")) {
+                                let wingTip = MeshUtils.getXMinVertex(child);
+                                BABYLON.Vector3.TransformCoordinatesToRef(wingTip, child.computeWorldMatrix(true), wingTip);
+                                if (childData.type === "wingL") {
+                                    spaceship.wingTipLeft.position.copyFrom(wingTip);
                                 }
-                                if (childData.type.startsWith("wing")) {
-                                    let wingTip = MeshUtils.getXMinVertex(child);
-                                    BABYLON.Vector3.TransformCoordinatesToRef(wingTip, child.computeWorldMatrix(true), wingTip);
-                                    if (childData.type === "wingL") {
-                                        spaceship.wingTipLeft.position.copyFrom(wingTip);
-                                    }
-                                    else if (childData.type === "wingR") {
-                                        spaceship.wingTipRight.position.copyFrom(wingTip);
-                                    }
+                                else if (childData.type === "wingR") {
+                                    spaceship.wingTipRight.position.copyFrom(wingTip);
                                 }
                             }
                         }
                     }
                 }
             }
-            return e;
-        });
+        }
+        return e;
     }
     createColliders() {
         this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
@@ -3704,61 +3656,57 @@ class SpaceShipFactory {
         }
         return "#00ff00";
     }
-    static AddSpaceShipToScene(data, scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let spaceshipData = yield SpaceshipLoader.instance.get(data.url);
-            let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
-            spaceShip.name = data.name;
-            yield spaceShip.initialize(spaceshipData.model, SpaceShipFactory.baseColorFromTeam(data.team), SpaceShipFactory.detailColorFromTeam(data.team));
-            let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
-            spaceShip.attachControler(spaceshipAI);
-            if (isFinite(data.x) && isFinite(data.y) && isFinite(data.z)) {
-                spaceShip.position.copyFromFloats(data.x, data.y, data.z);
-            }
-            if (isFinite(data.rx) && isFinite(data.ry) && isFinite(data.rz) && isFinite(data.rw)) {
-                spaceShip.rotationQuaternion.copyFromFloats(data.rx, data.ry, data.rz, data.rw);
-            }
-            RuntimeUtils.NextFrame(Main.Scene, () => {
-                spaceShip.trailMeshes.forEach((t) => {
-                    t.foldToGenerator();
-                });
+    static async AddSpaceShipToScene(data, scene) {
+        let spaceshipData = await SpaceshipLoader.instance.get(data.url);
+        let spaceShip = new SpaceShip(spaceshipData, Main.Scene);
+        spaceShip.name = data.name;
+        await spaceShip.initialize(spaceshipData.model, SpaceShipFactory.baseColorFromTeam(data.team), SpaceShipFactory.detailColorFromTeam(data.team));
+        let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
+        spaceShip.attachControler(spaceshipAI);
+        if (isFinite(data.x) && isFinite(data.y) && isFinite(data.z)) {
+            spaceShip.position.copyFromFloats(data.x, data.y, data.z);
+        }
+        if (isFinite(data.rx) && isFinite(data.ry) && isFinite(data.rz) && isFinite(data.rw)) {
+            spaceShip.rotationQuaternion.copyFromFloats(data.rx, data.ry, data.rz, data.rw);
+        }
+        RuntimeUtils.NextFrame(Main.Scene, () => {
+            spaceShip.trailMeshes.forEach((t) => {
+                t.foldToGenerator();
             });
-            return spaceShip;
         });
+        return spaceShip;
     }
-    static LoadSpaceshipPart(part, scene, baseColor, detailColor) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
-            let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
-            let data = VertexDataLoader.clone(yield VertexDataLoader.instance.get(part));
-            if (data.colors) {
-                for (let i = 0; i < data.colors.length / 4; i++) {
-                    let r = data.colors[4 * i];
-                    let g = data.colors[4 * i + 1];
-                    let b = data.colors[4 * i + 2];
-                    if (r === 1 && g === 0 && b === 0) {
-                        data.colors[4 * i] = detailColor3.r;
-                        data.colors[4 * i + 1] = detailColor3.g;
-                        data.colors[4 * i + 2] = detailColor3.b;
-                    }
-                    else if (r === 1 && g === 1 && b === 1) {
-                        data.colors[4 * i] = baseColor3.r;
-                        data.colors[4 * i + 1] = baseColor3.g;
-                        data.colors[4 * i + 2] = baseColor3.b;
-                    }
-                    else if (r === 0.502 && g === 0.502 && b === 0.502) {
-                        data.colors[4 * i] = baseColor3.r * 0.5;
-                        data.colors[4 * i + 1] = baseColor3.g * 0.5;
-                        data.colors[4 * i + 2] = baseColor3.b * 0.5;
-                    }
+    static async LoadSpaceshipPart(part, scene, baseColor, detailColor) {
+        let baseColor3 = BABYLON.Color3.FromHexString(baseColor);
+        let detailColor3 = BABYLON.Color3.FromHexString(detailColor);
+        let data = VertexDataLoader.clone(await VertexDataLoader.instance.get(part));
+        if (data.colors) {
+            for (let i = 0; i < data.colors.length / 4; i++) {
+                let r = data.colors[4 * i];
+                let g = data.colors[4 * i + 1];
+                let b = data.colors[4 * i + 2];
+                if (r === 1 && g === 0 && b === 0) {
+                    data.colors[4 * i] = detailColor3.r;
+                    data.colors[4 * i + 1] = detailColor3.g;
+                    data.colors[4 * i + 2] = detailColor3.b;
+                }
+                else if (r === 1 && g === 1 && b === 1) {
+                    data.colors[4 * i] = baseColor3.r;
+                    data.colors[4 * i + 1] = baseColor3.g;
+                    data.colors[4 * i + 2] = baseColor3.b;
+                }
+                else if (r === 0.502 && g === 0.502 && b === 0.502) {
+                    data.colors[4 * i] = baseColor3.r * 0.5;
+                    data.colors[4 * i + 1] = baseColor3.g * 0.5;
+                    data.colors[4 * i + 2] = baseColor3.b * 0.5;
                 }
             }
-            let m = new BABYLON.Mesh(part, Main.Scene);
-            m.layerMask = 1;
-            data.applyToMesh(m);
-            m.material = SpaceShipFactory.cellShadingMaterial;
-            return m;
-        });
+        }
+        let m = new BABYLON.Mesh(part, Main.Scene);
+        m.layerMask = 1;
+        data.applyToMesh(m);
+        m.material = SpaceShipFactory.cellShadingMaterial;
+        return m;
     }
 }
 class SpaceShipInputs extends SpaceShipControler {
@@ -4410,37 +4358,35 @@ class Antenna {
             Antenna.instances.splice(index, 1);
         }
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let poleMesh = new BABYLON.Mesh("blockMesh", scene);
-            let positions = [];
-            let indices = [];
-            let colors = [];
-            Pole.PushPolePart(positions, indices, colors, (1 + this.size * 0.5) * 0.25, (1 + this.size * 0.5) * 0.1, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
-            let data = new BABYLON.VertexData();
-            data.positions = positions;
-            data.indices = indices;
-            data.colors = colors;
-            data.normals = [];
-            BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
-            data.applyToMesh(poleMesh);
-            let antennaMesh = new BABYLON.Mesh("antennaMesh", scene);
-            let antennaIndex = Math.floor(2 * Math.random() + 1);
-            let antennaMeshData = yield VertexDataLoader.instance.getColorized("antenna-" + antennaIndex.toFixed(0), "#7f7f7f", "#1ece50");
-            antennaMeshData.applyToMesh(antennaMesh);
-            antennaMesh.scaling.copyFromFloats(1 + this.size * 0.5, 1 + this.size * 0.5, 1 + this.size * 0.5);
-            antennaMesh.position.y = this.height * 0.5 + 0.5;
-            antennaMesh.rotation.x = Math.PI / 4 + (Math.random() * 2 - 1) * Math.PI / 8;
-            antennaMesh.rotation.y = Math.random() * Math.PI * 2;
-            antennaMesh.computeWorldMatrix(true);
-            antennaMesh = BABYLON.Mesh.MergeMeshes([poleMesh, antennaMesh], true);
-            antennaMesh.layerMask = 1;
-            antennaMesh.position.x = this.position.x / 2 + 0.25;
-            antennaMesh.position.y = this.position.y / 2 + 0.25;
-            antennaMesh.position.z = this.position.z / 2 + 0.25;
-            antennaMesh.material = MinMax.cellShadingMaterial;
-            return antennaMesh;
-        });
+    async instantiate(scene) {
+        let poleMesh = new BABYLON.Mesh("blockMesh", scene);
+        let positions = [];
+        let indices = [];
+        let colors = [];
+        Pole.PushPolePart(positions, indices, colors, (1 + this.size * 0.5) * 0.25, (1 + this.size * 0.5) * 0.1, this.height * 0.5 + 0.5, 0, this.height * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2));
+        let data = new BABYLON.VertexData();
+        data.positions = positions;
+        data.indices = indices;
+        data.colors = colors;
+        data.normals = [];
+        BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+        data.applyToMesh(poleMesh);
+        let antennaMesh = new BABYLON.Mesh("antennaMesh", scene);
+        let antennaIndex = Math.floor(2 * Math.random() + 1);
+        let antennaMeshData = await VertexDataLoader.instance.getColorized("antenna-" + antennaIndex.toFixed(0), "#7f7f7f", "#1ece50");
+        antennaMeshData.applyToMesh(antennaMesh);
+        antennaMesh.scaling.copyFromFloats(1 + this.size * 0.5, 1 + this.size * 0.5, 1 + this.size * 0.5);
+        antennaMesh.position.y = this.height * 0.5 + 0.5;
+        antennaMesh.rotation.x = Math.PI / 4 + (Math.random() * 2 - 1) * Math.PI / 8;
+        antennaMesh.rotation.y = Math.random() * Math.PI * 2;
+        antennaMesh.computeWorldMatrix(true);
+        antennaMesh = BABYLON.Mesh.MergeMeshes([poleMesh, antennaMesh], true);
+        antennaMesh.layerMask = 1;
+        antennaMesh.position.x = this.position.x / 2 + 0.25;
+        antennaMesh.position.y = this.position.y / 2 + 0.25;
+        antennaMesh.position.z = this.position.z / 2 + 0.25;
+        antennaMesh.material = MinMax.cellShadingMaterial;
+        return antennaMesh;
     }
 }
 Antenna.instances = [];
@@ -4582,43 +4528,41 @@ class Way extends MinMax {
         }
         return slot;
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            //let container = new BABYLON.Mesh("container", scene);
-            let wayMesh = new BABYLON.Mesh("wayMesh", scene);
-            wayMesh.position.x = this.position.x / 2 + 0.25;
-            wayMesh.position.y = this.position.y / 2 + 0.25;
-            wayMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.East) {
-                wayMesh.rotation.y = Math.PI / 2;
+    async instantiate(scene) {
+        //let container = new BABYLON.Mesh("container", scene);
+        let wayMesh = new BABYLON.Mesh("wayMesh", scene);
+        wayMesh.position.x = this.position.x / 2 + 0.25;
+        wayMesh.position.y = this.position.y / 2 + 0.25;
+        wayMesh.position.z = this.position.z / 2 + 0.25;
+        if (this.direction === Direction.East) {
+            wayMesh.rotation.y = Math.PI / 2;
+        }
+        if (this.direction === Direction.South) {
+            wayMesh.rotation.y = Math.PI;
+        }
+        if (this.direction === Direction.West) {
+            wayMesh.rotation.y = -Math.PI / 2;
+        }
+        let data = await VertexDataLoader.instance.get("station-way");
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0) {
+                data.positions[i] += (this.width - 1) * 0.5;
             }
-            if (this.direction === Direction.South) {
-                wayMesh.rotation.y = Math.PI;
+            else {
+                data.positions[i] -= (this.width - 1) * 0.5;
             }
-            if (this.direction === Direction.West) {
-                wayMesh.rotation.y = -Math.PI / 2;
+            if (data.positions[i + 1] > 1) {
+                data.positions[i + 1] += (this.height - 4) * 0.5;
             }
-            let data = yield VertexDataLoader.instance.get("station-way");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0) {
-                    data.positions[i] += (this.width - 1) * 0.5;
-                }
-                else {
-                    data.positions[i] -= (this.width - 1) * 0.5;
-                }
-                if (data.positions[i + 1] > 1) {
-                    data.positions[i + 1] += (this.height - 4) * 0.5;
-                }
-                if (data.positions[i + 2] > 0) {
-                    data.positions[i + 2] += (this.length - 2) * 0.5;
-                }
+            if (data.positions[i + 2] > 0) {
+                data.positions[i + 2] += (this.length - 2) * 0.5;
             }
-            data.applyToMesh(wayMesh);
-            wayMesh.layerMask = 1;
-            wayMesh.material = MinMax.cellShadingMaterial;
-            return wayMesh;
-        });
+        }
+        data.applyToMesh(wayMesh);
+        wayMesh.layerMask = 1;
+        wayMesh.material = MinMax.cellShadingMaterial;
+        return wayMesh;
     }
 }
 Way.instances = [];
@@ -4645,40 +4589,38 @@ class Nub extends MinMax {
             Nub.instances.splice(index, 1);
         }
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let nubMesh = new BABYLON.Mesh("blockMesh", scene);
-            let meshIndex = Math.floor(Math.random() * 2 + 1);
-            if (this.height > 2 || this.width < 2 || this.depth < 2) {
-                meshIndex = 1;
+    async instantiate(scene) {
+        let nubMesh = new BABYLON.Mesh("blockMesh", scene);
+        let meshIndex = Math.floor(Math.random() * 2 + 1);
+        if (this.height > 2 || this.width < 2 || this.depth < 2) {
+            meshIndex = 1;
+        }
+        let data = await VertexDataLoader.instance.get("station-nub-" + meshIndex.toFixed(0));
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0) {
+                data.positions[i] += (this.width - 2) * 0.5;
             }
-            let data = yield VertexDataLoader.instance.get("station-nub-" + meshIndex.toFixed(0));
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0) {
-                    data.positions[i] += (this.width - 2) * 0.5;
-                }
-                else {
-                    data.positions[i] -= (this.width - 2) * 0.5;
-                }
-                if (data.positions[i + 1] > 0) {
-                    data.positions[i + 1] += (this.height - 1) * 0.5;
-                }
-                if (data.positions[i + 2] > 0) {
-                    data.positions[i + 2] += (this.depth - 2) * 0.5;
-                }
-                else {
-                    data.positions[i + 2] -= (this.depth - 2) * 0.5;
-                }
+            else {
+                data.positions[i] -= (this.width - 2) * 0.5;
             }
-            data.applyToMesh(nubMesh);
-            nubMesh.layerMask = 1;
-            nubMesh.position.x = this.position.x / 2 + 0.25;
-            nubMesh.position.y = this.position.y / 2 + 0.25;
-            nubMesh.position.z = this.position.z / 2 + 0.25;
-            nubMesh.material = MinMax.cellShadingMaterial;
-            return nubMesh;
-        });
+            if (data.positions[i + 1] > 0) {
+                data.positions[i + 1] += (this.height - 1) * 0.5;
+            }
+            if (data.positions[i + 2] > 0) {
+                data.positions[i + 2] += (this.depth - 2) * 0.5;
+            }
+            else {
+                data.positions[i + 2] -= (this.depth - 2) * 0.5;
+            }
+        }
+        data.applyToMesh(nubMesh);
+        nubMesh.layerMask = 1;
+        nubMesh.position.x = this.position.x / 2 + 0.25;
+        nubMesh.position.y = this.position.y / 2 + 0.25;
+        nubMesh.position.z = this.position.z / 2 + 0.25;
+        nubMesh.material = MinMax.cellShadingMaterial;
+        return nubMesh;
     }
 }
 Nub.instances = [];
@@ -4824,318 +4766,300 @@ class Block extends MinMax {
             this._nubs[i].destroy();
         }
     }
-    tryPush(scene, face, side, elementName, attempts, w, h, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let randomizeY = false;
-            if (y === undefined) {
-                randomizeY = true;
+    async tryPush(scene, face, side, elementName, attempts, w, h, y) {
+        let randomizeY = false;
+        if (y === undefined) {
+            randomizeY = true;
+        }
+        for (let n = 0; n < attempts; n++) {
+            let x = Math.floor(Math.random() * (face.length - w - 1) + 1);
+            if (randomizeY) {
+                y = Math.floor(Math.random() * (face[0].length - h - 1) + 1);
             }
-            for (let n = 0; n < attempts; n++) {
-                let x = Math.floor(Math.random() * (face.length - w - 1) + 1);
-                if (randomizeY) {
-                    y = Math.floor(Math.random() * (face[0].length - h - 1) + 1);
+            let ok = true;
+            for (let i = 0; i < w; i++) {
+                for (let j = 0; j < h; j++) {
+                    if (face[x + i][y + j] > 0) {
+                        ok = false;
+                    }
                 }
-                let ok = true;
+            }
+            if (ok) {
                 for (let i = 0; i < w; i++) {
                     for (let j = 0; j < h; j++) {
-                        if (face[x + i][y + j] > 0) {
-                            ok = false;
-                        }
+                        face[x + i][y + j] = 2;
                     }
                 }
-                if (ok) {
-                    for (let i = 0; i < w; i++) {
-                        for (let j = 0; j < h; j++) {
-                            face[x + i][y + j] = 2;
-                        }
-                    }
-                    let newMesh;
-                    if (side === Direction.North) {
-                        newMesh = yield this.pushNorth(scene, elementName, w, h, x, y);
-                    }
-                    if (side === Direction.East) {
-                        newMesh = yield this.pushEast(scene, elementName, w, h, x, y);
-                    }
-                    if (side === Direction.South) {
-                        newMesh = yield this.pushSouth(scene, elementName, w, h, x, y);
-                    }
-                    if (side === Direction.West) {
-                        newMesh = yield this.pushWest(scene, elementName, w, h, x, y);
-                    }
-                    if (newMesh) {
-                        this._meshes.push(newMesh);
-                    }
+                let newMesh;
+                if (side === Direction.North) {
+                    newMesh = await this.pushNorth(scene, elementName, w, h, x, y);
+                }
+                if (side === Direction.East) {
+                    newMesh = await this.pushEast(scene, elementName, w, h, x, y);
+                }
+                if (side === Direction.South) {
+                    newMesh = await this.pushSouth(scene, elementName, w, h, x, y);
+                }
+                if (side === Direction.West) {
+                    newMesh = await this.pushWest(scene, elementName, w, h, x, y);
+                }
+                if (newMesh) {
+                    this._meshes.push(newMesh);
                 }
             }
-        });
+        }
     }
-    pushNorth(scene, elementName, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            //ScreenLoger.instance.log("NORTH");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get(elementName);
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
+    async pushNorth(scene, elementName, w, h, x, y) {
+        //ScreenLoger.instance.log("NORTH");
+        let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+        let data = await VertexDataLoader.instance.get(elementName);
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += w * 0.5 - 1;
             }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.max.z + 1).scaleInPlace(0.5);
-            windowMesh.position.x -= x * 0.5;
-            windowMesh.position.y += y * 0.5;
-            windowMesh.rotation.y = Math.PI;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
+            if (data.positions[i + 1] > 0.5) {
+                data.positions[i + 1] += h * 0.5 - 1;
+            }
+        }
+        data.applyToMesh(windowMesh);
+        windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.max.z + 1).scaleInPlace(0.5);
+        windowMesh.position.x -= x * 0.5;
+        windowMesh.position.y += y * 0.5;
+        windowMesh.rotation.y = Math.PI;
+        windowMesh.layerMask = 1;
+        return windowMesh;
     }
-    pushEast(scene, elementName, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            //ScreenLoger.instance.log("EAST");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get(elementName);
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
+    async pushEast(scene, elementName, w, h, x, y) {
+        //ScreenLoger.instance.log("EAST");
+        let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+        let data = await VertexDataLoader.instance.get(elementName);
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += w * 0.5 - 1;
             }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.min.z).scaleInPlace(0.5);
-            windowMesh.position.y += y * 0.5;
-            windowMesh.rotation.y = -Math.PI / 2;
-            windowMesh.position.z += x * 0.5;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
+            if (data.positions[i + 1] > 0.5) {
+                data.positions[i + 1] += h * 0.5 - 1;
+            }
+        }
+        data.applyToMesh(windowMesh);
+        windowMesh.position.copyFromFloats(this.max.x + 1, this.min.y, this.min.z).scaleInPlace(0.5);
+        windowMesh.position.y += y * 0.5;
+        windowMesh.rotation.y = -Math.PI / 2;
+        windowMesh.position.z += x * 0.5;
+        windowMesh.layerMask = 1;
+        return windowMesh;
     }
-    pushSouth(scene, elementName, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            //ScreenLoger.instance.log("SOUTH");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get(elementName);
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
+    async pushSouth(scene, elementName, w, h, x, y) {
+        //ScreenLoger.instance.log("SOUTH");
+        let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+        let data = await VertexDataLoader.instance.get(elementName);
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += w * 0.5 - 1;
             }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFrom(this.min).scaleInPlace(0.5);
-            windowMesh.position.x += x * 0.5;
-            windowMesh.position.y += y * 0.5;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
+            if (data.positions[i + 1] > 0.5) {
+                data.positions[i + 1] += h * 0.5 - 1;
+            }
+        }
+        data.applyToMesh(windowMesh);
+        windowMesh.position.copyFrom(this.min).scaleInPlace(0.5);
+        windowMesh.position.x += x * 0.5;
+        windowMesh.position.y += y * 0.5;
+        windowMesh.layerMask = 1;
+        return windowMesh;
     }
-    pushWest(scene, elementName, w, h, x, y) {
-        return __awaiter(this, void 0, void 0, function* () {
-            //ScreenLoger.instance.log("West");
-            let windowMesh = new BABYLON.Mesh("windowMesh", scene);
-            let data = yield VertexDataLoader.instance.get(elementName);
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += w * 0.5 - 1;
-                }
-                if (data.positions[i + 1] > 0.5) {
-                    data.positions[i + 1] += h * 0.5 - 1;
-                }
+    async pushWest(scene, elementName, w, h, x, y) {
+        //ScreenLoger.instance.log("West");
+        let windowMesh = new BABYLON.Mesh("windowMesh", scene);
+        let data = await VertexDataLoader.instance.get(elementName);
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += w * 0.5 - 1;
             }
-            data.applyToMesh(windowMesh);
-            windowMesh.position.copyFromFloats(this.min.x, this.min.y, this.max.z + 1).scaleInPlace(0.5);
-            windowMesh.position.y += y * 0.5;
-            windowMesh.rotation.y = Math.PI / 2;
-            windowMesh.position.z -= x * 0.5;
-            windowMesh.layerMask = 1;
-            return windowMesh;
-        });
+            if (data.positions[i + 1] > 0.5) {
+                data.positions[i + 1] += h * 0.5 - 1;
+            }
+        }
+        data.applyToMesh(windowMesh);
+        windowMesh.position.copyFromFloats(this.min.x, this.min.y, this.max.z + 1).scaleInPlace(0.5);
+        windowMesh.position.y += y * 0.5;
+        windowMesh.rotation.y = Math.PI / 2;
+        windowMesh.position.z -= x * 0.5;
+        windowMesh.layerMask = 1;
+        return windowMesh;
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let blockMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-block");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0) {
-                    data.positions[i] += (this.width - 1) * 0.5;
-                }
-                else {
-                    data.positions[i] -= (this.width - 1) * 0.5;
-                }
-                if (data.positions[i + 1] > 0) {
-                    data.positions[i + 1] += (this.height - 1) * 0.5;
-                }
-                else {
-                    data.positions[i + 1] -= (this.height - 1) * 0.5;
-                }
-                if (data.positions[i + 2] > 0) {
-                    data.positions[i + 2] += (this.depth - 1) * 0.5;
-                }
-                else {
-                    data.positions[i + 2] -= (this.depth - 1) * 0.5;
-                }
-            }
-            data.applyToMesh(blockMesh);
-            blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
-            blockMesh.layerMask = 1;
-            blockMesh.position.x = this.position.x / 2 + 0.25;
-            blockMesh.position.y = this.position.y / 2 + 0.25;
-            blockMesh.position.z = this.position.z / 2 + 0.25;
-            blockMesh.material = MinMax.cellShadingMaterial;
-            this._meshes.push(blockMesh);
-            let northFace = [];
-            for (let i = 0; i < this.width * 2 + 1; i++) {
-                northFace[i] = [];
-                for (let j = 0; j < this.height * 2 + 1; j++) {
-                    northFace[i][j] = 0;
-                    let I = this.max.x + 1 - i;
-                    let J = this.min.y + j;
-                    let K = this.max.z + 1;
-                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
-                        northFace[i][j] = 1;
-                    }
-                }
-            }
-            let eastFace = [];
-            for (let i = 0; i < this.depth * 2 + 1; i++) {
-                eastFace[i] = [];
-                for (let j = 0; j < this.height * 2 + 1; j++) {
-                    eastFace[i][j] = 0;
-                    let I = this.max.x + 1;
-                    let J = this.min.y + j;
-                    let K = this.min.z + i;
-                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
-                        eastFace[i][j] = 1;
-                    }
-                }
-            }
-            let southFace = [];
-            for (let i = 0; i < this.width * 2 + 1; i++) {
-                southFace[i] = [];
-                for (let j = 0; j < this.height * 2 + 1; j++) {
-                    southFace[i][j] = 0;
-                    let I = this.min.x + i;
-                    let J = this.min.y + j;
-                    let K = this.min.z - 1;
-                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
-                        southFace[i][j] = 1;
-                    }
-                }
-            }
-            let westFace = [];
-            for (let i = 0; i < this.depth * 2 + 1; i++) {
-                westFace[i] = [];
-                for (let j = 0; j < this.height * 2 + 1; j++) {
-                    westFace[i][j] = 0;
-                    let I = this.min.x - 1;
-                    let J = this.min.y + j;
-                    let K = this.max.z + 1 - i;
-                    if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
-                        westFace[i][j] = 1;
-                    }
-                }
-            }
-            let r = Math.random();
-            if (r < 0.33) {
-                yield this.tryPushLiving(scene, northFace, eastFace, southFace, westFace);
-            }
-            else if (r < 0.66) {
-                yield this.tryPushUtil(scene, northFace, eastFace, southFace, westFace);
+    async instantiate(scene) {
+        let blockMesh = new BABYLON.Mesh("blockMesh", scene);
+        let data = await VertexDataLoader.instance.get("station-block");
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0) {
+                data.positions[i] += (this.width - 1) * 0.5;
             }
             else {
-                yield this.tryPushView(scene, northFace, eastFace, southFace, westFace);
+                data.positions[i] -= (this.width - 1) * 0.5;
             }
-            for (let i = 0; i < this._nubs.length; i++) {
-                let nub = this._nubs[i];
-                let nubMesh = yield nub.instantiate(scene);
-                this._meshes.push(nubMesh);
+            if (data.positions[i + 1] > 0) {
+                data.positions[i + 1] += (this.height - 1) * 0.5;
             }
-            for (let i = 0; i < this._platforms.length; i++) {
-                let platform = this._platforms[i];
-                let platformMesh = yield platform.instantiate(scene);
-                this._meshes.push(platformMesh);
+            else {
+                data.positions[i + 1] -= (this.height - 1) * 0.5;
             }
-            for (let i = 0; i < this._poles.length; i++) {
-                let pole = this._poles[i];
-                let poleMesh = yield pole.instantiate(scene);
-                this._meshes.push(poleMesh);
+            if (data.positions[i + 2] > 0) {
+                data.positions[i + 2] += (this.depth - 1) * 0.5;
             }
-            for (let i = 0; i < this._antennas.length; i++) {
-                let antenna = this._antennas[i];
-                let antennaMesh = yield antenna.instantiate(scene);
-                this._meshes.push(antennaMesh);
+            else {
+                data.positions[i + 2] -= (this.depth - 1) * 0.5;
             }
-            let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
-            mergedMesh.material = MinMax.cellShadingMaterial;
-            mergedMesh.layerMask = 1;
-            return mergedMesh;
-        });
-    }
-    tryPushUtil(scene, northFace, eastFace, southFace, westFace) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let surface = this.width * this.height + this.width * this.depth + this.height * this.depth;
-            let count = Math.ceil(surface / 30);
-            for (let w = 3; w > 0; w--) {
-                yield this.tryPush(scene, northFace, Direction.North, "station-dark", count, w, w);
-                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", count, w, w);
-                yield this.tryPush(scene, southFace, Direction.South, "station-dark", count, w, w);
-                yield this.tryPush(scene, westFace, Direction.West, "station-dark", count, w, w);
-            }
-            yield this.tryPush(scene, northFace, Direction.North, "station-window", count, 3, 3);
-            yield this.tryPush(scene, eastFace, Direction.East, "station-window", count, 3, 3);
-            yield this.tryPush(scene, southFace, Direction.South, "station-window", count, 3, 3);
-            yield this.tryPush(scene, westFace, Direction.West, "station-window", count, 3, 3);
-        });
-    }
-    tryPushLiving(scene, northFace, eastFace, southFace, westFace) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let floors = Math.floor(this.height / 3);
-            for (let i = 1; i < floors; i++) {
-                yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
-            }
-            for (let i = 0; i < floors; i++) {
-                yield this.tryPush(scene, northFace, Direction.North, "station-window", 3, 4, 5, i * 6 + 1);
-                yield this.tryPush(scene, eastFace, Direction.East, "station-window", 3, 4, 5, i * 6 + 1);
-                yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
-                yield this.tryPush(scene, westFace, Direction.West, "station-window", 3, 4, 5, i * 6 + 1);
-            }
-            yield this.tryPush(scene, northFace, Direction.North, "station-window", 6, 3, 3);
-            yield this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
-            yield this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
-            yield this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
-        });
-    }
-    tryPushView(scene, northFace, eastFace, southFace, westFace) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let floors = Math.floor(this.height / 3);
-            for (let i = 1; i < floors; i++) {
-                yield this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
-                yield this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
-            }
-            for (let i = 0; i < floors; i++) {
-                for (let w = 8; w > 0; w -= 2) {
-                    yield this.tryPush(scene, northFace, Direction.North, "station-window", 3, w, 5, i * 6 + 1);
-                    yield this.tryPush(scene, eastFace, Direction.East, "station-window", 3, w, 5, i * 6 + 1);
-                    yield this.tryPush(scene, southFace, Direction.South, "station-window", 3, w, 5, i * 6 + 1);
-                    yield this.tryPush(scene, westFace, Direction.West, "station-window", 3, w, 5, i * 6 + 1);
+        }
+        data.applyToMesh(blockMesh);
+        blockMesh.position.copyFrom(this.position).scaleInPlace(0.5);
+        blockMesh.layerMask = 1;
+        blockMesh.position.x = this.position.x / 2 + 0.25;
+        blockMesh.position.y = this.position.y / 2 + 0.25;
+        blockMesh.position.z = this.position.z / 2 + 0.25;
+        blockMesh.material = MinMax.cellShadingMaterial;
+        this._meshes.push(blockMesh);
+        let northFace = [];
+        for (let i = 0; i < this.width * 2 + 1; i++) {
+            northFace[i] = [];
+            for (let j = 0; j < this.height * 2 + 1; j++) {
+                northFace[i][j] = 0;
+                let I = this.max.x + 1 - i;
+                let J = this.min.y + j;
+                let K = this.max.z + 1;
+                if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                    northFace[i][j] = 1;
                 }
             }
-        });
+        }
+        let eastFace = [];
+        for (let i = 0; i < this.depth * 2 + 1; i++) {
+            eastFace[i] = [];
+            for (let j = 0; j < this.height * 2 + 1; j++) {
+                eastFace[i][j] = 0;
+                let I = this.max.x + 1;
+                let J = this.min.y + j;
+                let K = this.min.z + i;
+                if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                    eastFace[i][j] = 1;
+                }
+            }
+        }
+        let southFace = [];
+        for (let i = 0; i < this.width * 2 + 1; i++) {
+            southFace[i] = [];
+            for (let j = 0; j < this.height * 2 + 1; j++) {
+                southFace[i][j] = 0;
+                let I = this.min.x + i;
+                let J = this.min.y + j;
+                let K = this.min.z - 1;
+                if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                    southFace[i][j] = 1;
+                }
+            }
+        }
+        let westFace = [];
+        for (let i = 0; i < this.depth * 2 + 1; i++) {
+            westFace[i] = [];
+            for (let j = 0; j < this.height * 2 + 1; j++) {
+                westFace[i][j] = 0;
+                let I = this.min.x - 1;
+                let J = this.min.y + j;
+                let K = this.max.z + 1 - i;
+                if (MinMax.containsPointAny(new BABYLON.Vector3(I, J, K))) {
+                    westFace[i][j] = 1;
+                }
+            }
+        }
+        let r = Math.random();
+        if (r < 0.33) {
+            await this.tryPushLiving(scene, northFace, eastFace, southFace, westFace);
+        }
+        else if (r < 0.66) {
+            await this.tryPushUtil(scene, northFace, eastFace, southFace, westFace);
+        }
+        else {
+            await this.tryPushView(scene, northFace, eastFace, southFace, westFace);
+        }
+        for (let i = 0; i < this._nubs.length; i++) {
+            let nub = this._nubs[i];
+            let nubMesh = await nub.instantiate(scene);
+            this._meshes.push(nubMesh);
+        }
+        for (let i = 0; i < this._platforms.length; i++) {
+            let platform = this._platforms[i];
+            let platformMesh = await platform.instantiate(scene);
+            this._meshes.push(platformMesh);
+        }
+        for (let i = 0; i < this._poles.length; i++) {
+            let pole = this._poles[i];
+            let poleMesh = await pole.instantiate(scene);
+            this._meshes.push(poleMesh);
+        }
+        for (let i = 0; i < this._antennas.length; i++) {
+            let antenna = this._antennas[i];
+            let antennaMesh = await antenna.instantiate(scene);
+            this._meshes.push(antennaMesh);
+        }
+        let mergedMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
+        mergedMesh.material = MinMax.cellShadingMaterial;
+        mergedMesh.layerMask = 1;
+        return mergedMesh;
+    }
+    async tryPushUtil(scene, northFace, eastFace, southFace, westFace) {
+        let surface = this.width * this.height + this.width * this.depth + this.height * this.depth;
+        let count = Math.ceil(surface / 30);
+        for (let w = 3; w > 0; w--) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", count, w, w);
+            await this.tryPush(scene, eastFace, Direction.East, "station-dark", count, w, w);
+            await this.tryPush(scene, southFace, Direction.South, "station-dark", count, w, w);
+            await this.tryPush(scene, westFace, Direction.West, "station-dark", count, w, w);
+        }
+        await this.tryPush(scene, northFace, Direction.North, "station-window", count, 3, 3);
+        await this.tryPush(scene, eastFace, Direction.East, "station-window", count, 3, 3);
+        await this.tryPush(scene, southFace, Direction.South, "station-window", count, 3, 3);
+        await this.tryPush(scene, westFace, Direction.West, "station-window", count, 3, 3);
+    }
+    async tryPushLiving(scene, northFace, eastFace, southFace, westFace) {
+        let floors = Math.floor(this.height / 3);
+        for (let i = 1; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+        }
+        for (let i = 0; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-window", 3, 4, 5, i * 6 + 1);
+            await this.tryPush(scene, eastFace, Direction.East, "station-window", 3, 4, 5, i * 6 + 1);
+            await this.tryPush(scene, southFace, Direction.South, "station-window", 3, 4, 5, i * 6 + 1);
+            await this.tryPush(scene, westFace, Direction.West, "station-window", 3, 4, 5, i * 6 + 1);
+        }
+        await this.tryPush(scene, northFace, Direction.North, "station-window", 6, 3, 3);
+        await this.tryPush(scene, eastFace, Direction.East, "station-window", 6, 3, 3);
+        await this.tryPush(scene, southFace, Direction.South, "station-window", 6, 3, 3);
+        await this.tryPush(scene, westFace, Direction.West, "station-window", 6, 3, 3);
+    }
+    async tryPushView(scene, northFace, eastFace, southFace, westFace) {
+        let floors = Math.floor(this.height / 3);
+        for (let i = 1; i < floors; i++) {
+            await this.tryPush(scene, northFace, Direction.North, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, eastFace, Direction.East, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, southFace, Direction.South, "station-dark", 1, this.width * 2 - 1, 1, i * 6);
+            await this.tryPush(scene, westFace, Direction.West, "station-dark", 1, this.depth * 2 - 1, 1, i * 6);
+        }
+        for (let i = 0; i < floors; i++) {
+            for (let w = 8; w > 0; w -= 2) {
+                await this.tryPush(scene, northFace, Direction.North, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, eastFace, Direction.East, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, southFace, Direction.South, "station-window", 3, w, 5, i * 6 + 1);
+                await this.tryPush(scene, westFace, Direction.West, "station-window", 3, w, 5, i * 6 + 1);
+            }
+        }
     }
     tryPop() {
         let blocks = [];
@@ -5247,28 +5171,26 @@ class Door {
             Door.instances.splice(index, 1);
         }
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let doorMesh = new BABYLON.Mesh("blockMesh", scene);
-            let doorIndex = Math.floor(2 * Math.random() + 1);
-            if (this.width > 3) {
-                doorIndex = 2;
+    async instantiate(scene) {
+        let doorMesh = new BABYLON.Mesh("blockMesh", scene);
+        let doorIndex = Math.floor(2 * Math.random() + 1);
+        if (this.width > 3) {
+            doorIndex = 2;
+        }
+        let data = await VertexDataLoader.instance.get("station-door-" + doorIndex.toFixed(0));
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            if (data.positions[i] > 0.5) {
+                data.positions[i] += (this.width - 2) * 0.5;
             }
-            let data = yield VertexDataLoader.instance.get("station-door-" + doorIndex.toFixed(0));
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                if (data.positions[i] > 0.5) {
-                    data.positions[i] += (this.width - 2) * 0.5;
-                }
-                else if (data.positions[i] < -0.5) {
-                    data.positions[i] -= (this.width - 2) * 0.5;
-                }
+            else if (data.positions[i] < -0.5) {
+                data.positions[i] -= (this.width - 2) * 0.5;
             }
-            data.applyToMesh(doorMesh);
-            doorMesh.layerMask = 1;
-            doorMesh.material = MinMax.cellShadingMaterial;
-            return doorMesh;
-        });
+        }
+        data.applyToMesh(doorMesh);
+        doorMesh.layerMask = 1;
+        doorMesh.material = MinMax.cellShadingMaterial;
+        return doorMesh;
     }
     intersects(other) {
         if (this.position.x + this.width < other.position.x - other.width) {
@@ -5334,63 +5256,61 @@ class Platform extends MinMax {
             this._doors.pop().destroy();
         }
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let platformMesh = new BABYLON.Mesh("blockMesh", scene);
-            let data = yield VertexDataLoader.instance.get("station-platform");
-            data = VertexDataLoader.clone(data);
-            for (let i = 0; i < data.positions.length; i += 3) {
-                let x = data.positions[i];
-                let y = data.positions[i + 1];
-                let z = data.positions[i + 2];
-                let ll = x * x + z * z;
-                if (ll > 0) {
-                    if (y > 0.15 || y < -0.15) {
-                        data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
-                        data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
-                    }
-                    else {
-                        data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
-                        data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
-                    }
+    async instantiate(scene) {
+        let platformMesh = new BABYLON.Mesh("blockMesh", scene);
+        let data = await VertexDataLoader.instance.get("station-platform");
+        data = VertexDataLoader.clone(data);
+        for (let i = 0; i < data.positions.length; i += 3) {
+            let x = data.positions[i];
+            let y = data.positions[i + 1];
+            let z = data.positions[i + 2];
+            let ll = x * x + z * z;
+            if (ll > 0) {
+                if (y > 0.15 || y < -0.15) {
+                    data.positions[i] *= (0.1 + this.width * 0.5) / 0.6;
+                    data.positions[i + 2] *= (0.1 + this.width * 0.5) / 0.6;
                 }
-                data.positions[i + 2] -= 0.25;
+                else {
+                    data.positions[i] *= (0.2 + this.width * 0.5) / 0.7;
+                    data.positions[i + 2] *= (0.2 + this.width * 0.5) / 0.7;
+                }
             }
-            data.applyToMesh(platformMesh);
-            platformMesh.computeWorldMatrix(true);
-            this._meshes.push(platformMesh);
-            let lightMesh = new BABYLON.Mesh("lightMesh", scene);
-            let lightMeshData = yield VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
-            lightMeshData.applyToMesh(lightMesh);
-            lightMesh.position.z = (this.width - 1) * 0.5;
-            lightMesh.position.y = 0.5;
-            lightMesh.computeWorldMatrix(true);
-            this._meshes.push(lightMesh);
-            for (let i = 0; i < this._doors.length; i++) {
-                let door = this._doors[i];
-                let doorMesh = yield door.instantiate(scene);
-                doorMesh.position.x = door.position.x * 0.5;
-                doorMesh.position.y = 0.5;
-                doorMesh.computeWorldMatrix(true);
-                this._meshes.push(doorMesh);
-            }
-            let newPlatformMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
-            newPlatformMesh.layerMask = 1;
-            newPlatformMesh.position.x = this.position.x / 2 + 0.25;
-            newPlatformMesh.position.y = this.position.y / 2 + 0.25;
-            newPlatformMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.direction === Direction.South) {
-                newPlatformMesh.rotation.y = Math.PI;
-            }
-            if (this.direction === Direction.East) {
-                newPlatformMesh.rotation.y = Math.PI * 0.5;
-            }
-            if (this.direction === Direction.West) {
-                newPlatformMesh.rotation.y = -Math.PI * 0.5;
-            }
-            newPlatformMesh.material = MinMax.cellShadingMaterial;
-            return newPlatformMesh;
-        });
+            data.positions[i + 2] -= 0.25;
+        }
+        data.applyToMesh(platformMesh);
+        platformMesh.computeWorldMatrix(true);
+        this._meshes.push(platformMesh);
+        let lightMesh = new BABYLON.Mesh("lightMesh", scene);
+        let lightMeshData = await VertexDataLoader.instance.getColorized("light-s", "#c4c4c4", "#1ece50");
+        lightMeshData.applyToMesh(lightMesh);
+        lightMesh.position.z = (this.width - 1) * 0.5;
+        lightMesh.position.y = 0.5;
+        lightMesh.computeWorldMatrix(true);
+        this._meshes.push(lightMesh);
+        for (let i = 0; i < this._doors.length; i++) {
+            let door = this._doors[i];
+            let doorMesh = await door.instantiate(scene);
+            doorMesh.position.x = door.position.x * 0.5;
+            doorMesh.position.y = 0.5;
+            doorMesh.computeWorldMatrix(true);
+            this._meshes.push(doorMesh);
+        }
+        let newPlatformMesh = BABYLON.Mesh.MergeMeshes(this._meshes, true);
+        newPlatformMesh.layerMask = 1;
+        newPlatformMesh.position.x = this.position.x / 2 + 0.25;
+        newPlatformMesh.position.y = this.position.y / 2 + 0.25;
+        newPlatformMesh.position.z = this.position.z / 2 + 0.25;
+        if (this.direction === Direction.South) {
+            newPlatformMesh.rotation.y = Math.PI;
+        }
+        if (this.direction === Direction.East) {
+            newPlatformMesh.rotation.y = Math.PI * 0.5;
+        }
+        if (this.direction === Direction.West) {
+            newPlatformMesh.rotation.y = -Math.PI * 0.5;
+        }
+        newPlatformMesh.material = MinMax.cellShadingMaterial;
+        return newPlatformMesh;
     }
 }
 Platform.instances = [];
@@ -5491,31 +5411,29 @@ class Pole extends MinMax {
             Pole.instances.splice(index, 1);
         }
     }
-    instantiate(scene) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let poleMesh = new BABYLON.Mesh("blockMesh", scene);
-            let positions = [];
-            let indices = [];
-            let colors = [];
-            Pole.PushPoleParts(positions, indices, colors, this.width + 0.5, 0.5, this.length * 0.5 + 0.5, 0, this.length * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2), Math.floor(this.length * 0.5 + 0.5), 0.2);
-            Pole.PushPolePart(positions, indices, colors, this.width + 0.1, 0.1, this.length * 0.5 + 0.5, 0.1, this.length * 0.5 + 0.5 - 0.2, new BABYLON.Color3(1, 1, 1));
-            let data = new BABYLON.VertexData();
-            data.positions = positions;
-            data.indices = indices;
-            data.colors = colors;
-            data.normals = [];
-            BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
-            data.applyToMesh(poleMesh);
-            poleMesh.layerMask = 1;
-            poleMesh.position.x = this.position.x / 2 + 0.25;
-            poleMesh.position.y = this.position.y / 2 + 0.25;
-            poleMesh.position.z = this.position.z / 2 + 0.25;
-            if (this.down) {
-                poleMesh.rotation.x = Math.PI;
-            }
-            poleMesh.material = MinMax.cellShadingMaterial;
-            return poleMesh;
-        });
+    async instantiate(scene) {
+        let poleMesh = new BABYLON.Mesh("blockMesh", scene);
+        let positions = [];
+        let indices = [];
+        let colors = [];
+        Pole.PushPoleParts(positions, indices, colors, this.width + 0.5, 0.5, this.length * 0.5 + 0.5, 0, this.length * 0.5 + 0.5, new BABYLON.Color3(0.2, 0.2, 0.2), Math.floor(this.length * 0.5 + 0.5), 0.2);
+        Pole.PushPolePart(positions, indices, colors, this.width + 0.1, 0.1, this.length * 0.5 + 0.5, 0.1, this.length * 0.5 + 0.5 - 0.2, new BABYLON.Color3(1, 1, 1));
+        let data = new BABYLON.VertexData();
+        data.positions = positions;
+        data.indices = indices;
+        data.colors = colors;
+        data.normals = [];
+        BABYLON.VertexData.ComputeNormals(data.positions, data.indices, data.normals);
+        data.applyToMesh(poleMesh);
+        poleMesh.layerMask = 1;
+        poleMesh.position.x = this.position.x / 2 + 0.25;
+        poleMesh.position.y = this.position.y / 2 + 0.25;
+        poleMesh.position.z = this.position.z / 2 + 0.25;
+        if (this.down) {
+            poleMesh.rotation.x = Math.PI;
+        }
+        poleMesh.material = MinMax.cellShadingMaterial;
+        return poleMesh;
     }
 }
 Pole.instances = [];
@@ -6261,7 +6179,7 @@ class Spawner extends BABYLON.Mesh {
         this._spawns = [];
         this.onDestroyObservable = new BABYLON.Observable();
         this._cooldown = 0;
-        this._update = () => __awaiter(this, void 0, void 0, function* () {
+        this._update = async () => {
             if (this._cooldown > 0) {
                 let dt = this.getScene().getEngine().getDeltaTime() / 1000;
                 this._cooldown -= dt;
@@ -6272,7 +6190,7 @@ class Spawner extends BABYLON.Mesh {
                 return;
             }
             this._cooldown = this.delay;
-            let spawn = yield SpaceShipFactory.AddSpaceShipToScene({
+            let spawn = await SpaceShipFactory.AddSpaceShipToScene({
                 name: "Mob",
                 url: "arrow-3",
                 team: this.team,
@@ -6291,7 +6209,7 @@ class Spawner extends BABYLON.Mesh {
                 }
             });
             Spawner.onAnySpawnerSpawnObservable.notifyObservers(this);
-        });
+        };
         this.onWoundObservable = new BABYLON.Observable();
         this.position = position;
         this.rotationQuaternion = rotationQuaternion;
@@ -6367,19 +6285,17 @@ class RuntimeUtils {
         };
         Main.Scene.onBeforeRenderObservable.add(step);
     }
-    static RunCoroutine(coroutine) {
-        return __awaiter(this, void 0, void 0, function* () {
-            ScreenLoger.instance.log("Run Coroutine");
-            return new Promise((resolve) => {
-                let step = () => {
-                    if (!coroutine.next().done) {
-                        return;
-                    }
-                    resolve();
-                    Main.Scene.onBeforeRenderObservable.removeCallback(step);
-                };
-                Main.Scene.onBeforeRenderObservable.add(step);
-            });
+    static async RunCoroutine(coroutine) {
+        ScreenLoger.instance.log("Run Coroutine");
+        return new Promise((resolve) => {
+            let step = () => {
+                if (!coroutine.next().done) {
+                    return;
+                }
+                resolve();
+                Main.Scene.onBeforeRenderObservable.removeCallback(step);
+            };
+            Main.Scene.onBeforeRenderObservable.add(step);
         });
     }
     static NextFrame(scene, callback) {
