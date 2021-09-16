@@ -1,3 +1,5 @@
+/// <reference path="../../lib/babylon.material.d.ts"/>
+
 enum ISquadRole {
 	Leader,
 	WingMan,
@@ -20,10 +22,16 @@ interface ISpaceshipInstanceData {
 
 class SpaceShipFactory {
 
+	public static Scene: BABYLON.Scene;
+
+	constructor(scene: BABYLON.Scene) {
+		SpaceShipFactory.Scene = scene;
+	}
+
 	public static _cellShadingMaterial: BABYLON.CellMaterial;
 	public static get cellShadingMaterial(): BABYLON.CellMaterial {
 		if (!SpaceShipFactory._cellShadingMaterial) {
-			SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", Main.Scene);
+			SpaceShipFactory._cellShadingMaterial = new BABYLON.CellMaterial("CellMaterial", SpaceShipFactory.Scene);
 			SpaceShipFactory._cellShadingMaterial.computeHighLevel = true;
 		}
 		return SpaceShipFactory._cellShadingMaterial;
@@ -46,33 +54,29 @@ class SpaceShipFactory {
 	public static async AddSpaceShipToScene(
 		data: ISpaceshipInstanceData,
 		scene: BABYLON.Scene
-	): Promise<SpaceShip> {
+	): Promise<Spaceship> {
 		let spaceshipData = await SpaceshipLoader.instance.get(data.url);
-		let spaceShip: SpaceShip = new SpaceShip(spaceshipData, Main.Scene);
+		let spaceShip: Spaceship = new Spaceship(spaceshipData, scene);
 		spaceShip.name = data.name;
 		await spaceShip.initialize(
 			spaceshipData.model,
 			SpaceShipFactory.baseColorFromTeam(data.team),
 			SpaceShipFactory.detailColorFromTeam(data.team)
 		);
-		let spaceshipAI = new DefaultAI(spaceShip, data.role, data.team, scene);
-		spaceShip.attachControler(spaceshipAI);
+		
 		if (isFinite(data.x) && isFinite(data.y) && isFinite(data.z)) {
 			spaceShip.position.copyFromFloats(data.x, data.y, data.z);
 		}
 		if (isFinite(data.rx) && isFinite(data.ry) && isFinite(data.rz) && isFinite(data.rw)) {
 			spaceShip.rotationQuaternion.copyFromFloats(data.rx, data.ry, data.rz, data.rw);
 		}
-		RuntimeUtils.NextFrame(
-			Main.Scene,
-			() => {
-				spaceShip.trailMeshes.forEach(
-					(t) => {
-						t.foldToGenerator();
-					}
-				)
-			}
-		);
+		requestAnimationFrame(() => {
+			spaceShip.trailMeshes.forEach(
+				(t) => {
+					t.foldToGenerator();
+				}
+			)
+		});
 		return spaceShip;
 	}
 
@@ -107,7 +111,7 @@ class SpaceShipFactory {
 				}
 			}
 		}
-		let m = new BABYLON.Mesh(part, Main.Scene);
+		let m = new BABYLON.Mesh(part, SpaceShipFactory.Scene);
 		m.layerMask = 1;
 		data.applyToMesh(m);
 		m.material = SpaceShipFactory.cellShadingMaterial;

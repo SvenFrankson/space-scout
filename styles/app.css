@@ -1,221 +1,47 @@
-  html, body {
+html,
+body {
     overflow: hidden;
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
-  }
+    font-family: "akashi", sans-serif;
+    font-size: 100%;
+    color: white;
+}
 
-  @font-face {
-    font-family: Oneday;
-    src: url("./fonts/ONEDAY.otf") format("opentype");
-  }
-
-  .frame {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.7);
-    color: rgba(255, 255, 255, 255);
-    padding: 30px 30px 30px 30px;
-    font-size: 16px;
-  }
-
-  #cinematic-frame-picture {
-    height: 40%;
-  }
-
-  #cinematic-frame-picture-img {
-    max-width: 100%;
-    max-height: 100%;
-    width: auto;
-    height: auto;
-  }
-
-  .cinematic-lg-title-container {
-    text-align: center;
-    margin-bottom: 10%;
-    font-family: "Oneday";
-  }
-
-  .ss-title {
-    font-family: "Oneday";
-  }
-
-  .ss-title-container {
-    text-align: center;
-    margin-bottom: 5%;
-  }
-
-  .ss-panel {
-    margin: 20px;
-    padding: 10px;
-    padding-bottom: 30px;
-    text-align: center;
-    color: rgba(255, 255, 255, 255);
-  }
-
-  .dark {
-    background-color: rgba(0, 0, 0, 0.7);
-  }
-
-  .ss-panel-header {
-    text-align: center;
-    margin: 5%;
-    border-bottom: 1px solid white;
-  }
-
-  .ss-panel-body {
-    font-size: 20px;
-  }
-
-  .team-panel-title {
-    margin: 0px 0px 20px 0px;
-  }
-
-  .space-line-head {
-    border-bottom: 1px solid white;
-    padding-right: 15px;
-  }
-
-  .space-line {
-    padding-top: 5px;
-    padding-right: 15px;
-  }
-
-  #team-panel {
-    font-family: "Verdana";
-    position: absolute;
-    top: 0px;
-    right: 0px;
-    padding: 0px 0px 10px 10px;
-    color: rgba(255, 255, 255, 255);
-    font-size: 16px;
-    border-left: 1px solid;
-    border-bottom: 1px solid;
-    border-radius: 3px;
-    border-color: rgba(255, 255, 255, 1);
-    background-color: rgba(0, 0, 0, 0);
-  }
-
-  #team-panel-internal {
-    padding: 15px 25px 15px 25px;
-    border-left: 1px solid;
-    border-bottom: 1px solid;
-    border-radius: 3px;
-    border-color: rgba(255, 255, 255, 1);
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  #com-link {
-    position: absolute;
-    bottom: 5%;
-    left: 50%;
-    width: 60%;
-    transform: translateX(-50%);
-    padding: 10px 20px 10px 20px;
-    color: rgba(255, 255, 255, 255);
-    font-size: 25px;
-    text-align: left;
-    pointer-events: none;
-  }
-
-  .com-link-line {
-    background-color: rgba(0, 0, 0, 0.5);
-    pointer-events: none;
-  }
-
-  #play-button {
-    margin: 0px;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
-  }
-
-  #skip-button {
-    margin: 0px;
-    position: absolute;
-    right: 5%;
-    bottom: 5%;
-  }
-
-  .ss-button {
-    margin: 3%;
-    padding: 10px 20px 10px 20px;
-    border: 2px solid;
-    font-size: 25px;
-    color: rgba(255, 255, 255, 255);
-    border-color: rgba(255, 255, 255, 1);
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  .ss-button-lg {
-    margin: 5%;
-    padding: 25px 50px 25px 50px;
-    border: 2px solid;
-    font-size: 25px;
-    color: rgba(255, 255, 255, 255);
-    border-color: rgba(255, 255, 255, 1);
-    background-color: rgba(0, 0, 0, 0.5);
-  }
-
-  #render-canvas {
-    display: block;
+#render-canvas {
     width: 100%;
     height: 100%;
     margin: 0px;
+    -ms-touch-action: none;
     touch-action: none;
-  }
+}
 
-  #focal-length {
-    position: absolute;
-    top: 15%;
-    left: 50%;
-    transform: translateX(-50%) translateY(-50%);
+#fps-info {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 100px;
     font-size: 20px;
-    color: rgba(255, 255, 255, 127);
-    pointer-events: none;
-  }
+    color: red;
+    text-align: right;
+    font-family: monospace;
+}
 
-  .target {
-    position: absolute;
-    pointer-events: none;
-  }
+#meshes-info {
+    position: fixed;
+    top: 30px;
+    right: 10px;
+    width: 250px;
+    font-size: 16px;
+    color: red;
+    text-align: right;
+    font-family: monospace;
+}
 
-  #panel-right {
-    position: absolute;
-  }
-
-  #speed-display {
-    position: absolute;
-    pointer-events: none;
-    clip: rect(100px, 290px, 290px, 0px);
-  }
-
-  #objective-radar {
-    position: absolute;
-    pointer-events: none;
-  }
-
-  #page {
-    position: absolute;
-    top: 5%;
-    bottom: 5%;
-    left: 5%;
-    right: 5%;
-  }
-
-  .map-icon {
-    position: absolute;
-    pointer-events: none;
-    z-index: 2;
-  }
-
-  #credit {
-    position: absolute;
-    width: 256px;
-    height: 40px;
-    bottom: 0px;
-    right: 0px;
-    font-size: 24px;
-    color: white;
-  }
+#hud-root {
+    position: fixed;
+    height: 70%;
+    top: 15%;
+}

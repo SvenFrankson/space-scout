@@ -1,4 +1,4 @@
-class SpaceShip extends BABYLON.Mesh {
+class Spaceship extends BABYLON.Mesh {
 
 	private _forwardInput: number = 0;
 	public get forwardInput(): number {
@@ -9,7 +9,7 @@ class SpaceShip extends BABYLON.Mesh {
 			this._forwardInput = BABYLON.Scalar.Clamp(v, -1, 1);
 		}
 	}
-	private _enginePower: number = 15;
+	private _enginePower: number = 25;
 	private _frontDrag: number = 0.01;
 	private _backDrag: number = 1;
 	private _speed: number = 0;
@@ -26,8 +26,8 @@ class SpaceShip extends BABYLON.Mesh {
 			this._rollInput = BABYLON.Scalar.Clamp(v, -1, 1);
 		}
 	}
-	private _rollPower: number = 2
-	private _rollDrag: number = 0.9;
+	private _rollPower: number = 10;
+	private _rollDrag: number = 0;
 	private _roll: number = 0;
 	public get roll(): number {
 		return this._roll;
@@ -42,7 +42,7 @@ class SpaceShip extends BABYLON.Mesh {
 			this._yawInput = BABYLON.Scalar.Clamp(v, -1, 1);
 		}
 	}
-	private _yawPower: number = 2
+	private _yawPower: number = 4;
 	private _yawDrag: number = 0.9;
 	private _yaw: number = 0;
 	public get yaw(): number {
@@ -58,7 +58,7 @@ class SpaceShip extends BABYLON.Mesh {
 			this._pitchInput = BABYLON.Scalar.Clamp(v, -1, 1);
 		}
 	}
-	private _pitchPower: number = 2
+	private _pitchPower: number = 4;
 	private _pitchDrag: number = 0.9;
 	private _pitch: number = 0;
 	public get pitch(): number {
@@ -82,7 +82,7 @@ class SpaceShip extends BABYLON.Mesh {
 	public get localZ(): BABYLON.Vector3 {
 		return this._localZ;
 	}
-	public controler: SpaceShipControler;
+	
 	private _colliders: Array<BABYLON.BoundingSphere> = [];
 	public shield: Shield;
 	public impactParticle: BABYLON.ParticleSystem;
@@ -102,7 +102,12 @@ class SpaceShip extends BABYLON.Mesh {
 	public shootCoolDown: number = 0.3;
 	public _shootCool: number = 0;
 
-	constructor(data: ISpaceshipData, scene: BABYLON.Scene) {
+	private _controler: PlayerControler;
+	public get controler(): PlayerControler {
+		return this._controler;
+	}
+
+	constructor(data: ISpaceshipData, public scene: BABYLON.Scene) {
 		super("spaceship", scene);
 		
 		this.stamina = data.stamina * (0.95 + 0.1 * Math.random());
@@ -151,13 +156,27 @@ class SpaceShip extends BABYLON.Mesh {
 		this.wingTipRight.parent = this;
 		this.wingTipRight.position.copyFromFloats(2.91, 0, -1.24);
 		this.trailMeshes = [
-			new TrailMesh("Test", this.wingTipLeft, Main.Scene, 0.07, 60),
-			new TrailMesh("Test", this.wingTipRight, Main.Scene, 0.07, 60)
+			new TrailMesh("Test", this.wingTipLeft, this.scene, 0.07, 60),
+			new TrailMesh("Test", this.wingTipRight, this.scene, 0.07, 60)
 		];
 		this.hitPoint = this.stamina;
 		this.createColliders();
 		scene.onBeforeRenderObservable.add(this._move);
 	}
+
+    
+
+    public setControler(controler: PlayerControler): void {
+        if (controler != this._controler) {
+            if (this._controler) {
+                this._controler.setSpaceship(undefined);
+            }
+            this._controler = controler;
+            if (controler) {
+                this._controler.setSpaceship(this);
+            }
+        }
+    }
 
 	public onDestroyObservable: BABYLON.Observable<void> = new BABYLON.Observable<void>();
 
@@ -177,7 +196,7 @@ class SpaceShip extends BABYLON.Mesh {
 		detailColor: string
 	): Promise<BABYLON.Mesh> {
 		let meshes: BABYLON.Mesh[] = [];
-		await SpaceShip._InitializeRecursively(model, baseColor, detailColor, this, meshes);
+		await Spaceship._InitializeRecursively(this.scene, model, baseColor, detailColor, this, meshes);
 		let invWorldMatrix = this.computeWorldMatrix(true).clone().invert();
 		for (let i = 0; i < meshes.length; i++) {
 			meshes[i].computeWorldMatrix(true);
@@ -199,13 +218,14 @@ class SpaceShip extends BABYLON.Mesh {
 
 	private _canonNodes: BABYLON.TransformNode[] = [];
 	private static async _InitializeRecursively(
+		scene: BABYLON.Scene,
 		elementData: SpaceShipElement,
 		baseColor: string,
 		detailColor: string,
-		spaceship: SpaceShip,
+		spaceship: Spaceship,
 		meshes?: BABYLON.Mesh[]
 	): Promise<BABYLON.TransformNode> {
-		let e = await SpaceShipFactory.LoadSpaceshipPart(elementData.name, Main.Scene, baseColor, detailColor);
+		let e = await SpaceShipFactory.LoadSpaceshipPart(elementData.name, scene, baseColor, detailColor);
 		if (meshes) {
 			meshes.push(e);
 		}
@@ -223,7 +243,7 @@ class SpaceShip extends BABYLON.Mesh {
 						}
 					}
 					else {
-						let child = await SpaceShip._InitializeRecursively(childData, baseColor, detailColor, spaceship, meshes);
+						let child = await Spaceship._InitializeRecursively(scene, childData, baseColor, detailColor, spaceship, meshes);
 						child.parent = e;
 						child.position = slot.pos;
 						child.rotation = slot.rot;
@@ -258,12 +278,12 @@ class SpaceShip extends BABYLON.Mesh {
 	}
 
 	private createColliders(): void {
-		this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
-		this._colliders.push(SpaceShip.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
+		this._colliders.push(Spaceship.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0.22, -0.59), 1.06));
+		this._colliders.push(Spaceship.CenterRadiusBoundingSphere(new BABYLON.Vector3(0, 0, 2.43), 0.75));
 	}
 
-	public attachControler(controler: SpaceShipControler): void {
-		this.controler = controler;
+	public attachControler(): void {
+		
 	}
 
 	public static CenterRadiusBoundingSphere(center: BABYLON.Vector3, radius: number): BABYLON.BoundingSphere {
@@ -282,13 +302,6 @@ class SpaceShip extends BABYLON.Mesh {
 		this._shootCool -= this._dt;
 		this._shootCool = Math.max(0, this._shootCool);
 
-		if (!(Main.State === State.Game)) {
-			return;
-		}
-
-		if (this.controler) {
-			this.controler.checkInputs(this._dt);
-		}
 		if (this.isAlive) {
 			this._speed += this.forwardInput * this._enginePower * this._dt;
 			this._yaw += this.yawInput * this._yawPower * this._dt;
@@ -416,7 +429,7 @@ class SpaceShip extends BABYLON.Mesh {
 	
 			this.onWoundObservable.notifyObservers(projectile);
 			if (this.hitPoint <= 0) {
-				Main.Loger.log(projectile.shooter.name + " killed " + this.name);
+				//Main.Loger.log(projectile.shooter.name + " killed " + this.name);
 				this.hitPoint = 0;
 				this.isAlive = false;
 				this.impactParticle.emitter = this.position;

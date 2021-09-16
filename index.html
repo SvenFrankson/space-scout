@@ -1,28 +1,25 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
-  <title>SpaceScout</title>
-  <script src="./lib/jquery.min.js"></script>
-  <script src="./lib/bootstrap.min.js"></script>
-  <script src="./lib/babylon.js"></script>
-  <script src="./lib/babylon.gui.js"></script>
-  <script src="./lib/babylon.cellMaterial.js"></script>
-  <script src="./scripts/app.js"></script>
-  <link rel="stylesheet" type="text/css" href="./styles/app.css">
-  <link rel="stylesheet" type="text/css" href="./styles/bootstrap.css">
-</head>
-<body>
-  <canvas id="render-canvas"></canvas>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html" charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Space-Scout</title>
+        <script src="./lib/babylon.js"></script>
+        <script src="./lib/babylon.material.js"></script>
+        <script src="./scripts/app.js"></script>
+        <link rel="stylesheet" type="text/css" href="./styles/app.css" />
+    </head>
 
-  <div id="page">
-
-  </div>
-
-  <a href="http://www.svenfrankson.com">
-    <div id="credit">
-      > Sven Frankson
-    </div>
-  </a>
-</body>
+    <body>
+        <canvas id="render-canvas"></canvas>
+        <div id="fps-info"></div>
+        <div id="meshes-info">
+            <div>MESHES INFO</div>
+            <div><span>Total - </span><span id="meshes-info-total">432</span></div>
+            <div><span>Non-Static & Unique - </span><span id="meshes-info-nonstatic-unique">24</span></div>
+            <div><span>Static & Unique - </span><span id="meshes-info-static-unique">12</span></div>
+            <div><span>Non-Static & Instance - </span><span id="meshes-info-nonstatic-instance">124</span></div>
+            <div><span>Static & Instance - </span><span id="meshes-info-static-instance">212</span></div>
+        </div>
+    </body>
 </html>

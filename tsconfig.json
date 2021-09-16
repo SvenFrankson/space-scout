@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "target": "esnext",
-        "outFile": "./scripts/app.js"
-    },
-    "compileOnSave": true,
-    "buildOnSave": true
-}
